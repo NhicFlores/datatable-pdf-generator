@@ -10,25 +10,35 @@ export async function getExpenses(): Promise<Expense[]> {
     const fileContent = fs.readFileSync(filePath, "utf8")
 
     // Parse the CSV content
-    const result = Papa.parse<Expense>(fileContent, {
+    interface HeaderMap {
+      [key: string]: string;
+    }
+
+    interface ParseResult<T> {
+      data: T[];
+      errors: Papa.ParseError[];
+      meta: Papa.ParseMeta;
+    }
+
+    const headerMap: HeaderMap = {
+      "Card Holder Name": "cardHolderName",
+      "Statement Period Start Date": "statementPeriodStartDate",
+      "Statement Period End Date": "statementPeriodEndDate",
+      "Last Four Digits": "lastFourDigits",
+      "Current Date": "currentDate",
+      Supplier: "supplier",
+      "Supplier Address": "supplierAddress",
+      Amount: "amount",
+    };
+
+    const result: ParseResult<Expense> = Papa.parse<Expense>(fileContent, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (header) => {
-        // Map CSV headers to our type properties
-        const headerMap: Record<string, string> = {
-          "Card Holder Name": "cardHolderName",
-          "Statement Period Start Date": "statementPeriodStartDate",
-          "Statement Period End Date": "statementPeriodEndDate",
-          "Last Four Digits": "lastFourDigits",
-          "Current Date": "currentDate",
-          Supplier: "supplier",
-          "Supplier Address": "supplierAddress",
-          Amount: "amount",
-        }
-
-        return headerMap[header] || header
+      transformHeader: (header: string): string => {
+      // Map CSV headers to our type properties
+      return headerMap[header] || header;
       },
-    })
+    });
 
     if (result.errors && result.errors.length > 0) {
       console.error("Error parsing CSV:", result.errors)
