@@ -36,24 +36,24 @@ export type Transaction = {
 };
 
 export type CSV_Row = {
-  "Statement Period - Start Date": string;
-  "Statement Period - End Date": string;
-  "Account - Last Four Digits": string;
-  "Cardholder Name": string;
-  "Transaction - Transaction Date": string;
-  "Transaction - Posting Date": string;
-  "Transaction - Billing Amount": string;
-  "Transaction - Line Amount": string;
-  "Transaction - Line Number": string;
-  "Transaction Line Coding - GL Code": string;
-  "Transaction Line Coding Description - GL Code": string;
-  "Transaction - Reason for Expense": string;
-  "Transaction - Receipt Image Name": string;
-  "Transaction - Receipt Image Reference ID": string;
-  "Supplier - Name": string;
-  "Supplier - City": string;
-  "Supplier - State": string;
-  "Transaction - Workflow Status": string;
+  statementPeriodStartDate: string;
+  statementPeriodEndDate: string;
+  lastFourDigits: string;
+  cardHolderName: string;
+  transactionDate: string;
+  postingDate: string;
+  billingAmount: string;
+  lineAmount: string;
+  lineNumber: string;
+  glCode: string;
+  glCodeDescription: string;
+  reasonForExpense: string;
+  receiptImageName: string;
+  receiptImageReferenceId: string;
+  supplierName: string;
+  supplierCity: string;
+  supplierState: string;
+  workflowStatus: string;
 }
 
 export const column_names = [

@@ -1,19 +1,13 @@
-import { getCsvData } from "@/lib/report-data";
+import { ExpenseTable } from "@/components/expense-table"
+import { getExpenses } from "@/lib/data"
 
-export default async function ExpenseReport() {
-    const transactions = await getCsvData();
+export default async function ExpenseReportPage() {
+  const expenses = await getExpenses()
 
-    return (
-        <div>
-            {transactions.map((transaction, index) => (
-                <div key={index} className="border p-4 mb-4">
-                    <h2 className="text-xl font-bold">{transaction["Cardholder Name"]}</h2>
-                    <p>Date: {transaction["Transaction - Transaction Date"]}</p>
-                    <p>Supplier: {transaction["Supplier - Name"]}</p>
-                    <p>Amount: {transaction["Transaction - Billing Amount"]}</p>
-                    {/* Add more fields as needed */}
-                </div>
-            ))}
-        </div>
-    )
+  return (
+    <div className="container mx-auto py-10">
+      <h1 className="text-2xl font-bold mb-6">Company Expenses</h1>
+      <ExpenseTable expenses={expenses} />
+    </div>
+  )
 }

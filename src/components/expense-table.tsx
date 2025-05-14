@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import {
   type ColumnDef,
@@ -79,6 +78,21 @@ export function ExpenseTable({ expenses }: { expenses: Expense[] }) {
       accessorKey: "lastFourDigits",
       header: "Last 4",
       cell: ({ row }) => <div>{row.getValue("lastFourDigits")}</div>,
+    },
+    {
+      accessorKey: "statementPeriodStartDate",
+      header: ({ column }) => {
+        return (
+          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+            Statement Period
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      cell: ({ row }) => {
+        const date = row.getValue("statementPeriodStartDate") as string
+        return <div className="text-center">{date}</div>
+      },
     },
     {
       accessorKey: "amount",
