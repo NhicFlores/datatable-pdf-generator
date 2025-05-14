@@ -1,5 +1,5 @@
 import { ExpenseTable } from "@/components/expense-table"
-import { getExpenses } from "@/lib/data"
+import { getExpenses } from "@/lib/read-sample-csv"
 
 export default async function ExpenseReportPage() {
   const expenses = await getExpenses()

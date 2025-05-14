@@ -15,10 +15,12 @@ export type Statement = {
   lastFourDigits: string;
   cardHolderName: string;
   totalAmount: string;
-  transactions: Transaction[];
+  // transactions: Transaction[];
 };
 
 export type Transaction = {
+  cardholderName: string; 
+  lastFourDigits: string;
   transactionDate: string;
   postingDate: string;
   billingAmount: string;
