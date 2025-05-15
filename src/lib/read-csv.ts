@@ -3,6 +3,12 @@ import path from "path";
 import Papa from "papaparse";
 import { CSV_Row } from "./types";
 
+// consider processing into statement and transaction objects on server
+// interface result {
+//   statements: Statement[];
+//   transactions: Transaction[];
+// }
+
 export async function getCsvData(): Promise<CSV_Row[]> {
   try {
     const filePath = path.join(process.cwd(), "data/report.csv");
@@ -21,8 +27,9 @@ export async function getCsvData(): Promise<CSV_Row[]> {
     const headerMap: HeaderMap = {
       "Statement Period - Start Date": "statementPeriodStartDate",
       "Statement Period - End Date": "statementPeriodEndDate",
-      "Account - Last Four Digits": "lastFourDigits",
       "Cardholder Name": "cardHolderName",
+      "Account - Last Four Digits": "lastFourDigits",
+      "Transaction - Transaction Reference": "transactionReference",
       "Transaction - Transaction Date": "transactionDate",
       "Transaction - Posting Date": "postingDate",
       "Transaction - Billing Amount": "billingAmount",

@@ -14,18 +14,19 @@ export type Statement = {
   statementPeriodEndDate: string;
   lastFourDigits: string;
   cardHolderName: string;
-  totalAmount: string;
-  // transactions: Transaction[];
+  // totalAmount: number;
+  transactions: Transaction[];
 };
 
 export type Transaction = {
+  transactionReference: string;
   cardholderName: string; 
-  lastFourDigits: string;
-  transactionDate: string;
-  postingDate: string;
-  billingAmount: string;
-  lineAmount: string;
-  lineNumber: string;
+  lastFourDigits: string; 
+  transactionDate: string; // parse into date
+  postingDate: string; // parse into date 
+  billingAmount: number; // parse into number 
+  lineAmount: number; // parse into number 
+  lineNumber: number; // parse into number 
   glCode: string;
   glCodeDescription: string;
   reasonForExpense: string;
@@ -42,6 +43,7 @@ export type CSV_Row = {
   statementPeriodEndDate: string;
   lastFourDigits: string;
   cardHolderName: string;
+  transactionReference: string;
   transactionDate: string;
   postingDate: string;
   billingAmount: string;
