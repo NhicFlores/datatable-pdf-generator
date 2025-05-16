@@ -26,7 +26,7 @@ interface StatementTableProps<TData, TValue> {
   data: TData[];
 }
 
-export function StatementTable<TData, TValue>({
+export function DataTable<TData, TValue>({
   columns,
   data,
 }: StatementTableProps<TData, TValue>) {
