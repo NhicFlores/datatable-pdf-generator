@@ -5,6 +5,7 @@ import { Button } from "./ui/button";
 import { ArrowUpDown } from "lucide-react";
 import Link from "next/link";
 import { ExpenseReportRoute } from "@/lib/routes";
+import { useStatements } from "./data-context";
 
 export const StatementColumns: ColumnDef<Statement>[] = [
   {
@@ -21,11 +22,21 @@ export const StatementColumns: ColumnDef<Statement>[] = [
         </Button>
       );
     },
-    cell: ({ row }) => {
+    cell: function CardholderNameCell({ row }) {
+      // instead of using an arrow function, we declare a functional component so we can use hooks 
+      const { setSelectedStatement } = useStatements();
+      function handleClick() {
+        // const { setSelectedStatement } = useStatements(); // incorrect usage
+        setSelectedStatement(row.original);
+      }
       return (
-        <Link href={ExpenseReportRoute.href}>
-          {row.getValue("cardHolderName")}
-        </Link>
+        <span onClick={handleClick}>
+          <Link
+            href={ExpenseReportRoute.detailPage(row.original.cardHolderName)}
+          >
+            {row.getValue("cardHolderName")}
+          </Link>
+        </span>
       );
     },
   },
@@ -87,6 +98,13 @@ export const StatementColumns: ColumnDef<Statement>[] = [
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
+    },
+    cell: ({ row }) => {
+      const totalAmount = row.original.transactions.reduce(
+        (acc, transaction) => acc + (Number(transaction.billingAmount) || 0),
+        0
+      );
+      return <div>{totalAmount}</div>;
     },
   },
 ];

@@ -8,7 +8,7 @@ import { Statement } from "@/lib/types";
 import Link from "next/link";
 
 export default function Home() {
-  const statements:Statement[] = useStatements();
+  const statements:Statement[] = useStatements().statements;
 
   return (
     <main className="container mx-auto py-10">

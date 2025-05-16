@@ -3,8 +3,14 @@ import { createStatements } from "@/lib/data";
 import { CSV_Row, Statement } from "@/lib/types";
 import React, { createContext, useContext } from "react";
 
+interface StatementsContextType {
+  statements: Statement[];
+  selectedStatement: Statement | null;
+  setSelectedStatement: (statement: Statement | null) => void;
+}
+
 // initialize context
-const StatementsContext = createContext<Statement[] | undefined>(undefined);
+const StatementsContext = createContext<StatementsContextType | undefined>(undefined);
 
 // custom hook to use the context
 export const useStatements = () => {
@@ -24,13 +30,12 @@ export const StatementsProvider = ({
   data,
   children,
 }: StatementsProviderProps) => {
-  // const [statements, setStatements] = React.useState<Statement[]>(
-  //   createStatements(data)
-  // );
+
   const statements = createStatements(data);
+  const [selectedStatement, setSelectedStatement] = React.useState<Statement | null>(null)
 
   return (
-    <StatementsContext.Provider value={statements}>
+    <StatementsContext.Provider value={{statements, selectedStatement, setSelectedStatement}}>
       {children}
     </StatementsContext.Provider>
   );
