@@ -1,22 +1,46 @@
-"use client"
+import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 
-// This file is kept for reference but is no longer used
-// PDF generation is now handled directly in pdf-download-button.tsx
+interface Transaction {
+  transactionDate: string;
+  supplierName: string;
+  glCode: string;
+  billingAmount: number;
+}
 
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer"
-import type { Expense } from "@/lib/types"
+interface ExpenseReportPDFProps {
+  cardHolderName: string;
+  lastFourDigits: string;
+  statementPeriodStartDate: string;
+  statementPeriodEndDate: string;
+  transactions: Transaction[];
+}
 
-// Create styles
 const styles = StyleSheet.create({
   page: {
     flexDirection: "column",
     backgroundColor: "#fff",
     padding: 30,
+    fontSize: 10,
   },
   title: {
-    fontSize: 24,
-    marginBottom: 20,
+    fontSize: 22,
+    marginBottom: 12,
     textAlign: "center",
+    fontWeight: "bold",
+  },
+  meta: {
+    marginBottom: 16,
+    fontSize: 11,
+  },
+  metaRow: {
+    marginBottom: 2,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    marginTop: 18,
+    marginBottom: 6,
+    fontWeight: "bold",
+    color: "#333",
   },
   table: {
     display: "flex",
@@ -26,12 +50,13 @@ const styles = StyleSheet.create({
     borderColor: "#bfbfbf",
     borderRightWidth: 0,
     borderBottomWidth: 0,
+    marginBottom: 12,
   },
   tableRow: {
     flexDirection: "row",
   },
   tableColHeader: {
-    width: "16.66%",
+    width: "25%",
     borderStyle: "solid",
     borderWidth: 1,
     borderColor: "#bfbfbf",
@@ -39,50 +64,115 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
     padding: 5,
     backgroundColor: "#f0f0f0",
-    fontSize: 10,
     fontWeight: "bold",
   },
   tableCol: {
-    width: "16.66%",
+    width: "25%",
     borderStyle: "solid",
     borderWidth: 1,
     borderColor: "#bfbfbf",
     borderLeftWidth: 0,
     borderTopWidth: 0,
     padding: 5,
-    fontSize: 8,
+  },
+  tableColAmount: {
+    width: "25%",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderColor: "#bfbfbf",
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 5,
+    textAlign: "right",
+    // monospace caused rendering issues because it wasn't a registered font
+    fontFamily: "Courier",
   },
   total: {
-    marginTop: 20,
+    marginTop: 10,
     fontSize: 12,
     fontWeight: "bold",
     textAlign: "right",
   },
-})
+});
 
-export function ExpensePDF({
-  expenses,
-  totalAmount,
-}: {
-  expenses: Expense[]
-  totalAmount: number
-}) {
-  const formattedTotalAmount = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(totalAmount)
+function getGLSummary(transactions: Transaction[]) {
+  const summary = transactions.reduce((acc, tx) => {
+    if (!acc[tx.glCode]) acc[tx.glCode] = 0;
+    acc[tx.glCode] += Number(tx.billingAmount) || 0;
+    return acc;
+  }, {} as Record<string, number>);
+  return Object.entries(summary);
+}
+
+export function ExpenseReportPDF({
+  cardHolderName,
+  lastFourDigits,
+  statementPeriodStartDate,
+  statementPeriodEndDate,
+  transactions,
+}: ExpenseReportPDFProps) {
+  const glSummary = getGLSummary(transactions);
+  const total = transactions.reduce(
+    (sum, tx) => sum + Number(tx.billingAmount || 0),
+    0
+  );
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        {/* Header */}
         <Text style={styles.title}>Expense Report</Text>
+        <View style={styles.meta}>
+          <Text style={styles.metaRow}>
+            <Text style={{ fontWeight: "bold" }}>Card Holder:</Text>{" "}
+            {cardHolderName}
+          </Text>
+          <Text style={styles.metaRow}>
+            <Text style={{ fontWeight: "bold" }}>Card Ending:</Text>{" "}
+            {lastFourDigits}
+          </Text>
+          <Text style={styles.metaRow}>
+            <Text style={{ fontWeight: "bold" }}>Period:</Text>{" "}
+            {statementPeriodStartDate} → {statementPeriodEndDate}
+          </Text>
+        </View>
 
+        {/* GL Code Summary */}
+        <Text style={styles.sectionTitle}>GL Code Totals</Text>
         <View style={styles.table}>
-          {/* Table Header */}
           <View style={styles.tableRow}>
             <View style={styles.tableColHeader}>
-              <Text>Card Holder</Text>
+              <Text>GL Code</Text>
             </View>
+            <View style={styles.tableColHeader}>
+              <Text>Total Billing Amount</Text>
+            </View>
+            <View style={styles.tableColHeader}></View>
+            <View style={styles.tableColHeader}></View>
+          </View>
+          {glSummary.map(([glCode, amount]) => (
+            <View style={styles.tableRow} key={glCode}>
+              <View style={styles.tableCol}>
+                <Text>{glCode}</Text>
+              </View>
+              <View style={styles.tableColAmount}>
+                <Text>
+                  {Number(amount).toLocaleString("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                  })}
+                </Text>
+              </View>
+              <View style={styles.tableCol}></View>
+              <View style={styles.tableCol}></View>
+            </View>
+          ))}
+        </View>
+
+        {/* Transaction Table */}
+        <Text style={styles.sectionTitle}>Transactions</Text>
+        <View style={styles.table}>
+          <View style={styles.tableRow}>
             <View style={styles.tableColHeader}>
               <Text>Date</Text>
             </View>
@@ -90,48 +180,42 @@ export function ExpensePDF({
               <Text>Supplier</Text>
             </View>
             <View style={styles.tableColHeader}>
-              <Text>Supplier Address</Text>
-            </View>
-            <View style={styles.tableColHeader}>
-              <Text>Last 4</Text>
+              <Text>GL Code</Text>
             </View>
             <View style={styles.tableColHeader}>
               <Text>Amount</Text>
             </View>
           </View>
-
-          {/* Table Rows */}
-          {expenses.map((expense, i) => (
-            <View key={i} style={styles.tableRow}>
+          {transactions.map((tx, i) => (
+            <View style={styles.tableRow} key={i}>
               <View style={styles.tableCol}>
-                <Text>{expense.cardHolderName}</Text>
+                <Text>{tx.transactionDate}</Text>
               </View>
               <View style={styles.tableCol}>
-                <Text>{expense.currentDate}</Text>
+                <Text>{tx.supplierName}</Text>
               </View>
               <View style={styles.tableCol}>
-                <Text>{expense.supplier}</Text>
+                <Text>{tx.glCode}</Text>
               </View>
-              <View style={styles.tableCol}>
-                <Text>{expense.supplierAddress}</Text>
-              </View>
-              <View style={styles.tableCol}>
-                <Text>{expense.lastFourDigits}</Text>
-              </View>
-              <View style={styles.tableCol}>
+              <View style={styles.tableColAmount}>
                 <Text>
-                  {new Intl.NumberFormat("en-US", {
+                  {Number(tx.billingAmount).toLocaleString("en-US", {
                     style: "currency",
                     currency: "USD",
-                  }).format(Number.parseFloat(expense.amount))}
+                  })}
                 </Text>
               </View>
             </View>
           ))}
         </View>
-
-        <Text style={styles.total}>Total: {formattedTotalAmount}</Text>
+        <Text style={styles.total}>
+          Total:{" "}
+          {total.toLocaleString("en-US", {
+            style: "currency",
+            currency: "USD",
+          })}
+        </Text>
       </Page>
     </Document>
-  )
+  );
 }
