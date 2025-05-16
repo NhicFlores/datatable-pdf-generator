@@ -68,25 +68,34 @@ export function createStatements(data: CSV_Row[]): Statement[] {
   return statements;
 }
 
-// export async function getTransactions() {
-//   const transactions = await getCsvData();
+export type LineItem = {
+  lineAmount: number;
+  lineNumber: number;
+  glCode: string;
+  reasonForExpense: string;
+}
 
-//   return transactions.map((transaction) => ({
-//     cardholderName: transaction.cardHolderName,
-//     lastFourDigits: transaction.lastFourDigits,
-//     transactionDate: transaction.transactionDate,
-//     postingDate: transaction.postingDate,
-//     billingAmount: transaction.billingAmount,
-//     lineAmount: transaction.lineAmount,
-//     lineNumber: transaction.lineNumber,
-//     glCode: transaction.glCode,
-//     glCodeDescription: transaction.glCodeDescription,
-//     reasonForExpense: transaction.reasonForExpense,
-//     receiptImageName: transaction.receiptImageName,
-//     receiptImageReferenceId: transaction.receiptImageReferenceId,
-//     supplierName: transaction.supplierName,
-//     supplierCity: transaction.supplierCity,
-//     supplierState: transaction.supplierState,
-//     workflowStatus: transaction.workflowStatus,
-//   }));
-// }
+export type CleanTransaction = {
+  transactionReference: string;
+  cardholderName: string; 
+  lastFourDigits: string; 
+  transactionDate: string; // parse into date
+  postingDate: string; // parse into date 
+  billingAmount: number; // parse into number  
+  glCode: string;
+  glCodeDescription: string;
+  reasonForExpense: string;
+  receiptImageName: string;
+  receiptImageReferenceId: string;
+  supplierName: string;
+  supplierCity: string;
+  supplierState: string;
+  workflowStatus: string;
+  lineItems?: LineItem[];
+};
+// TODO finish implementation 
+export function cleanTransactions(data: CSV_Row[]) {
+  
+  const cleanedData = data.reduce(() => {}, []);
+  
+}

@@ -1,6 +1,6 @@
 "use client";
 import { useStatements } from "@/components/data-context";
-import { DataTable } from "@/components/data-table";
+import { DataTable } from "@/components/tables/data-table";
 import { ExpenseReportPDF } from "@/components/expense-pdf";
 import ReportHeader from "@/components/report-header";
 import { GLCodeSummaryTable } from "@/components/tables/glcode-summary-table";

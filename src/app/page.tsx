@@ -1,7 +1,7 @@
 "use client";
 import { useStatements } from "@/components/data-context";
-import { StatementColumns } from "@/components/statement-columns";
-import { DataTable } from "@/components/data-table";
+import { DataTable } from "@/components/tables/data-table";
+import { StatementColumns } from "@/components/tables/statement-columns";
 // import { createStatements } from "@/lib/data";
 import { ExpenseReportRoute } from "@/lib/routes";
 import { Statement } from "@/lib/types";
