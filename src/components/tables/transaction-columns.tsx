@@ -52,36 +52,44 @@ export const TransactionColumns: ColumnDef<Transaction>[] = [
           className="flex items-center"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Transaction Date
+          <div>
+            <div>Transaction Date</div>
+            <div>Posting Date</div>
+          </div>
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => {
-      const date = formatDateStringToLocal(row.getValue("transactionDate"));
-      return <div>{date}</div>;
+      const transactionDate = formatDateStringToLocal(row.original.transactionDate);
+      const postingDate = formatDateStringToLocal(row.original.postingDate);
+
+      return <div>
+        <div className="font-bold">{transactionDate}</div>
+        <div>{postingDate}</div>
+      </div>;
     },
   },
-  {
-    id: "postingDate",
-    accessorKey: "postingDate",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant={"ghost"}
-          className="flex items-center"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Posting Date
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const date = formatDateStringToLocal(row.getValue("postingDate"));
-      return <div>{date}</div>;
-    },
-  },
+  // {
+  //   id: "postingDate",
+  //   accessorKey: "postingDate",
+  //   header: ({ column }) => {
+  //     return (
+  //       <Button
+  //         variant={"ghost"}
+  //         className="flex items-center"
+  //         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+  //       >
+  //         Posting Date
+  //         <ArrowUpDown className="ml-2 h-4 w-4" />
+  //       </Button>
+  //     );
+  //   },
+  //   cell: ({ row }) => {
+  //     const date = formatDateStringToLocal(row.getValue("postingDate"));
+  //     return <div>{date}</div>;
+  //   },
+  // },
   {
     id: "billingAmount",
     accessorKey: "billingAmount",
