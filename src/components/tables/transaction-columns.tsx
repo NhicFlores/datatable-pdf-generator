@@ -15,7 +15,7 @@ export const TransactionColumns: ColumnDef<Transaction>[] = [
           className="flex items-center"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Status
+          Approved
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -61,13 +61,17 @@ export const TransactionColumns: ColumnDef<Transaction>[] = [
       );
     },
     cell: ({ row }) => {
-      const transactionDate = formatDateStringToLocal(row.original.transactionDate);
+      const transactionDate = formatDateStringToLocal(
+        row.original.transactionDate
+      );
       const postingDate = formatDateStringToLocal(row.original.postingDate);
 
-      return <div>
-        <div className="font-bold">{transactionDate}</div>
-        <div>{postingDate}</div>
-      </div>;
+      return (
+        <div>
+          <div className="font-bold">{transactionDate}</div>
+          <div>{postingDate}</div>
+        </div>
+      );
     },
   },
   // {
@@ -106,7 +110,13 @@ export const TransactionColumns: ColumnDef<Transaction>[] = [
       );
     },
     cell: ({ row }) => {
-      const amount = row.getValue("billingAmount");
+      const amount = row.original.billingAmount;
+      
+      // Check if amount is null, undefined, or not a valid number
+      if (amount === null || amount === undefined || isNaN(Number(amount))) {
+        return <div>-</div>;
+      }
+      
       const formattedAmount = formatCurrency(Number(amount));
       return <div>{formattedAmount}</div>;
     },
@@ -127,20 +137,19 @@ export const TransactionColumns: ColumnDef<Transaction>[] = [
       );
     },
     cell: ({ row }) => {
-      const amount = row.original.lineAmount;
-      const formattedAmount = formatCurrency(Number(amount));
+      // const amount = row.original.lineAmount;
+      // const formattedAmount = formatCurrency(Number(amount));
       const lineNum = row.original.lineNumber;
-      const lineAmount = row.original.lineAmount;
+      const formattedLineAmount = formatCurrency(
+        Number(row.original.lineAmount)
+      );
       return (
         <div>
-          {formattedAmount}
-          {!(amount === lineAmount) && (
+          {
             <div>
-              <span className="text-red-500 text-xs">
-                Line {lineNum} Amount: {formattedAmount}
-              </span>
+              Line {lineNum}: {formattedLineAmount}
             </div>
-          )}
+          }
         </div>
       );
     },

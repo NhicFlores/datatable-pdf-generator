@@ -133,7 +133,7 @@ export function ExpenseReportPDF({
           </Text>
           <Text style={styles.metaRow}>
             <Text style={{ fontWeight: "bold" }}>Period:</Text>{" "}
-            {statementPeriodStartDate} → {statementPeriodEndDate}
+            {statementPeriodStartDate} - {statementPeriodEndDate}
           </Text>
         </View>
 

@@ -17,7 +17,7 @@ export const StatementColumns: ColumnDef<Statement>[] = [
           variant={"ghost"}
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Card Holder Name
+          Name
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -29,12 +29,15 @@ export const StatementColumns: ColumnDef<Statement>[] = [
         // const { setSelectedStatement } = useStatements(); // incorrect usage
         setSelectedStatement(row.original);
       }
+      const cardHolderName = row.getValue("cardHolderName") as string;
+      const cleanedName = cardHolderName.replace(/,/g, " ");
+      
       return (
         <span onClick={handleClick}>
           <Link
             href={ExpenseReportRoute.detailPage(row.original.cardHolderName)}
           >
-            {row.getValue("cardHolderName")}
+            {cleanedName}
           </Link>
         </span>
       );

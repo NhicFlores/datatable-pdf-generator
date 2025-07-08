@@ -3,15 +3,15 @@ import React from "react";
 export function GLCodeSummaryTable({
   transactions,
 }: {
-  transactions: { glCode: string; billingAmount: number }[];
+  transactions: { glCode: string; lineAmount: number }[];  
 }) {
   // Calculate totals per GL code
   const summary = transactions.reduce((acc, transaction) => {
-    const { glCode, billingAmount } = transaction;
+    const { glCode, lineAmount } = transaction;
     if (!acc[glCode]) {
       acc[glCode] = 0;
     }
-    acc[glCode] += billingAmount;
+    acc[glCode] += lineAmount;
     return acc;
   }, {} as Record<string, number>);
 

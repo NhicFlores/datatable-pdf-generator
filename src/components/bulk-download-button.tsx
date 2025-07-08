@@ -42,9 +42,9 @@ export function BulkDownloadButton({ statements }: BulkDownloadButtonProps) {
         // Create filename based on statement details
         const fileName = `${statement.cardHolderName.replace(/\s+/g, "_")}_${
           statement.lastFourDigits
-        }_${statement.statementPeriodStartDate}_${
-          statement.statementPeriodEndDate
         }.pdf`;
+        // NOTE: if you want to add statement period to the filename, remove '\' from date strings to
+        // avoid creating folders in windows file system
 
         // Add PDF to ZIP
         zip.file(fileName, pdfBlob);
@@ -126,7 +126,7 @@ export function BulkDownloadButton({ statements }: BulkDownloadButtonProps) {
 // Shows error handling with alerts
 // Now let's integrate this button into your main page so users can access it:
 
-// implemented in main page.tsx 
+// implemented in main page.tsx
 
 // How to Use It:
 // Main Page: You'll now see a "Download All Reports" button in the top-right corner of your main page
