@@ -68,6 +68,7 @@ const styles = StyleSheet.create({
     padding: 2,
     backgroundColor: "#f0f0f0",
     fontWeight: "bold",
+    textAlign: "center",
   },
   tableCol: {
     borderStyle: "solid",
@@ -76,17 +77,18 @@ const styles = StyleSheet.create({
     borderLeftWidth: 0,
     borderTopWidth: 0,
     padding: 2,
+    textAlign: "center",
   },
   // Column widths for the new table structure
-  colApproved: { width: "8%" },
+  colApproved: { width: "8%", textAlign: "center" },
   colDate: { width: "12%", textAlign: "center" },
   colAmount: { width: "10%", textAlign: "right" },
   colLineAmount: { width: "10%", textAlign: "right" },
-  colGlCode: { width: "8%" },
-  colGlDescription: { width: "15%" },
-  colReason: { width: "15%" },
-  colReceiptId: { width: "10%" },
-  colSupplier: { width: "12%" },
+  colGlCode: { width: "8%", textAlign: "center" },
+  colGlDescription: { width: "15%", textAlign: "center" },
+  colReason: { width: "15%", textAlign: "center" },
+  colReceiptId: { width: "10%", textAlign: "center" },
+  colSupplier: { width: "12%", textAlign: "center" },
 
   total: {
     marginTop: 8,
@@ -94,6 +96,37 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "right",
     paddingRight: 10,
+  },
+  totalRow: {
+    flexDirection: "row",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderColor: "#bfbfbf",
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    backgroundColor: "#f8f8f8",
+  },
+  totalLabel: {
+    width: "50%",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderColor: "#bfbfbf",
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 2,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  totalAmount: {
+    width: "50%",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderColor: "#bfbfbf",
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 2,
+    textAlign: "right",
+    fontWeight: "bold",
   },
   checkmark: {
     color: "#16a34a",
@@ -190,6 +223,15 @@ export function ExpenseReportPDF({
               </View>
             </View>
           ))}
+          {/* Total Row */}
+          <View style={styles.totalRow}>
+            <View style={styles.totalLabel}>
+              <Text>Total</Text>
+            </View>
+            <View style={styles.totalAmount}>
+              <Text>{formatCurrency(total)}</Text>
+            </View>
+          </View>
         </View>
 
         {/* Transaction Table */}
@@ -202,11 +244,8 @@ export function ExpenseReportPDF({
             <View style={[styles.tableColHeader, styles.colDate]}>
               <Text>Transaction Date / Posting Date</Text>
             </View>
-            <View style={[styles.tableColHeader, styles.colAmount]}>
-              <Text>Amount</Text>
-            </View>
-            <View style={[styles.tableColHeader, styles.colLineAmount]}>
-              <Text>Line Amount</Text>
+            <View style={[styles.tableColHeader, styles.colSupplier]}>
+              <Text>Supplier</Text>
             </View>
             <View style={[styles.tableColHeader, styles.colGlCode]}>
               <Text>GL Code</Text>
@@ -220,8 +259,11 @@ export function ExpenseReportPDF({
             <View style={[styles.tableColHeader, styles.colReceiptId]}>
               <Text>Receipt ID</Text>
             </View>
-            <View style={[styles.tableColHeader, styles.colSupplier]}>
-              <Text>Supplier</Text>
+            <View style={[styles.tableColHeader, styles.colLineAmount]}>
+              <Text>Line Amount</Text>
+            </View>
+            <View style={[styles.tableColHeader, styles.colAmount]}>
+              <Text>Amount</Text>
             </View>
           </View>
           {transactions.map((tx, i) => (
@@ -232,10 +274,16 @@ export function ExpenseReportPDF({
                   style={
                     tx.workflowStatus === "Approved"
                       ? styles.checkmark
-                      : styles.xmark
+                      : tx.workflowStatus === "Approval Required"
+                      ? styles.xmark
+                      : { textAlign: "center" }
                   }
                 >
-                  {tx.workflowStatus === "Approved" ? "✓" : "✗"}
+                  {tx.workflowStatus === "Approved"
+                    ? "Yes"
+                    : tx.workflowStatus === "Approval Required"
+                    ? "No"
+                    : tx.workflowStatus || "-"}
                 </Text>
               </View>
 
@@ -247,15 +295,11 @@ export function ExpenseReportPDF({
                 <Text>{formatDate(tx.postingDate)}</Text>
               </View>
 
-              {/* Billing Amount */}
-              <View style={[styles.tableCol, styles.colAmount]}>
-                <Text>{formatCurrency(tx.billingAmount)}</Text>
-              </View>
-
-              {/* Line Amount */}
-              <View style={[styles.tableCol, styles.colLineAmount]}>
+              {/* Supplier */}
+              <View style={[styles.tableCol, styles.colSupplier]}>
+                <Text>{tx.supplierName}</Text>
                 <Text>
-                  Line {tx.lineNumber}: {formatCurrency(tx.lineAmount)}
+                  {tx.supplierCity}, {tx.supplierState}
                 </Text>
               </View>
 
@@ -279,18 +323,20 @@ export function ExpenseReportPDF({
                 <Text>{tx.receiptImageReferenceId}</Text>
               </View>
 
-              {/* Supplier */}
-              <View style={[styles.tableCol, styles.colSupplier]}>
-                <Text>{tx.supplierName}</Text>
+              {/* Line Amount */}
+              <View style={[styles.tableCol, styles.colLineAmount]}>
                 <Text>
-                  {tx.supplierCity}, {tx.supplierState}
+                  Line {tx.lineNumber}: {formatCurrency(tx.lineAmount)}
                 </Text>
+              </View>
+
+              {/* Billing Amount */}
+              <View style={[styles.tableCol, styles.colAmount]}>
+                <Text>{formatCurrency(tx.billingAmount)}</Text>
               </View>
             </View>
           ))}
         </View>
-
-        <Text style={styles.total}>Total: {formatCurrency(total)}</Text>
       </Page>
     </Document>
   );

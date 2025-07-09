@@ -74,29 +74,9 @@ export const TransactionColumns: ColumnDef<Transaction>[] = [
       );
     },
   },
-  // {
-  //   id: "postingDate",
-  //   accessorKey: "postingDate",
-  //   header: ({ column }) => {
-  //     return (
-  //       <Button
-  //         variant={"ghost"}
-  //         className="flex items-center"
-  //         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-  //       >
-  //         Posting Date
-  //         <ArrowUpDown className="ml-2 h-4 w-4" />
-  //       </Button>
-  //     );
-  //   },
-  //   cell: ({ row }) => {
-  //     const date = formatDateStringToLocal(row.getValue("postingDate"));
-  //     return <div>{date}</div>;
-  //   },
-  // },
   {
-    id: "billingAmount",
-    accessorKey: "billingAmount",
+    id: "supplierName",
+    accessorKey: "supplierName",
     header: ({ column }) => {
       return (
         <Button
@@ -104,52 +84,20 @@ export const TransactionColumns: ColumnDef<Transaction>[] = [
           className="flex items-center"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Billing Amount
+          Supplier
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => {
-      const amount = row.original.billingAmount;
-      
-      // Check if amount is null, undefined, or not a valid number
-      if (amount === null || amount === undefined || isNaN(Number(amount))) {
-        return <div>-</div>;
-      }
-      
-      const formattedAmount = formatCurrency(Number(amount));
-      return <div>{formattedAmount}</div>;
-    },
-  },
-  {
-    id: "lineAmount",
-    accessorKey: "lineAmount",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant={"ghost"}
-          className="flex items-center"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Line Amount
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      // const amount = row.original.lineAmount;
-      // const formattedAmount = formatCurrency(Number(amount));
-      const lineNum = row.original.lineNumber;
-      const formattedLineAmount = formatCurrency(
-        Number(row.original.lineAmount)
-      );
+      const supplierName = row.original.supplierName;
+      const supplierCity = row.original.supplierCity;
+      const supplierState = row.original.supplierState;
+      const supplierCityState = `${supplierCity}, ${supplierState}`;
+      // const supplierCityStateFormatted = supplierCityState.replace(/, /g, ",");
       return (
         <div>
-          {
-            <div>
-              Line {lineNum}: {formattedLineAmount}
-            </div>
-          }
+          {supplierName}, {supplierCityState}
         </div>
       );
     },
@@ -235,8 +183,8 @@ export const TransactionColumns: ColumnDef<Transaction>[] = [
     },
   },
   {
-    id: "supplierName",
-    accessorKey: "supplierName",
+    id: "lineAmount",
+    accessorKey: "lineAmount",
     header: ({ column }) => {
       return (
         <Button
@@ -244,22 +192,54 @@ export const TransactionColumns: ColumnDef<Transaction>[] = [
           className="flex items-center"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Supplier
+          Line Amount
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => {
-      const supplierName = row.original.supplierName;
-      const supplierCity = row.original.supplierCity;
-      const supplierState = row.original.supplierState;
-      const supplierCityState = `${supplierCity}, ${supplierState}`;
-      // const supplierCityStateFormatted = supplierCityState.replace(/, /g, ",");
+      // const amount = row.original.lineAmount;
+      // const formattedAmount = formatCurrency(Number(amount));
+      const lineNum = row.original.lineNumber;
+      const formattedLineAmount = formatCurrency(
+        Number(row.original.lineAmount)
+      );
       return (
         <div>
-          {supplierName}, {supplierCityState}
+          {
+            <div>
+              Line {lineNum}: {formattedLineAmount}
+            </div>
+          }
         </div>
       );
+    },
+  },
+  {
+    id: "billingAmount",
+    accessorKey: "billingAmount",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant={"ghost"}
+          className="flex items-center"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Billing Amount
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const amount = row.original.billingAmount;
+
+      // Check if amount is null, undefined, or not a valid number
+      if (amount === null || amount === undefined || isNaN(Number(amount))) {
+        return <div>-</div>;
+      }
+
+      const formattedAmount = formatCurrency(Number(amount));
+      return <div>{formattedAmount}</div>;
     },
   },
 ];
