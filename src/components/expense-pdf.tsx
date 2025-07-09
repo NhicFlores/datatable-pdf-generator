@@ -182,6 +182,7 @@ export function ExpenseReportPDF({
 
   return (
     <Document>
+      {/* First Page - Header and Transactions */}
       <Page size="A4" orientation="landscape" style={styles.page}>
         {/* Header */}
         <Text style={styles.title}>Expense Report</Text>
@@ -198,40 +199,6 @@ export function ExpenseReportPDF({
             <Text style={{ fontWeight: "bold" }}>Period:</Text>{" "}
             {statementPeriodStartDate} - {statementPeriodEndDate}
           </Text>
-        </View>
-
-        {/* GL Code Summary */}
-        <Text style={styles.sectionTitle}>GL Code Totals</Text>
-        <View style={styles.glSummaryTable}>
-          <View style={styles.tableRow}>
-            <View style={[styles.tableColHeader, { width: "50%" }]}>
-              <Text>GL Code</Text>
-            </View>
-            <View style={[styles.tableColHeader, { width: "50%" }]}>
-              <Text>Total Amount</Text>
-            </View>
-          </View>
-          {glSummary.map(([glCode, amount]) => (
-            <View style={styles.tableRow} key={glCode}>
-              <View style={[styles.tableCol, { width: "50%" }]}>
-                <Text>{glCode}</Text>
-              </View>
-              <View
-                style={[styles.tableCol, styles.colAmount, { width: "50%" }]}
-              >
-                <Text>{formatCurrency(amount)}</Text>
-              </View>
-            </View>
-          ))}
-          {/* Total Row */}
-          <View style={styles.totalRow}>
-            <View style={styles.totalLabel}>
-              <Text>Total</Text>
-            </View>
-            <View style={styles.totalAmount}>
-              <Text>{formatCurrency(total)}</Text>
-            </View>
-          </View>
         </View>
 
         {/* Transaction Table */}
@@ -336,6 +303,54 @@ export function ExpenseReportPDF({
               </View>
             </View>
           ))}
+        </View>
+      </Page>
+
+      {/* Second Page - GL Code Summary */}
+      <Page size="A4" orientation="landscape" style={styles.page}>
+        <Text style={styles.title}>GL Code Summary</Text>
+        <View style={styles.meta}>
+          <Text style={styles.metaRow}>
+            <Text style={{ fontWeight: "bold" }}>Report for:</Text>{" "}
+            {cardHolderName} - Card ending {lastFourDigits}
+          </Text>
+          <Text style={styles.metaRow}>
+            <Text style={{ fontWeight: "bold" }}>Period:</Text>{" "}
+            {statementPeriodStartDate} - {statementPeriodEndDate}
+          </Text>
+        </View>
+
+        <Text style={styles.sectionTitle}>GL Code Totals</Text>
+        <View style={styles.glSummaryTable}>
+          <View style={styles.tableRow}>
+            <View style={[styles.tableColHeader, { width: "50%" }]}>
+              <Text>GL Code</Text>
+            </View>
+            <View style={[styles.tableColHeader, { width: "50%" }]}>
+              <Text>Total Amount</Text>
+            </View>
+          </View>
+          {glSummary.map(([glCode, amount]) => (
+            <View style={styles.tableRow} key={glCode}>
+              <View style={[styles.tableCol, { width: "50%" }]}>
+                <Text>{glCode}</Text>
+              </View>
+              <View
+                style={[styles.tableCol, styles.colAmount, { width: "50%" }]}
+              >
+                <Text>{formatCurrency(amount)}</Text>
+              </View>
+            </View>
+          ))}
+          {/* Total Row */}
+          <View style={styles.totalRow}>
+            <View style={styles.totalLabel}>
+              <Text>Total</Text>
+            </View>
+            <View style={styles.totalAmount}>
+              <Text>{formatCurrency(total)}</Text>
+            </View>
+          </View>
         </View>
       </Page>
     </Document>

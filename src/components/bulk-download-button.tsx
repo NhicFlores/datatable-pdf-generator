@@ -40,9 +40,9 @@ export function BulkDownloadButton({ statements }: BulkDownloadButtonProps) {
         const pdfBlob = await pdf(pdfDocument).toBlob();
 
         // Create filename based on statement details
-        const fileName = `${statement.cardHolderName.replace(/\s+/g, "_")}_${
+        const fileName = `${statement.cardHolderName.replace(/\s+/g, "_")}-${
           statement.lastFourDigits
-        }.pdf`;
+        }_exp.pdf`;
         // NOTE: if you want to add statement period to the filename, remove '\' from date strings to
         // avoid creating folders in windows file system
 
