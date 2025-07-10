@@ -14,7 +14,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     backgroundColor: "#fff",
     padding: 30,
-    fontSize: 8,
+    fontSize: 10,
   },
   title: {
     fontSize: 18,
@@ -172,6 +172,45 @@ function formatDate(dateString: string): string {
   });
 }
 
+// Header component to be reused on both pages
+function ReportHeader({
+  cardHolderName,
+  lastFourDigits,
+  statementPeriodStartDate,
+  statementPeriodEndDate,
+  total,
+}: {
+  cardHolderName: string;
+  lastFourDigits: string;
+  statementPeriodStartDate: string;
+  statementPeriodEndDate: string;
+  total: number;
+}) {
+  return (
+    <>
+      <Text style={styles.title}>Expense Report</Text>
+      <View style={styles.meta}>
+        <Text style={styles.metaRow}>
+          <Text style={{ fontWeight: "bold" }}>Card Holder:</Text>{" "}
+          {cardHolderName}
+        </Text>
+        <Text style={styles.metaRow}>
+          <Text style={{ fontWeight: "bold" }}>Card Ending:</Text>{" "}
+          {lastFourDigits}
+        </Text>
+        <Text style={styles.metaRow}>
+          <Text style={{ fontWeight: "bold" }}>Period:</Text>{" "}
+          {statementPeriodStartDate} - {statementPeriodEndDate}
+        </Text>
+        <Text style={styles.metaRow}>
+          <Text style={{ fontWeight: "bold" }}>Total Amount:</Text>{" "}
+          {formatCurrency(total)}
+        </Text>
+      </View>
+    </>
+  );
+}
+
 export function ExpenseReportPDF({
   cardHolderName,
   lastFourDigits,
@@ -190,21 +229,13 @@ export function ExpenseReportPDF({
       {/* First Page - Header and Transactions */}
       <Page size="A4" orientation="landscape" style={styles.page}>
         {/* Header */}
-        <Text style={styles.title}>Expense Report</Text>
-        <View style={styles.meta}>
-          <Text style={styles.metaRow}>
-            <Text style={{ fontWeight: "bold" }}>Card Holder:</Text>{" "}
-            {cardHolderName}
-          </Text>
-          <Text style={styles.metaRow}>
-            <Text style={{ fontWeight: "bold" }}>Card Ending:</Text>{" "}
-            {lastFourDigits}
-          </Text>
-          <Text style={styles.metaRow}>
-            <Text style={{ fontWeight: "bold" }}>Period:</Text>{" "}
-            {statementPeriodStartDate} - {statementPeriodEndDate}
-          </Text>
-        </View>
+        <ReportHeader
+          cardHolderName={cardHolderName}
+          lastFourDigits={lastFourDigits}
+          statementPeriodStartDate={statementPeriodStartDate}
+          statementPeriodEndDate={statementPeriodEndDate}
+          total={total}
+        />
 
         {/* Transaction Table */}
         <Text style={styles.sectionTitle}>Transactions</Text>
@@ -313,17 +344,13 @@ export function ExpenseReportPDF({
 
       {/* Second Page - GL Code Summary */}
       <Page size="A4" orientation="landscape" style={styles.page}>
-        <Text style={styles.title}>GL Code Summary</Text>
-        <View style={styles.meta}>
-          <Text style={styles.metaRow}>
-            <Text style={{ fontWeight: "bold" }}>Report for:</Text>{" "}
-            {cardHolderName} - Card ending {lastFourDigits}
-          </Text>
-          <Text style={styles.metaRow}>
-            <Text style={{ fontWeight: "bold" }}>Period:</Text>{" "}
-            {statementPeriodStartDate} - {statementPeriodEndDate}
-          </Text>
-        </View>
+        <ReportHeader
+          cardHolderName={cardHolderName}
+          lastFourDigits={lastFourDigits}
+          statementPeriodStartDate={statementPeriodStartDate}
+          statementPeriodEndDate={statementPeriodEndDate}
+          total={total}
+        />
 
         <Text style={styles.sectionTitle}>GL Code Totals</Text>
         <View style={styles.glSummaryTable}>
