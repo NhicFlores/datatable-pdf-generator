@@ -119,8 +119,19 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "bold",
   },
+  totalCount: {
+    width: "33.33%",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderColor: "#bfbfbf",
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 2,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
   totalAmount: {
-    width: "66.67%",
+    width: "33.34%",
     borderStyle: "solid",
     borderWidth: 1,
     borderColor: "#bfbfbf",
@@ -223,6 +234,7 @@ export function ExpenseReportPDF({
     (sum, tx) => sum + Number(tx.billingAmount || 0),
     0
   );
+  const totalTransactionCount = transactions.length;
 
   return (
     <Document>
@@ -384,6 +396,9 @@ export function ExpenseReportPDF({
           <View style={styles.totalRow}>
             <View style={styles.totalLabel}>
               <Text>Total</Text>
+            </View>
+            <View style={styles.totalCount}>
+              <Text>{totalTransactionCount}</Text>
             </View>
             <View style={styles.totalAmount}>
               <Text>{formatCurrency(total)}</Text>
