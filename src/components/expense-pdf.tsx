@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
   },
   table: {
     display: "flex",
-    width: "auto",
+    width: "95%",
     borderStyle: "solid",
     borderWidth: 1,
     borderColor: "#bfbfbf",
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   },
   glSummaryTable: {
     display: "flex",
-    width: "75%",
+    width: "70%",
     borderStyle: "solid",
     borderWidth: 1,
     borderColor: "#bfbfbf",
