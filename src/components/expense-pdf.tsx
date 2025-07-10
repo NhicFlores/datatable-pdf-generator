@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   },
   glSummaryTable: {
     display: "flex",
-    width: "50%",
+    width: "75%",
     borderStyle: "solid",
     borderWidth: 1,
     borderColor: "#bfbfbf",
@@ -69,6 +69,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
     fontWeight: "bold",
     textAlign: "center",
+    fontSize: 10,
   },
   tableCol: {
     borderStyle: "solid",
@@ -78,6 +79,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
     padding: 2,
     textAlign: "center",
+    fontSize: 10,
   },
   // Column widths for the new table structure
   colApproved: { width: "8%", textAlign: "center" },
@@ -107,7 +109,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f8f8",
   },
   totalLabel: {
-    width: "50%",
+    width: "33.33%",
     borderStyle: "solid",
     borderWidth: 1,
     borderColor: "#bfbfbf",
@@ -118,7 +120,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   totalAmount: {
-    width: "50%",
+    width: "66.67%",
     borderStyle: "solid",
     borderWidth: 1,
     borderColor: "#bfbfbf",
@@ -140,10 +142,13 @@ const styles = StyleSheet.create({
 
 function getGLSummary(transactions: Transaction[]) {
   const summary = transactions.reduce((acc, tx) => {
-    if (!acc[tx.glCode]) acc[tx.glCode] = 0;
-    acc[tx.glCode] += Number(tx.billingAmount) || 0;
+    if (!acc[tx.glCode]) {
+      acc[tx.glCode] = { total: 0, count: 0 };
+    }
+    acc[tx.glCode].total += Number(tx.billingAmount) || 0;
+    acc[tx.glCode].count += 1;
     return acc;
-  }, {} as Record<string, number>);
+  }, {} as Record<string, { total: number; count: number }>);
   return Object.entries(summary);
 }
 
@@ -221,7 +226,7 @@ export function ExpenseReportPDF({
               <Text>GL Description</Text>
             </View>
             <View style={[styles.tableColHeader, styles.colReason]}>
-              <Text>Reason</Text>
+              <Text>Reason for Expense</Text>
             </View>
             <View style={[styles.tableColHeader, styles.colReceiptId]}>
               <Text>Receipt ID</Text>
@@ -323,22 +328,28 @@ export function ExpenseReportPDF({
         <Text style={styles.sectionTitle}>GL Code Totals</Text>
         <View style={styles.glSummaryTable}>
           <View style={styles.tableRow}>
-            <View style={[styles.tableColHeader, { width: "50%" }]}>
+            <View style={[styles.tableColHeader, { width: "33.33%" }]}>
               <Text>GL Code</Text>
             </View>
-            <View style={[styles.tableColHeader, { width: "50%" }]}>
+            <View style={[styles.tableColHeader, { width: "33.33%" }]}>
+              <Text>Transaction Count</Text>
+            </View>
+            <View style={[styles.tableColHeader, { width: "33.34%" }]}>
               <Text>Total Amount</Text>
             </View>
           </View>
-          {glSummary.map(([glCode, amount]) => (
+          {glSummary.map(([glCode, data]) => (
             <View style={styles.tableRow} key={glCode}>
-              <View style={[styles.tableCol, { width: "50%" }]}>
+              <View style={[styles.tableCol, { width: "33.33%" }]}>
                 <Text>{glCode}</Text>
               </View>
+              <View style={[styles.tableCol, { width: "33.33%" }]}>
+                <Text>{data.count}</Text>
+              </View>
               <View
-                style={[styles.tableCol, styles.colAmount, { width: "50%" }]}
+                style={[styles.tableCol, styles.colAmount, { width: "33.34%" }]}
               >
-                <Text>{formatCurrency(amount)}</Text>
+                <Text>{formatCurrency(data.total)}</Text>
               </View>
             </View>
           ))}
