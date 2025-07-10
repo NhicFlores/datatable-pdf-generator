@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 12,
     marginTop: 14,
-    marginBottom: 6,
+    marginBottom: 8,
     fontWeight: "bold",
     color: "#333",
   },
@@ -172,8 +172,18 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 10,
   },
+  glSummaryColLeft: {
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderColor: "#bfbfbf",
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 3,
+    textAlign: "left",
+    fontSize: 10,
+  },
   glSummaryTotalLabel: {
-    width: "33.33%",
+    width: "50%",
     borderStyle: "solid",
     borderWidth: 1,
     borderColor: "#bfbfbf",
@@ -184,7 +194,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   glSummaryTotalCount: {
-    width: "33.33%",
+    width: "25%",
     borderStyle: "solid",
     borderWidth: 1,
     borderColor: "#bfbfbf",
@@ -195,7 +205,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   glSummaryTotalAmount: {
-    width: "33.34%",
+    width: "25%",
     borderStyle: "solid",
     borderWidth: 1,
     borderColor: "#bfbfbf",
@@ -420,32 +430,42 @@ export function ExpenseReportPDF({
           total={total}
         />
 
-        <Text style={styles.sectionTitle}>GL Code Totals</Text>
+        <Text style={styles.sectionTitle}>GL Code Summary</Text>
         <View style={styles.glSummaryTable}>
           <View style={styles.tableRow}>
-            <View style={[styles.glSummaryColHeader, { width: "33.33%" }]}>
+            <View
+              style={[
+                styles.glSummaryColHeader,
+                { textAlign: "left", width: "50%" },
+              ]}
+            >
               <Text>GL Code</Text>
             </View>
-            <View style={[styles.glSummaryColHeader, { width: "33.33%" }]}>
+            <View style={[styles.glSummaryColHeader, { width: "25%" }]}>
               <Text>Transaction Count</Text>
             </View>
-            <View style={[styles.glSummaryColHeader, { width: "33.34%" }]}>
+            <View
+              style={[
+                styles.glSummaryColHeader,
+                { textAlign: "right", width: "25%" },
+              ]}
+            >
               <Text>Total Amount</Text>
             </View>
           </View>
           {glSummary.map(([glCode, data]) => (
             <View style={styles.tableRow} key={glCode}>
-              <View style={[styles.glSummaryCol, { width: "33.33%" }]}>
+              <View style={[styles.glSummaryColLeft, { width: "50%" }]}>
                 <Text>{glCode}</Text>
               </View>
-              <View style={[styles.glSummaryCol, { width: "33.33%" }]}>
+              <View style={[styles.glSummaryCol, { width: "25%" }]}>
                 <Text>{data.count}</Text>
               </View>
               <View
                 style={[
                   styles.glSummaryCol,
                   styles.colAmount,
-                  { width: "33.34%" },
+                  { width: "25%" },
                 ]}
               >
                 <Text>{formatCurrency(data.total)}</Text>
