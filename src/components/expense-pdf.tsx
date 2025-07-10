@@ -149,6 +149,62 @@ const styles = StyleSheet.create({
     color: "#dc2626",
     textAlign: "center",
   },
+  // GL Summary table specific styles with increased row height
+  glSummaryColHeader: {
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderColor: "#bfbfbf",
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 3,
+    backgroundColor: "#f0f0f0",
+    fontWeight: "bold",
+    textAlign: "center",
+    fontSize: 10,
+  },
+  glSummaryCol: {
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderColor: "#bfbfbf",
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 3,
+    textAlign: "center",
+    fontSize: 10,
+  },
+  glSummaryTotalLabel: {
+    width: "33.33%",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderColor: "#bfbfbf",
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 3,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  glSummaryTotalCount: {
+    width: "33.33%",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderColor: "#bfbfbf",
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 3,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  glSummaryTotalAmount: {
+    width: "33.34%",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderColor: "#bfbfbf",
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 3,
+    textAlign: "right",
+    fontWeight: "bold",
+  },
 });
 
 function getGLSummary(transactions: Transaction[]) {
@@ -367,26 +423,30 @@ export function ExpenseReportPDF({
         <Text style={styles.sectionTitle}>GL Code Totals</Text>
         <View style={styles.glSummaryTable}>
           <View style={styles.tableRow}>
-            <View style={[styles.tableColHeader, { width: "33.33%" }]}>
+            <View style={[styles.glSummaryColHeader, { width: "33.33%" }]}>
               <Text>GL Code</Text>
             </View>
-            <View style={[styles.tableColHeader, { width: "33.33%" }]}>
+            <View style={[styles.glSummaryColHeader, { width: "33.33%" }]}>
               <Text>Transaction Count</Text>
             </View>
-            <View style={[styles.tableColHeader, { width: "33.34%" }]}>
+            <View style={[styles.glSummaryColHeader, { width: "33.34%" }]}>
               <Text>Total Amount</Text>
             </View>
           </View>
           {glSummary.map(([glCode, data]) => (
             <View style={styles.tableRow} key={glCode}>
-              <View style={[styles.tableCol, { width: "33.33%" }]}>
+              <View style={[styles.glSummaryCol, { width: "33.33%" }]}>
                 <Text>{glCode}</Text>
               </View>
-              <View style={[styles.tableCol, { width: "33.33%" }]}>
+              <View style={[styles.glSummaryCol, { width: "33.33%" }]}>
                 <Text>{data.count}</Text>
               </View>
               <View
-                style={[styles.tableCol, styles.colAmount, { width: "33.34%" }]}
+                style={[
+                  styles.glSummaryCol,
+                  styles.colAmount,
+                  { width: "33.34%" },
+                ]}
               >
                 <Text>{formatCurrency(data.total)}</Text>
               </View>
@@ -394,13 +454,13 @@ export function ExpenseReportPDF({
           ))}
           {/* Total Row */}
           <View style={styles.totalRow}>
-            <View style={styles.totalLabel}>
+            <View style={styles.glSummaryTotalLabel}>
               <Text>Total</Text>
             </View>
-            <View style={styles.totalCount}>
+            <View style={styles.glSummaryTotalCount}>
               <Text>{totalTransactionCount}</Text>
             </View>
-            <View style={styles.totalAmount}>
+            <View style={styles.glSummaryTotalAmount}>
               <Text>{formatCurrency(total)}</Text>
             </View>
           </View>
