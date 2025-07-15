@@ -27,6 +27,9 @@ export async function getCsvData(): Promise<CSV_Row[]> {
     const headerMap: HeaderMap = {
       "Statement Period - Start Date": "statementPeriodStartDate",
       "Statement Period - End Date": "statementPeriodEndDate",
+      "Employee - ID": "employeeId",
+      "Employee - First Name": "employeeFirstName",
+      "Employee - Last Name": "employeeLastName",
       "Cardholder Name": "cardHolderName",
       "Account - Last Four Digits": "lastFourDigits",
       "Transaction - Transaction Reference": "transactionReference",
