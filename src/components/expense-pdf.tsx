@@ -295,12 +295,19 @@ export function ExpenseReportPDF({
   statementPeriodEndDate,
   transactions,
 }: ExpenseReportPDFProps) {
-  const glSummary = getGLSummary(transactions);
-  const total = transactions.reduce(
+  // Sort transactions from oldest to newest by transaction date
+  const sortedTransactions = [...transactions].sort((a, b) => {
+    const dateA = new Date(a.transactionDate);
+    const dateB = new Date(b.transactionDate);
+    return dateA.getTime() - dateB.getTime();
+  });
+
+  const glSummary = getGLSummary(sortedTransactions);
+  const total = sortedTransactions.reduce(
     (sum, tx) => sum + Number(tx.billingAmount || 0),
     0
   );
-  const totalTransactionCount = transactions.length;
+  const totalTransactionCount = sortedTransactions.length;
 
   return (
     <Document>
@@ -347,7 +354,7 @@ export function ExpenseReportPDF({
               <Text>Amount</Text>
             </View>
           </View>
-          {transactions.map((tx, i) => (
+          {sortedTransactions.map((tx, i) => (
             <View style={styles.tableRow} key={i}>
               {/* Approved Status */}
               <View style={[styles.tableCol, styles.colApproved]}>
