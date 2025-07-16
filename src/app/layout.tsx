@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { StatementsProvider } from "@/components/data-context";
 import { getExpenseCsvData } from "@/lib/read-expense-csv";
+import { getFuelCsvData } from "@/lib/read-fuel-csv";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,13 +27,16 @@ export default async function RootLayout({
 }>) {
   // fetch CSV data
   const statements = await getExpenseCsvData();
+  const fuelData = await getFuelCsvData();
   // pass raw data to the StatementsProvider which uses the createStatements function to transform it into the Statement type
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <StatementsProvider data={statements}>{children}</StatementsProvider>
+        <StatementsProvider data={statements} fuelData={fuelData}>
+          {children}
+        </StatementsProvider>
       </body>
     </html>
   );

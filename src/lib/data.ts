@@ -1,4 +1,4 @@
-import { Expense_CSV_Row, Statement } from "./types";
+import { Expense_CSV_Row, Statement, Fuel_CSV_Row, FuelReport } from "./types";
 
 export function createStatementsTEST(data: Expense_CSV_Row[]): Statement[] {
   // Group transactions by cardHolderName
@@ -155,4 +155,50 @@ export function createStatements(data: Expense_CSV_Row[]): Statement[] {
   );
 
   return statements;
+}
+
+export function createFuelReports(data: Fuel_CSV_Row[]): FuelReport[] {
+  // Group fuel transactions by driver name
+  const fuelReports: FuelReport[] = data.reduce(
+    (acc: FuelReport[], row: Fuel_CSV_Row) => {
+      const { driver } = row;
+
+      const existingReport = acc.find((report) => report.driver === driver);
+
+      if (existingReport) {
+        existingReport.fuelTransactions.push({
+          vehicleId: row.vehicleId,
+          date: new Date(row.date),
+          invoiceNumber: row.invoiceNumber,
+          gallons: parseFloat(row.gallons) || 0,
+          cost: parseFloat(row.cost) || 0,
+          sellerState: row.sellerState,
+          sellerName: row.sellerName,
+          odometer: parseFloat(row.odometer) || 0,
+          receipt: row.receipt,
+        });
+      } else {
+        acc.push({
+          driver,
+          fuelTransactions: [
+            {
+              vehicleId: row.vehicleId,
+              date: new Date(row.date),
+              invoiceNumber: row.invoiceNumber,
+              gallons: parseFloat(row.gallons) || 0,
+              cost: parseFloat(row.cost) || 0,
+              sellerState: row.sellerState,
+              sellerName: row.sellerName,
+              odometer: parseFloat(row.odometer) || 0,
+              receipt: row.receipt,
+            },
+          ],
+        });
+      }
+      return acc;
+    },
+    []
+  );
+
+  return fuelReports;
 }

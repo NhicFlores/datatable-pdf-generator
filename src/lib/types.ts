@@ -1,3 +1,28 @@
+export type Expense_CSV_Row = {
+  statementPeriodStartDate: string;
+  statementPeriodEndDate: string;
+  employeeId: string;
+  employeeFirstName: string;
+  employeeLastName: string;
+  cardHolderName: string;
+  lastFourDigits: string;
+  transactionReference: string;
+  transactionDate: string;
+  postingDate: string;
+  billingAmount: string;
+  lineAmount: string;
+  lineNumber: string;
+  glCode: string;
+  glCodeDescription: string;
+  reasonForExpense: string;
+  receiptImageName: string;
+  receiptImageReferenceId: string;
+  supplierName: string;
+  supplierCity: string;
+  supplierState: string;
+  workflowStatus: string;
+};
+
 export type Statement = {
   statementPeriodStartDate: string;
   statementPeriodEndDate: string;
@@ -30,30 +55,35 @@ export type Transaction = {
   workflowStatus: string;
 };
 
-export type Expense_CSV_Row = {
-  statementPeriodStartDate: string;
-  statementPeriodEndDate: string;
-  employeeId: string;
-  employeeFirstName: string;
-  employeeLastName: string;
-  cardHolderName: string;
-  lastFourDigits: string;
-  transactionReference: string;
-  transactionDate: string;
-  postingDate: string;
-  billingAmount: string;
-  lineAmount: string;
-  lineNumber: string;
-  glCode: string;
-  glCodeDescription: string;
-  reasonForExpense: string;
-  receiptImageName: string;
-  receiptImageReferenceId: string;
-  supplierName: string;
-  supplierCity: string;
-  supplierState: string;
-  workflowStatus: string;
+export type Fuel_CSV_Row = {
+  vehicleId: string;
+  driver: string;
+  date: string;
+  invoiceNumber: string;
+  gallons: string;
+  cost: string;
+  sellerState: string;
+  sellerName: string;
+  odometer: string;
+  receipt: string;
+}
+
+export type FuelTransaction = {
+  vehicleId: string;
+  date: Date; // parse into date
+  invoiceNumber: string;
+  gallons: number; // parse into number
+  cost: number; // parse into number
+  sellerState: string;
+  sellerName: string;
+  odometer: number; // parse into number
+  receipt: string;
 };
+
+export type FuelReport = {
+  driver: string;
+  fuelTransactions: FuelTransaction[];
+}
 
 export const column_names = [
   "Statement Period - Start Date",
