@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import Papa from "papaparse";
-import { CSV_Row } from "./types";
+import { Expense_CSV_Row } from "./types";
 
 // consider processing into statement and transaction objects on server
 // interface result {
@@ -9,7 +9,7 @@ import { CSV_Row } from "./types";
 //   transactions: Transaction[];
 // }
 
-export async function getCsvData(): Promise<CSV_Row[]> {
+export async function getExpenseCsvData(): Promise<Expense_CSV_Row[]> {
   try {
     const filePath = path.join(process.cwd(), "data/report.csv");
     const fileContent = fs.readFileSync(filePath, "utf8");
@@ -49,13 +49,16 @@ export async function getCsvData(): Promise<CSV_Row[]> {
       "Transaction - Workflow Status": "workflowStatus",
     };
 
-    const result: ParseResult<CSV_Row> = Papa.parse<CSV_Row>(fileContent, {
-      header: true,
-      skipEmptyLines: true,
-      transformHeader: (header: string): string => {
-        return headerMap[header] || header;
-      },
-    });
+    const result: ParseResult<Expense_CSV_Row> = Papa.parse<Expense_CSV_Row>(
+      fileContent,
+      {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header: string): string => {
+          return headerMap[header] || header;
+        },
+      }
+    );
 
     if (result.errors && result.errors.length > 0) {
       console.error("Error parsing CSV:", result.errors);

@@ -1,9 +1,9 @@
-import { CSV_Row, Statement } from "./types";
+import { Expense_CSV_Row, Statement } from "./types";
 
-export function createStatementsTEST(data: CSV_Row[]): Statement[] {
+export function createStatementsTEST(data: Expense_CSV_Row[]): Statement[] {
   // Group transactions by cardHolderName
   const statements: Statement[] = data.reduce(
-    (acc: Statement[], row: CSV_Row) => {
+    (acc: Statement[], row: Expense_CSV_Row) => {
       const {
         statementPeriodStartDate,
         statementPeriodEndDate,
@@ -76,10 +76,10 @@ export function createStatementsTEST(data: CSV_Row[]): Statement[] {
   return statements;
 }
 
-export function createStatements(data: CSV_Row[]): Statement[] {
+export function createStatements(data: Expense_CSV_Row[]): Statement[] {
   // Group transactions by employeeId
   const statements: Statement[] = data.reduce(
-    (acc: Statement[], row: CSV_Row) => {
+    (acc: Statement[], row: Expense_CSV_Row) => {
       const {
         statementPeriodStartDate,
         statementPeriodEndDate,
@@ -156,35 +156,3 @@ export function createStatements(data: CSV_Row[]): Statement[] {
 
   return statements;
 }
-
-export type LineItem = {
-  lineAmount: number;
-  lineNumber: number;
-  glCode: string;
-  reasonForExpense: string;
-};
-
-// export type CleanTransaction = {
-//   transactionReference: string;
-//   cardholderName: string;
-//   lastFourDigits: string;
-//   transactionDate: string; // parse into date
-//   postingDate: string; // parse into date
-//   billingAmount: number; // parse into number
-//   glCode: string;
-//   glCodeDescription: string;
-//   reasonForExpense: string;
-//   receiptImageName: string;
-//   receiptImageReferenceId: string;
-//   supplierName: string;
-//   supplierCity: string;
-//   supplierState: string;
-//   workflowStatus: string;
-//   lineItems?: LineItem[];
-// };
-// // TODO finish implementation
-// export function cleanTransactions(data: CSV_Row[]) {
-
-//   const cleanedData = data.reduce(() => {}, []);
-
-// }

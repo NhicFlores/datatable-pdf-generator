@@ -1,6 +1,6 @@
 "use client";
 import { createStatements } from "@/lib/data";
-import { CSV_Row, Statement } from "@/lib/types";
+import { Expense_CSV_Row, Statement } from "@/lib/types";
 import React, { createContext, useContext } from "react";
 
 interface StatementsContextType {
@@ -10,7 +10,9 @@ interface StatementsContextType {
 }
 
 // initialize context
-const StatementsContext = createContext<StatementsContextType | undefined>(undefined);
+const StatementsContext = createContext<StatementsContextType | undefined>(
+  undefined
+);
 
 // custom hook to use the context
 export const useStatements = () => {
@@ -21,7 +23,7 @@ export const useStatements = () => {
 };
 
 interface StatementsProviderProps {
-  data: CSV_Row[];
+  data: Expense_CSV_Row[];
   children: React.ReactNode;
 }
 
@@ -30,12 +32,14 @@ export const StatementsProvider = ({
   data,
   children,
 }: StatementsProviderProps) => {
-
   const statements = createStatements(data);
-  const [selectedStatement, setSelectedStatement] = React.useState<Statement | null>(null)
+  const [selectedStatement, setSelectedStatement] =
+    React.useState<Statement | null>(null);
 
   return (
-    <StatementsContext.Provider value={{statements, selectedStatement, setSelectedStatement}}>
+    <StatementsContext.Provider
+      value={{ statements, selectedStatement, setSelectedStatement }}
+    >
       {children}
     </StatementsContext.Provider>
   );

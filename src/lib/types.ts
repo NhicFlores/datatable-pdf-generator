@@ -30,7 +30,7 @@ export type Transaction = {
   workflowStatus: string;
 };
 
-export type CSV_Row = {
+export type Expense_CSV_Row = {
   statementPeriodStartDate: string;
   statementPeriodEndDate: string;
   employeeId: string;

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { StatementsProvider } from "@/components/data-context";
-import { getCsvData } from "@/lib/read-csv";
+import { getExpenseCsvData } from "@/lib/read-expense-csv";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,9 +24,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // fetch CSV data 
-  const statements = await getCsvData();
-  // pass raw data to the StatementsProvider which uses the createStatements function to transform it into the Statement type 
+  // fetch CSV data
+  const statements = await getExpenseCsvData();
+  // pass raw data to the StatementsProvider which uses the createStatements function to transform it into the Statement type
   return (
     <html lang="en">
       <body
