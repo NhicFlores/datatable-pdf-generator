@@ -4,6 +4,8 @@ import { DataTable } from "@/components/tables/data-table";
 import { StatementColumns } from "@/components/tables/statement-columns";
 import { BulkDownloadButton } from "@/components/bulk-download-button";
 import { FuelDiscrepancyButton } from "@/components/fuel-discrepancy-button";
+import { FuelReportRoute } from "@/lib/routes";
+import Link from "next/link";
 
 export default function Home() {
   const { statements, fuelReports } = useStatements();
@@ -17,6 +19,9 @@ export default function Home() {
             statements={statements}
             fuelReports={fuelReports}
           />
+          <Link href={FuelReportRoute.summaryPage} className="border p-1 rounded hover:bg-gray-100">
+            Fuel Reports
+          </Link>
         </div>
       </div>
       <div>
