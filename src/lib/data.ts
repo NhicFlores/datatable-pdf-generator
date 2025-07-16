@@ -1,4 +1,10 @@
-import { Expense_CSV_Row, Statement, Fuel_CSV_Row, FuelReport } from "./types";
+import {
+  Expense_CSV_Row,
+  Statement,
+  Fuel_CSV_Row,
+  FuelReport,
+  FuelExpenseDiscrepancy,
+} from "./types";
 
 export function createStatementsTEST(data: Expense_CSV_Row[]): Statement[] {
   // Group transactions by cardHolderName
@@ -201,4 +207,63 @@ export function createFuelReports(data: Fuel_CSV_Row[]): FuelReport[] {
   );
 
   return fuelReports;
+}
+
+function cleanName(name: string): string {
+  // Remove special characters, spaces, and convert to lowercase
+  return name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+}
+
+export function getFuelExpenseDiscrepancies(
+  statements: Statement[],
+  fuelReports: FuelReport[]
+): FuelExpenseDiscrepancy[] {
+  const discrepancies: FuelExpenseDiscrepancy[] = [];
+
+  // Iterate over all statements
+  for (const statement of statements) {
+    // Find matching fuel report by driver name (with cleaned names)
+    const cleanedCardHolderName = cleanName(statement.cardHolderName);
+    const matchingFuelReport = fuelReports.find(
+      (fuelReport) => cleanName(fuelReport.driver) === cleanedCardHolderName
+    );
+
+    if (matchingFuelReport) {
+      // Find transactions that exist in statement but not in fuel report
+      const missingTransactions = statement.transactions.filter(
+        (transaction) => {
+          // Check if this transaction exists in fuel report
+          const matchingFuelTransaction =
+            matchingFuelReport.fuelTransactions.find((fuelTransaction) => {
+              // Compare transaction date and amount
+              const transactionDate = new Date(transaction.transactionDate);
+              const fuelTransactionDate = fuelTransaction.date;
+
+              // Compare dates (same day) and amounts (billing amount vs cost)
+              return (
+                transactionDate.toDateString() ===
+                  fuelTransactionDate.toDateString() &&
+                Math.abs(transaction.billingAmount - fuelTransaction.cost) <
+                  0.01 // Small tolerance for floating point comparison
+              );
+            });
+
+          // Return true if no matching fuel transaction was found (meaning it's missing)
+          return !matchingFuelTransaction;
+        }
+      );
+
+      // If there are missing transactions, add them to discrepancies
+      if (missingTransactions.length > 0) {
+        discrepancies.push({
+          driver: statement.cardHolderName,
+          Transactions: missingTransactions,
+        });
+      }
+    }
+    // Skip statements without matching fuel reports
+    // (removed the else block that added all transactions as discrepancies)
+  }
+
+  return discrepancies;
 }

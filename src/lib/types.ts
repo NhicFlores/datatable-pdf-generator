@@ -85,6 +85,11 @@ export type FuelReport = {
   fuelTransactions: FuelTransaction[];
 }
 
+export type FuelExpenseDiscrepancy = {
+  driver: string;
+  Transactions: Transaction[];
+}
+
 export const column_names = [
   "Statement Period - Start Date",
   "Statement Period - End Date",
