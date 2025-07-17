@@ -171,13 +171,22 @@ export function getFuelExpenseDiscrepancies(
               const transactionDate = new Date(transaction.transactionDate);
               const fuelTransactionDate = fuelTransaction.date;
 
-              // Compare dates (same day) and amounts (billing amount vs cost)
-              return (
+              // Primary comparison: date and cost
+              const dateAndCostMatch =
                 transactionDate.toDateString() ===
                   fuelTransactionDate.toDateString() &&
                 Math.abs(transaction.billingAmount - fuelTransaction.cost) <
-                  0.01 // Small tolerance for floating point comparison
-              );
+                  0.01;
+
+              // Secondary comparison: date and fuel quantity (if both have fuel data)
+              const dateAndQuantityMatch =
+                transactionDate.toDateString() ===
+                  fuelTransactionDate.toDateString() &&
+                transaction.fuelQuantity !== undefined &&
+                Math.abs(transaction.fuelQuantity - fuelTransaction.gallons) <
+                  0.01;
+
+              return dateAndCostMatch || dateAndQuantityMatch;
             });
 
           // Return true if no matching fuel transaction was found (meaning it's missing)
@@ -207,12 +216,25 @@ export function getMissingFuelTransactions(
   const missingTransactions: Transaction[] = [];
 
   for (const transaction of transactions) {
-    const matchingFuelTransaction = fuelTransactions.find(
-      (fuelTransaction) =>
-        new Date(fuelTransaction.date).toDateString() ===
-          new Date(transaction.transactionDate).toDateString() &&
-        fuelTransaction.cost === transaction.billingAmount
-    );
+    const matchingFuelTransaction = fuelTransactions.find((fuelTransaction) => {
+      const transactionDate = new Date(
+        transaction.transactionDate
+      ).toDateString();
+      const fuelTransactionDate = new Date(fuelTransaction.date).toDateString();
+
+      // Primary comparison: date and cost
+      const dateAndCostMatch =
+        transactionDate === fuelTransactionDate &&
+        Math.abs(fuelTransaction.cost - transaction.billingAmount) < 0.01;
+
+      // Secondary comparison: date and fuel quantity (if both have fuel data)
+      const dateAndQuantityMatch =
+        transactionDate === fuelTransactionDate &&
+        transaction.fuelQuantity !== undefined &&
+        Math.abs(fuelTransaction.gallons - transaction.fuelQuantity) < 0.01;
+
+      return dateAndCostMatch || dateAndQuantityMatch;
+    });
 
     if (!matchingFuelTransaction) {
       missingTransactions.push(transaction);
