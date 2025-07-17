@@ -7,7 +7,7 @@ import React from "react";
 const FuelReportsPage = () => {
     const { fuelReports } = useFuelReports();
   return (
-  <main>
+  <main className="container mx-auto py-10">
     <div>
         <DataTable columns={FuelReportColumns} data={fuelReports} />
     </div>
