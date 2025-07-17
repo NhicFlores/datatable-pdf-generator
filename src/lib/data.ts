@@ -226,13 +226,13 @@ export function createFuelReports(data: Fuel_CSV_Row[]): FuelReport[] {
 }
 
 export function getFuelExpenseDiscrepancies(
-  statements: Statement[],
+  fuelStatements: FuelStatement[],
   fuelReports: FuelReport[]
 ): FuelExpenseDiscrepancy[] {
   const discrepancies: FuelExpenseDiscrepancy[] = [];
 
   // Iterate over all statements
-  for (const statement of statements) {
+  for (const statement of fuelStatements) {
     // Find matching fuel report by driver name (with cleaned names)
     const cleanedCardHolderName = cleanName(statement.cardHolderName);
     const matchingFuelReport = fuelReports.find(

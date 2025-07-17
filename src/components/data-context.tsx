@@ -1,10 +1,15 @@
 "use client";
-import { createStatements, createFuelReports } from "@/lib/data";
+import {
+  createStatements,
+  createFuelReports,
+  createFuelStatements,
+} from "@/lib/data";
 import {
   Expense_CSV_Row,
   Statement,
   Fuel_CSV_Row,
   FuelReport,
+  FuelStatement,
 } from "@/lib/types";
 import React, { createContext, useContext } from "react";
 
@@ -15,6 +20,9 @@ interface StatementsContextType {
   fuelReports: FuelReport[];
   selectedFuelReport: FuelReport | null;
   setSelectedFuelReport: (fuelReport: FuelReport | null) => void;
+  fuelStatements: FuelStatement[];
+  selectedFuelStatement: FuelStatement | null;
+  setSelectedFuelStatement: (fuelStatement: FuelStatement | null) => void;
 }
 
 // initialize context
@@ -42,6 +50,18 @@ export const useFuelReports = () => {
   };
 };
 
+// custom hook specifically for fuel statements
+export const useFuelStatements = () => {
+  const context = useContext(StatementsContext);
+  if (!context)
+    throw new Error("useFuelStatements must be used within StatementsProvider");
+  return {
+    fuelStatements: context.fuelStatements,
+    selectedFuelStatement: context.selectedFuelStatement,
+    setSelectedFuelStatement: context.setSelectedFuelStatement,
+  };
+};
+
 interface StatementsProviderProps {
   data: Expense_CSV_Row[];
   fuelData: Fuel_CSV_Row[];
@@ -56,10 +76,13 @@ export const StatementsProvider = ({
 }: StatementsProviderProps) => {
   const statements = createStatements(data);
   const fuelReports = createFuelReports(fuelData);
+  const fuelStatements = createFuelStatements(data);
   const [selectedStatement, setSelectedStatement] =
     React.useState<Statement | null>(null);
   const [selectedFuelReport, setSelectedFuelReport] =
     React.useState<FuelReport | null>(null);
+  const [selectedFuelStatement, setSelectedFuelStatement] =
+    React.useState<FuelStatement | null>(null);
 
   return (
     <StatementsContext.Provider
@@ -70,6 +93,9 @@ export const StatementsProvider = ({
         fuelReports,
         selectedFuelReport,
         setSelectedFuelReport,
+        fuelStatements,
+        selectedFuelStatement,
+        setSelectedFuelStatement,
       }}
     >
       {children}

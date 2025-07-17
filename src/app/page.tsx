@@ -8,7 +8,7 @@ import { FuelReportRoute } from "@/lib/routes";
 import Link from "next/link";
 
 export default function Home() {
-  const { statements, fuelReports } = useStatements();
+  const { statements, fuelReports, fuelStatements } = useStatements();
 
   return (
     <main className="container mx-auto py-10">
@@ -16,10 +16,13 @@ export default function Home() {
         <div className="flex gap-2">
           <BulkDownloadButton statements={statements} />
           <FuelDiscrepancyButton
-            statements={statements}
+            fuelStatements={fuelStatements}
             fuelReports={fuelReports}
           />
-          <Link href={FuelReportRoute.summaryPage} className="border p-1 rounded hover:bg-gray-100">
+          <Link
+            href={FuelReportRoute.summaryPage}
+            className="border p-1 rounded hover:bg-gray-100"
+          >
             Fuel Reports
           </Link>
         </div>

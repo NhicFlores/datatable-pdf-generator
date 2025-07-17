@@ -1,5 +1,5 @@
 "use client";
-import { useStatements } from "@/components/data-context";
+import { useFuelReports, useFuelStatements } from "@/components/data-context";
 import { DataTable } from "@/components/tables/data-table";
 import { FuelTransactionColumns } from "@/components/tables/fuel-transaction-columns";
 import { TransactionColumns } from "@/components/tables/transaction-columns";
@@ -7,17 +7,18 @@ import { getMissingFuelTransactions } from "@/lib/data";
 import React from "react";
 
 const FuelReportPage = () => {
-  const { selectedFuelReport, selectedStatement } = useStatements();
+  const { selectedFuelReport } = useFuelReports();
+  const { selectedFuelStatement } = useFuelStatements();
 
   const fuelTransactionDiscrepancies = getMissingFuelTransactions(
     selectedFuelReport?.fuelTransactions || [],
-    selectedStatement?.transactions || []
+    selectedFuelStatement?.transactions || []
   );
 
   return (
     <main className="container mx-auto py-10 space-y-4">
       <section>
-        {selectedStatement ? (
+        {selectedFuelStatement ? (
           <div>
             <DataTable
               columns={TransactionColumns}

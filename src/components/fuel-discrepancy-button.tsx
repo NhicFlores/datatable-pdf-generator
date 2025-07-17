@@ -3,16 +3,16 @@ import { Button } from "./ui/button";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { pdf } from "@react-pdf/renderer";
 import { FuelDiscrepancyPDF } from "./fuel-discrepancy-pdf";
-import { Statement, FuelReport } from "@/lib/types";
+import { FuelReport, FuelStatement } from "@/lib/types";
 import { getFuelExpenseDiscrepancies } from "@/lib/data";
 
 interface FuelDiscrepancyButtonProps {
-  statements: Statement[];
+  fuelStatements: FuelStatement[];
   fuelReports: FuelReport[];
 }
 
 export function FuelDiscrepancyButton({
-  statements,
+  fuelStatements: statements,
   fuelReports,
 }: FuelDiscrepancyButtonProps) {
   const [isGenerating, setIsGenerating] = useState(false);
