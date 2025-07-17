@@ -4,7 +4,8 @@ import { Button } from "../ui/button";
 import { ArrowUpDown } from "lucide-react";
 import Link from "next/link";
 import { FuelReportRoute } from "@/lib/routes";
-import { useFuelReports } from "../data-context";
+import { useStatements } from "../data-context";
+import { cleanName } from "@/lib/utils";
 
 export const FuelReportColumns: ColumnDef<FuelReport>[] = [
   {
@@ -22,10 +23,22 @@ export const FuelReportColumns: ColumnDef<FuelReport>[] = [
       );
     },
     cell: function FuelReportDriverCell({ row }) {
-      const { setSelectedFuelReport } = useFuelReports();
+      const { setSelectedFuelReport, statements, setSelectedStatement } = useStatements();
 
       function handleClick() {
         setSelectedFuelReport(row.original);
+
+        const cleanDriverName = cleanName(row.original.driver)
+        const statement = statements.find(
+          (s) => cleanName(s.cardHolderName) === cleanDriverName
+        );
+
+        if (statement) {
+          setSelectedStatement(statement);
+        } else {
+          setSelectedStatement(null);
+        }
+
       }
 
       const driverName = row.getValue("driver") as string;

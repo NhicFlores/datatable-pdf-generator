@@ -47,6 +47,11 @@ export async function getExpenseCsvData(): Promise<Expense_CSV_Row[]> {
       "Supplier - City": "supplierCity",
       "Supplier - State": "supplierState",
       "Transaction - Workflow Status": "workflowStatus",
+      "Supplier - Merchant Category Code": "merchantCategoryCode",
+      "Fuel - Fuel Quantity": "fuelQuantity",
+      "Fuel - Fuel Type": "fuelType",
+      "Fuel - Fuel Unit Cost": "fuelUnitCost",
+      "Fuel - Odometer Reading": "odometerReading",
     };
 
     const result: ParseResult<Expense_CSV_Row> = Papa.parse<Expense_CSV_Row>(
@@ -56,6 +61,27 @@ export async function getExpenseCsvData(): Promise<Expense_CSV_Row[]> {
         skipEmptyLines: true,
         transformHeader: (header: string): string => {
           return headerMap[header] || header;
+        },
+        transform: (
+          value: string,
+          field: string
+        ): string | number | undefined => {
+          // Handle empty values for optional numeric fields
+          if (!value || value.trim() === "") {
+            return undefined;
+          }
+
+          // Parse numeric fields
+          if (
+            field === "fuelQuantity" ||
+            field === "fuelUnitCost" ||
+            field === "odometerReading"
+          ) {
+            const parsed = parseFloat(value);
+            return isNaN(parsed) ? undefined : parsed;
+          }
+
+          return value;
         },
       }
     );

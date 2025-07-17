@@ -75,7 +75,7 @@ export const FuelTransactionColumns: ColumnDef<FuelTransaction>[] = [
             );
         },
         cell: ({ row }) => {
-            return <span>{row.original.gallons.toFixed(2)}</span>;
+            return <span>{row.original.gallons}</span>;
         },
     },
     {

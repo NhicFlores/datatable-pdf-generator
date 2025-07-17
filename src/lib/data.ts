@@ -4,83 +4,10 @@ import {
   Fuel_CSV_Row,
   FuelReport,
   FuelExpenseDiscrepancy,
+  FuelTransaction,
+  Transaction,
 } from "./types";
-
-export function createStatementsTEST(data: Expense_CSV_Row[]): Statement[] {
-  // Group transactions by cardHolderName
-  const statements: Statement[] = data.reduce(
-    (acc: Statement[], row: Expense_CSV_Row) => {
-      const {
-        statementPeriodStartDate,
-        statementPeriodEndDate,
-        cardHolderName,
-        lastFourDigits,
-      } = row;
-
-      const existingStatement = acc.find(
-        (statement) =>
-          statement.cardHolderName === cardHolderName &&
-          statement.statementPeriodStartDate === statementPeriodStartDate &&
-          statement.statementPeriodEndDate === statementPeriodEndDate &&
-          statement.lastFourDigits === lastFourDigits // we can remove lastFour from Statement type and just show all credit card numbers in case of multiple cards
-      );
-
-      if (existingStatement) {
-        existingStatement.transactions.push({
-          transactionReference: row.transactionReference,
-          cardholderName: row.cardHolderName,
-          lastFourDigits: row.lastFourDigits,
-          transactionDate: row.transactionDate,
-          postingDate: row.postingDate,
-          billingAmount: parseFloat(row.billingAmount),
-          lineAmount: parseFloat(row.lineAmount),
-          lineNumber: parseInt(row.lineNumber, 10),
-          glCode: row.glCode,
-          glCodeDescription: row.glCodeDescription,
-          reasonForExpense: row.reasonForExpense,
-          receiptImageName: row.receiptImageName,
-          receiptImageReferenceId: row.receiptImageReferenceId,
-          supplierName: row.supplierName,
-          supplierCity: row.supplierCity,
-          supplierState: row.supplierState,
-          workflowStatus: row.workflowStatus,
-        });
-      } else {
-        acc.push({
-          statementPeriodStartDate,
-          statementPeriodEndDate,
-          lastFourDigits,
-          cardHolderName,
-          transactions: [
-            {
-              transactionReference: row.transactionReference,
-              cardholderName: row.cardHolderName,
-              lastFourDigits: row.lastFourDigits,
-              transactionDate: row.transactionDate,
-              postingDate: row.postingDate,
-              billingAmount: parseFloat(row.billingAmount),
-              lineAmount: parseFloat(row.lineAmount),
-              lineNumber: parseInt(row.lineNumber, 10),
-              glCode: row.glCode,
-              glCodeDescription: row.glCodeDescription,
-              reasonForExpense: row.reasonForExpense,
-              receiptImageName: row.receiptImageName,
-              receiptImageReferenceId: row.receiptImageReferenceId,
-              supplierName: row.supplierName,
-              supplierCity: row.supplierCity,
-              supplierState: row.supplierState,
-              workflowStatus: row.workflowStatus,
-            },
-          ],
-        });
-      }
-      return acc;
-    },
-    []
-  );
-
-  return statements;
-}
+import { cleanName } from "./utils";
 
 export function createStatements(data: Expense_CSV_Row[]): Statement[] {
   // Group transactions by employeeId
@@ -122,6 +49,11 @@ export function createStatements(data: Expense_CSV_Row[]): Statement[] {
           supplierCity: row.supplierCity,
           supplierState: row.supplierState,
           workflowStatus: row.workflowStatus,
+          merchantCategoryCode: row.merchantCategoryCode,
+          fuelQuantity: row.fuelQuantity,
+          fuelType: row.fuelType,
+          fuelUnitCost: row.fuelUnitCost,
+          odometerReading: row.odometerReading,
         });
       } else {
         acc.push({
@@ -151,6 +83,11 @@ export function createStatements(data: Expense_CSV_Row[]): Statement[] {
               supplierCity: row.supplierCity,
               supplierState: row.supplierState,
               workflowStatus: row.workflowStatus,
+              merchantCategoryCode: row.merchantCategoryCode,
+              fuelQuantity: row.fuelQuantity,
+              fuelType: row.fuelType,
+              fuelUnitCost: row.fuelUnitCost,
+              odometerReading: row.odometerReading,
             },
           ],
         });
@@ -209,11 +146,6 @@ export function createFuelReports(data: Fuel_CSV_Row[]): FuelReport[] {
   return fuelReports;
 }
 
-function cleanName(name: string): string {
-  // Remove special characters, spaces, and convert to lowercase
-  return name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-}
-
 export function getFuelExpenseDiscrepancies(
   statements: Statement[],
   fuelReports: FuelReport[]
@@ -266,4 +198,26 @@ export function getFuelExpenseDiscrepancies(
   }
 
   return discrepancies;
+}
+
+export function getMissingFuelTransactions(
+  fuelTransactions: FuelTransaction[],
+  transactions: Transaction[]
+): Transaction[] {
+  const missingTransactions: Transaction[] = [];
+
+  for (const transaction of transactions) {
+    const matchingFuelTransaction = fuelTransactions.find(
+      (fuelTransaction) =>
+        new Date(fuelTransaction.date).toDateString() ===
+          new Date(transaction.transactionDate).toDateString() &&
+        fuelTransaction.cost === transaction.billingAmount
+    );
+
+    if (!matchingFuelTransaction) {
+      missingTransactions.push(transaction);
+    }
+  }
+
+  return missingTransactions;
 }

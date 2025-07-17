@@ -25,3 +25,8 @@ export const formatDateStringToLocal = (dateStr: string, locale: string = "en-US
 
   return formatter.format(date);
 }
+
+export function cleanName(name: string): string {
+  // Remove special characters, spaces, and convert to lowercase
+  return name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+}

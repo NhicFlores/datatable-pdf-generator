@@ -21,6 +21,11 @@ export type Expense_CSV_Row = {
   supplierCity: string;
   supplierState: string;
   workflowStatus: string;
+  merchantCategoryCode?: string;
+  fuelQuantity?: number;
+  fuelType?: string;
+  fuelUnitCost?: number; // parse into number
+  odometerReading?: number; // parse into number
 };
 
 export type Statement = {
@@ -53,6 +58,11 @@ export type Transaction = {
   supplierCity: string;
   supplierState: string;
   workflowStatus: string;
+  merchantCategoryCode?: string;
+  fuelQuantity?: number;
+  fuelType?: string;
+  fuelUnitCost?: number; // parse into number
+  odometerReading?: number; // parse into number
 };
 
 export type Fuel_CSV_Row = {
@@ -66,7 +76,7 @@ export type Fuel_CSV_Row = {
   sellerName: string;
   odometer: string;
   receipt: string;
-}
+};
 
 export type FuelTransaction = {
   vehicleId: string;
@@ -83,12 +93,12 @@ export type FuelTransaction = {
 export type FuelReport = {
   driver: string;
   fuelTransactions: FuelTransaction[];
-}
+};
 
 export type FuelExpenseDiscrepancy = {
   driver: string;
   Transactions: Transaction[];
-}
+};
 
 export const column_names = [
   "Statement Period - Start Date",
