@@ -67,6 +67,11 @@ export type Transaction = {
   fuelUnitOfMeasure?: string;
 };
 
+export type FuelStatement = {
+  cardHolderName: string;
+  transactions: Transaction[];
+}
+
 export type Fuel_CSV_Row = {
   vehicleId: string;
   driver: string;

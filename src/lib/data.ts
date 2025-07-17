@@ -6,6 +6,7 @@ import {
   FuelExpenseDiscrepancy,
   FuelTransaction,
   Transaction,
+  FuelStatement,
 } from "./types";
 import { cleanName } from "./utils";
 
@@ -100,6 +101,82 @@ export function createStatements(data: Expense_CSV_Row[]): Statement[] {
   );
 
   return statements;
+}
+
+export function createFuelStatements(data: Expense_CSV_Row[]): FuelStatement[] {
+  // Group transactions by cardHolderName
+  const fuelStatements: FuelStatement[] = data.reduce(
+    (acc: FuelStatement[], row: Expense_CSV_Row) => {
+      const { cardHolderName } = row;
+
+      const existingFuelStatement = acc.find(
+        (fuelStatement) => fuelStatement.cardHolderName === cardHolderName
+      );
+
+      if (existingFuelStatement) {
+        existingFuelStatement.transactions.push({
+          transactionReference: row.transactionReference,
+          cardholderName: row.cardHolderName,
+          lastFourDigits: row.lastFourDigits,
+          transactionDate: row.transactionDate,
+          postingDate: row.postingDate,
+          billingAmount: parseFloat(row.billingAmount),
+          lineAmount: parseFloat(row.lineAmount),
+          lineNumber: parseInt(row.lineNumber, 10),
+          glCode: row.glCode,
+          glCodeDescription: row.glCodeDescription,
+          reasonForExpense: row.reasonForExpense,
+          receiptImageName: row.receiptImageName,
+          receiptImageReferenceId: row.receiptImageReferenceId,
+          supplierName: row.supplierName,
+          supplierCity: row.supplierCity,
+          supplierState: row.supplierState,
+          workflowStatus: row.workflowStatus,
+          merchantCategoryCode: row.merchantCategoryCode,
+          odometerReading: row.odometerReading,
+          fuelQuantity: row.fuelQuantity,
+          fuelType: row.fuelType,
+          fuelUnitCost: row.fuelUnitCost,
+          fuelUnitOfMeasure: row.fuelUnitOfMeasure,
+        });
+      } else {
+        acc.push({
+          cardHolderName,
+          transactions: [
+            {
+              transactionReference: row.transactionReference,
+              cardholderName: row.cardHolderName,
+              lastFourDigits: row.lastFourDigits,
+              transactionDate: row.transactionDate,
+              postingDate: row.postingDate,
+              billingAmount: parseFloat(row.billingAmount),
+              lineAmount: parseFloat(row.lineAmount),
+              lineNumber: parseInt(row.lineNumber, 10),
+              glCode: row.glCode,
+              glCodeDescription: row.glCodeDescription,
+              reasonForExpense: row.reasonForExpense,
+              receiptImageName: row.receiptImageName,
+              receiptImageReferenceId: row.receiptImageReferenceId,
+              supplierName: row.supplierName,
+              supplierCity: row.supplierCity,
+              supplierState: row.supplierState,
+              workflowStatus: row.workflowStatus,
+              merchantCategoryCode: row.merchantCategoryCode,
+              odometerReading: row.odometerReading,
+              fuelQuantity: row.fuelQuantity,
+              fuelType: row.fuelType,
+              fuelUnitCost: row.fuelUnitCost,
+              fuelUnitOfMeasure: row.fuelUnitOfMeasure,
+            },
+          ],
+        });
+      }
+      return acc;
+    },
+    []
+  );
+
+  return fuelStatements;
 }
 
 export function createFuelReports(data: Fuel_CSV_Row[]): FuelReport[] {
