@@ -320,5 +320,20 @@ export function getMissingFuelTransactions(
     }
   }
 
-  return missingTransactions;
+  // Filter out transactions with glCodes containing "Drivers Expense" or "Repairs"
+  const filteredMissingTransactions = missingTransactions.filter(
+    (transaction) => {
+      const glCode = transaction.glCode.toLowerCase();
+      const glCodeDescription = transaction.glCodeDescription.toLowerCase();
+
+      return !(
+        glCode.includes("drivers expense") ||
+        glCode.includes("repairs") ||
+        glCodeDescription.includes("drivers expense") ||
+        glCodeDescription.includes("repairs")
+      );
+    }
+  );
+
+  return filteredMissingTransactions;
 }

@@ -1,8 +1,9 @@
 "use client";
 import { useFuelReports, useFuelStatements } from "@/components/data-context";
 import { DataTable } from "@/components/tables/data-table";
+import { FuelStatementColumns } from "@/components/tables/fuel-statement-columns";
 import { FuelTransactionColumns } from "@/components/tables/fuel-transaction-columns";
-import { TransactionColumns } from "@/components/tables/transaction-columns";
+
 import { getMissingFuelTransactions } from "@/lib/data";
 import React from "react";
 
@@ -21,7 +22,7 @@ const FuelReportPage = () => {
         {selectedFuelStatement ? (
           <div>
             <DataTable
-              columns={TransactionColumns}
+              columns={FuelStatementColumns}
               data={fuelTransactionDiscrepancies}
             />
           </div>
