@@ -48,10 +48,11 @@ export async function getExpenseCsvData(): Promise<Expense_CSV_Row[]> {
       "Supplier - State": "supplierState",
       "Transaction - Workflow Status": "workflowStatus",
       "Supplier - Merchant Category Code": "merchantCategoryCode",
+      "Fuel - Odometer Reading": "odometerReading",
       "Fuel - Fuel Quantity": "fuelQuantity",
       "Fuel - Fuel Type": "fuelType",
       "Fuel - Fuel Unit Cost": "fuelUnitCost",
-      "Fuel - Odometer Reading": "odometerReading",
+      "Fuel - Fuel Unit of Measure": "fuelUnitOfMeasure",
     };
 
     const result: ParseResult<Expense_CSV_Row> = Papa.parse<Expense_CSV_Row>(

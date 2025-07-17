@@ -50,10 +50,11 @@ export function createStatements(data: Expense_CSV_Row[]): Statement[] {
           supplierState: row.supplierState,
           workflowStatus: row.workflowStatus,
           merchantCategoryCode: row.merchantCategoryCode,
+          odometerReading: row.odometerReading,
           fuelQuantity: row.fuelQuantity,
           fuelType: row.fuelType,
           fuelUnitCost: row.fuelUnitCost,
-          odometerReading: row.odometerReading,
+          fuelUnitOfMeasure: row.fuelUnitOfMeasure,
         });
       } else {
         acc.push({
@@ -84,10 +85,11 @@ export function createStatements(data: Expense_CSV_Row[]): Statement[] {
               supplierState: row.supplierState,
               workflowStatus: row.workflowStatus,
               merchantCategoryCode: row.merchantCategoryCode,
+              odometerReading: row.odometerReading,
               fuelQuantity: row.fuelQuantity,
               fuelType: row.fuelType,
               fuelUnitCost: row.fuelUnitCost,
-              odometerReading: row.odometerReading,
+              fuelUnitOfMeasure: row.fuelUnitOfMeasure,
             },
           ],
         });

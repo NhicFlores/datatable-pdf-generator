@@ -22,10 +22,11 @@ export type Expense_CSV_Row = {
   supplierState: string;
   workflowStatus: string;
   merchantCategoryCode?: string;
+  odometerReading?: number; // parse into number
   fuelQuantity?: number;
   fuelType?: string;
   fuelUnitCost?: number; // parse into number
-  odometerReading?: number; // parse into number
+  fuelUnitOfMeasure?: string;
 };
 
 export type Statement = {
@@ -59,10 +60,11 @@ export type Transaction = {
   supplierState: string;
   workflowStatus: string;
   merchantCategoryCode?: string;
+  odometerReading?: number; // parse into number
   fuelQuantity?: number;
   fuelType?: string;
-  fuelUnitCost?: number; // parse into number
-  odometerReading?: number; // parse into number
+  fuelUnitCost?: number; // parse into number 
+  fuelUnitOfMeasure?: string;
 };
 
 export type Fuel_CSV_Row = {
