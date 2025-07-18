@@ -3,6 +3,7 @@ import { useFuelReports, useFuelStatements } from "@/components/data-context";
 import { DataTable } from "@/components/tables/data-table";
 import { createFuelStatementColumns } from "@/components/tables/fuel-statement-columns-enhanced";
 import { createFuelTransactionColumns } from "@/components/tables/fuel-transaction-columns-enhanced";
+import { CSVDownloadButton } from "@/components/csv-download-button";
 
 import {
   getMissingFuelTransactions,
@@ -67,9 +68,21 @@ const FuelReportPage = () => {
       </div>
 
       <section>
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
-          Missing Fuel Transactions (Expense Statement)
-        </h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-800">
+            Missing Fuel Transactions (Expense Statement)
+          </h2>
+          {selectedFuelStatement && fuelTransactionDiscrepancies.length > 0 && (
+            <CSVDownloadButton
+              data={fuelTransactionDiscrepancies}
+              filename={`missing_fuel_transactions_${selectedFuelStatement.cardHolderName.replace(
+                /[^a-zA-Z0-9]/g,
+                "_"
+              )}_${new Date().toISOString().split("T")[0]}.csv`}
+              label="Export Missing Transactions"
+            />
+          )}
+        </div>
         {selectedFuelStatement ? (
           <div>
             <DataTable
@@ -85,9 +98,23 @@ const FuelReportPage = () => {
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
-          All Fuel Transactions (Fuel Report)
-        </h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-800">
+            All Fuel Transactions (Fuel Report)
+          </h2>
+          {selectedFuelReport &&
+            selectedFuelReport.fuelTransactions.length > 0 && (
+              <CSVDownloadButton
+                data={selectedFuelReport.fuelTransactions}
+                driverName={selectedFuelReport.driver}
+                filename={`fuel_transactions_${selectedFuelReport.driver.replace(
+                  /[^a-zA-Z0-9]/g,
+                  "_"
+                )}_${new Date().toISOString().split("T")[0]}.csv`}
+                label="Export Fuel Transactions"
+              />
+            )}
+        </div>
         {selectedFuelReport ? (
           <div>
             <DataTable
