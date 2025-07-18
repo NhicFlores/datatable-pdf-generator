@@ -9,6 +9,24 @@ import { cleanName } from "@/lib/utils";
 
 export const FuelReportColumns: ColumnDef<FuelReport>[] = [
   {
+    id: "vehicleBranch",
+    accessorKey: "vehicleBranch",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant={"ghost"}
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Vehicle Branch
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      return row.original.vehicleBranch;
+    },
+  },
+  {
     id: "driver",
     accessorKey: "driver",
     header: ({ column }) => {
@@ -43,7 +61,7 @@ export const FuelReportColumns: ColumnDef<FuelReport>[] = [
       }
 
       const driverName = row.getValue("driver") as string;
-      const cleanedName = driverName.replace(/,/g, " ");
+      const cleanedName = driverName ? driverName.replace(/,/g, " ") : "";
       return (
         <span onClick={handleClick}>
           <Link href={FuelReportRoute.detailPage(cleanedName)}>

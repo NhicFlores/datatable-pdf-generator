@@ -178,8 +178,8 @@ export const TransactionColumns: ColumnDef<Transaction>[] = [
       );
     },
     cell: ({ row }) => {
-      const receiptImageReferenceId = row.original.receiptImageReferenceId;
-      return <div>{receiptImageReferenceId}</div>;
+      const receipt = row.original.receiptImageReferenceId ? "Yes" : "No";
+      return <div>{receipt}</div>;
     },
   },
   {
