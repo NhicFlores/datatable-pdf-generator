@@ -185,11 +185,12 @@ export function createFuelReports(data: Fuel_CSV_Row[]): FuelReport[] {
     (acc: FuelReport[], row: Fuel_CSV_Row) => {
       const { driver, vehicleId } = row;
 
-      const vehicleBranch = vehicleId ? vehicleId.split("-")[0] : ""; 
+      const vehicleBranch = vehicleId ? vehicleId.split("-")[0] : "";
 
-      const existingReport = acc.find((report) => 
-        report.driver === driver && 
-        report.vehicleBranch === vehicleBranch);
+      const existingReport = acc.find(
+        (report) =>
+          report.driver === driver && report.vehicleBranch === vehicleBranch
+      );
 
       if (existingReport) {
         existingReport.fuelTransactions.push({
@@ -341,4 +342,76 @@ export function getMissingFuelTransactions(
   );
 
   return filteredMissingTransactions;
+}
+
+export function getMatchingFuelTransactions(
+  fuelTransactions: FuelTransaction[],
+  transactions: Transaction[]
+): Set<string> {
+  const matchingFuelTransactionIds = new Set<string>();
+
+  for (const fuelTransaction of fuelTransactions) {
+    const matchingTransaction = transactions.find((transaction) => {
+      const transactionDate = new Date(
+        transaction.transactionDate
+      ).toDateString();
+      const fuelTransactionDate = new Date(fuelTransaction.date).toDateString();
+
+      // Primary comparison: date and cost
+      const dateAndCostMatch =
+        transactionDate === fuelTransactionDate &&
+        Math.abs(fuelTransaction.cost - transaction.billingAmount) < 0.01;
+
+      // Secondary comparison: date and fuel quantity (if both have fuel data)
+      const dateAndQuantityMatch =
+        transactionDate === fuelTransactionDate &&
+        transaction.fuelQuantity !== undefined &&
+        Math.abs(fuelTransaction.gallons - transaction.fuelQuantity) < 0.01;
+
+      return dateAndCostMatch || dateAndQuantityMatch;
+    });
+
+    if (matchingTransaction) {
+      // Create a unique identifier for the fuel transaction
+      const fuelTransactionId = `${fuelTransaction.vehicleId}-${fuelTransaction.date}-${fuelTransaction.invoiceNumber}`;
+      matchingFuelTransactionIds.add(fuelTransactionId);
+    }
+  }
+
+  return matchingFuelTransactionIds;
+}
+
+export function getMatchingTransactions(
+  fuelTransactions: FuelTransaction[],
+  transactions: Transaction[]
+): Set<string> {
+  const matchingTransactionIds = new Set<string>();
+
+  for (const transaction of transactions) {
+    const matchingFuelTransaction = fuelTransactions.find((fuelTransaction) => {
+      const transactionDate = new Date(
+        transaction.transactionDate
+      ).toDateString();
+      const fuelTransactionDate = new Date(fuelTransaction.date).toDateString();
+
+      // Primary comparison: date and cost
+      const dateAndCostMatch =
+        transactionDate === fuelTransactionDate &&
+        Math.abs(fuelTransaction.cost - transaction.billingAmount) < 0.01;
+
+      // Secondary comparison: date and fuel quantity (if both have fuel data)
+      const dateAndQuantityMatch =
+        transactionDate === fuelTransactionDate &&
+        transaction.fuelQuantity !== undefined &&
+        Math.abs(fuelTransaction.gallons - transaction.fuelQuantity) < 0.01;
+
+      return dateAndCostMatch || dateAndQuantityMatch;
+    });
+
+    if (matchingFuelTransaction) {
+      matchingTransactionIds.add(transaction.transactionReference);
+    }
+  }
+
+  return matchingTransactionIds;
 }
