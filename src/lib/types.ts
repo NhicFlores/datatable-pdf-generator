@@ -77,17 +77,17 @@ export type Fuel_CSV_Row = {
   driver: string;
   date: string;
   invoiceNumber: string;
-  gallons: string;
-  cost: string;
+  gallons: number;
+  cost: number;
   sellerState: string;
   sellerName: string;
-  odometer: string;
+  odometer: number;
   receipt: string;
 };
 
 export type FuelTransaction = {
   vehicleId: string;
-  date: Date; // parse into date
+  date: string; // parse into date
   invoiceNumber: string;
   gallons: number; // parse into number
   cost: number; // parse into number
@@ -99,6 +99,7 @@ export type FuelTransaction = {
 
 export type FuelReport = {
   driver: string;
+  vehicleBranch: string;
   fuelTransactions: FuelTransaction[];
 };
 

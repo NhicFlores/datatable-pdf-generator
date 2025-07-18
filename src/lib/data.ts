@@ -183,35 +183,40 @@ export function createFuelReports(data: Fuel_CSV_Row[]): FuelReport[] {
   // Group fuel transactions by driver name
   const fuelReports: FuelReport[] = data.reduce(
     (acc: FuelReport[], row: Fuel_CSV_Row) => {
-      const { driver } = row;
+      const { driver, vehicleId } = row;
 
-      const existingReport = acc.find((report) => report.driver === driver);
+      const vehicleBranch = vehicleId ? vehicleId.split("-")[0] : ""; 
+
+      const existingReport = acc.find((report) => 
+        report.driver === driver && 
+        report.vehicleBranch === vehicleBranch);
 
       if (existingReport) {
         existingReport.fuelTransactions.push({
           vehicleId: row.vehicleId,
-          date: new Date(row.date),
+          date: row.date,
           invoiceNumber: row.invoiceNumber,
-          gallons: parseFloat(row.gallons) || 0,
-          cost: parseFloat(row.cost) || 0,
+          gallons: row.gallons || 0,
+          cost: row.cost || 0,
           sellerState: row.sellerState,
           sellerName: row.sellerName,
-          odometer: parseFloat(row.odometer) || 0,
+          odometer: row.odometer || 0,
           receipt: row.receipt,
         });
       } else {
         acc.push({
           driver,
+          vehicleBranch,
           fuelTransactions: [
             {
               vehicleId: row.vehicleId,
-              date: new Date(row.date),
+              date: row.date,
               invoiceNumber: row.invoiceNumber,
-              gallons: parseFloat(row.gallons) || 0,
-              cost: parseFloat(row.cost) || 0,
+              gallons: row.gallons || 0,
+              cost: row.cost || 0,
               sellerState: row.sellerState,
               sellerName: row.sellerName,
-              odometer: parseFloat(row.odometer) || 0,
+              odometer: row.odometer || 0,
               receipt: row.receipt,
             },
           ],
@@ -248,7 +253,7 @@ export function getFuelExpenseDiscrepancies(
             matchingFuelReport.fuelTransactions.find((fuelTransaction) => {
               // Compare transaction date and amount
               const transactionDate = new Date(transaction.transactionDate);
-              const fuelTransactionDate = fuelTransaction.date;
+              const fuelTransactionDate = new Date(fuelTransaction.date);
 
               // Primary comparison: date and cost
               const dateAndCostMatch =
