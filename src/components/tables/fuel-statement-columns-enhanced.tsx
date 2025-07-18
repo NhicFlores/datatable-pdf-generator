@@ -8,13 +8,35 @@ export const createFuelStatementColumns = (
   matchingIds: Set<string>
 ): ColumnDef<Transaction>[] => [
   {
+    id: "workflowStatus",
+    accessorKey: "workflowStatus",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant={"ghost"}
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Workflow Status
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const isMatched = matchingIds.has(row.original.transactionReference);
+      return (
+        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
+          {row.original.workflowStatus}
+        </span>
+      );
+    },
+  },
+  {
     id: "transactionDate",
     accessorKey: "transactionDate",
     header: ({ column }) => {
       return (
         <Button
           variant={"ghost"}
-          className="flex items-center"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           <div>
@@ -41,16 +63,15 @@ export const createFuelStatementColumns = (
     },
   },
   {
-    id: "supplierName",
-    accessorKey: "supplierName",
+    id: "supplierState",
+    accessorKey: "supplierState",
     header: ({ column }) => {
       return (
         <Button
           variant={"ghost"}
-          className="flex items-center"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Supplier
+          Supplier / State
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -67,19 +88,19 @@ export const createFuelStatementColumns = (
       );
     },
   },
+
   {
-    id: "billingAmount",
-    accessorKey: "billingAmount",
+    id: "glCode",
+    accessorKey: "glCode",
     header: ({ column }) => {
       return (
         <Button
           variant={"ghost"}
-          className="flex items-center"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           <div>
-            <div>Billing Amount</div>
-            <div>Line Amount</div>
+            <div>GL Code</div>
+            <div>GL Description</div>
           </div>
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
@@ -89,10 +110,10 @@ export const createFuelStatementColumns = (
       const isMatched = matchingIds.has(row.original.transactionReference);
       return (
         <div className={isMatched ? "text-green-600 font-semibold" : ""}>
-          <div className="font-bold">
-            {formatCurrency(row.original.billingAmount)}
+          <div className="font-bold">{row.original.glCode}</div>
+          <div className="text-sm text-gray-600">
+            {row.original.glCodeDescription}
           </div>
-          <div>{formatCurrency(row.original.lineAmount)}</div>
         </div>
       );
     },
@@ -121,66 +142,12 @@ export const createFuelStatementColumns = (
     },
   },
   {
-    id: "glCode",
-    accessorKey: "glCode",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant={"ghost"}
-          className="flex items-center"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          <div>
-            <div>GL Code</div>
-            <div>GL Description</div>
-          </div>
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const isMatched = matchingIds.has(row.original.transactionReference);
-      return (
-        <div className={isMatched ? "text-green-600 font-semibold" : ""}>
-          <div className="font-bold">{row.original.glCode}</div>
-          <div className="text-sm text-gray-600">
-            {row.original.glCodeDescription}
-          </div>
-        </div>
-      );
-    },
-  },
-  {
-    id: "workflowStatus",
-    accessorKey: "workflowStatus",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant={"ghost"}
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Workflow Status
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const isMatched = matchingIds.has(row.original.transactionReference);
-      return (
-        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
-          {row.original.workflowStatus}
-        </span>
-      );
-    },
-  },
-  {
     id: "fuelQuantity",
     accessorKey: "fuelQuantity",
     header: ({ column }) => {
       return (
         <Button
           variant={"ghost"}
-          className="flex items-center"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           <div>
@@ -207,27 +174,31 @@ export const createFuelStatementColumns = (
     },
   },
   {
-    id: "odometerReading",
-    accessorKey: "odometerReading",
+    id: "billingAmount",
+    accessorKey: "billingAmount",
     header: ({ column }) => {
       return (
         <Button
           variant={"ghost"}
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Odometer
+          <div>
+            <div>Billing Amount</div>
+            <div>Line Amount</div>
+          </div>
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => {
       const isMatched = matchingIds.has(row.original.transactionReference);
-      const odometer = row.original.odometerReading;
-
       return (
-        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
-          {odometer ? odometer.toLocaleString() : "N/A"}
-        </span>
+        <div className={isMatched ? "text-green-600 font-semibold" : ""}>
+          <div className="font-bold">
+            {formatCurrency(row.original.billingAmount)}
+          </div>
+          <div>{formatCurrency(row.original.lineAmount)}</div>
+        </div>
       );
     },
   },

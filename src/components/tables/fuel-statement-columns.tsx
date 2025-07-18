@@ -12,7 +12,7 @@ export const FuelStatementColumns: ColumnDef<Transaction>[] = [
       return (
         <Button
           variant={"ghost"}
-          className="flex items-center"
+          
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           <div>
@@ -44,7 +44,7 @@ export const FuelStatementColumns: ColumnDef<Transaction>[] = [
       return (
         <Button
           variant={"ghost"}
-          className="flex items-center"
+          
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Supplier
@@ -72,7 +72,7 @@ export const FuelStatementColumns: ColumnDef<Transaction>[] = [
       return (
         <Button
           variant={"ghost"}
-          className="flex items-center"
+          
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           GL Code
@@ -92,7 +92,7 @@ export const FuelStatementColumns: ColumnDef<Transaction>[] = [
       return (
         <Button
           variant={"ghost"}
-          className="flex items-center"
+          
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Reason for Expense
@@ -112,7 +112,7 @@ export const FuelStatementColumns: ColumnDef<Transaction>[] = [
       return (
         <Button
           variant={"ghost"}
-          className="flex items-center"
+          
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Receipt Image Reference ID
@@ -132,7 +132,7 @@ export const FuelStatementColumns: ColumnDef<Transaction>[] = [
       return (
         <Button
           variant={"ghost"}
-          className="flex items-center"
+          
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Line Amount
@@ -165,7 +165,7 @@ export const FuelStatementColumns: ColumnDef<Transaction>[] = [
       return (
         <Button
           variant={"ghost"}
-          className="flex items-center"
+          
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Fuel Quantity
@@ -181,7 +181,7 @@ export const FuelStatementColumns: ColumnDef<Transaction>[] = [
       return (
         <Button
           variant={"ghost"}
-          className="flex items-center"
+          
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Billing Amount

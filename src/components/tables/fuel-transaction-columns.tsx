@@ -100,7 +100,7 @@ export const FuelTransactionColumns: ColumnDef<FuelTransaction>[] = [
       );
     },
     cell: ({ row }) => {
-      return <span>{row.original.odometer.toFixed(0)}</span>;
+      return <span>{row.original.odometer}</span>;
     },
   },
   {

@@ -23,7 +23,7 @@ export const createFuelTransactionColumns = (
       );
     },
     cell: ({ row }) => {
-        console.log("date", row.original.date);
+        // console.log("date", row.original.date);
       const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
       const isMatched = matchingIds.has(fuelTransactionId);
       return (
@@ -67,7 +67,7 @@ export const createFuelTransactionColumns = (
           variant={"ghost"}
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Seller State
+          Supplier / State
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -75,33 +75,11 @@ export const createFuelTransactionColumns = (
     cell: ({ row }) => {
       const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
       const isMatched = matchingIds.has(fuelTransactionId);
+      const sellerName = row.original.sellerName;
+      const sellerState = row.original.sellerState;
       return (
         <span className={isMatched ? "text-green-600 font-semibold" : ""}>
-          {row.original.sellerState}
-        </span>
-      );
-    },
-  },
-  {
-    id: "sellerName",
-    accessorKey: "sellerName",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant={"ghost"}
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Seller Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(fuelTransactionId);
-      return (
-        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
-          {row.original.sellerName}
+         {sellerName}, {sellerState}
         </span>
       );
     },
@@ -130,54 +108,7 @@ export const createFuelTransactionColumns = (
       );
     },
   },
-  {
-    id: "gallons",
-    accessorKey: "gallons",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant={"ghost"}
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Gallons
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(fuelTransactionId);
-      return (
-        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
-          {row.original.gallons.toFixed(2)}
-        </span>
-      );
-    },
-  },
-  {
-    id: "cost",
-    accessorKey: "cost",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant={"ghost"}
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Cost
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(fuelTransactionId);
-      return (
-        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
-          {formatCurrency(row.original.cost)}
-        </span>
-      );
-    },
-  },
+
   {
     id: "odometer",
     accessorKey: "odometer",
@@ -221,7 +152,55 @@ export const createFuelTransactionColumns = (
       const isMatched = matchingIds.has(fuelTransactionId);
       return (
         <span className={isMatched ? "text-green-600 font-semibold" : ""}>
-          {row.original.receipt}
+          {row.original.receipt ? "Yes" : "No"}
+        </span>
+      );
+    },
+  },
+    {
+    id: "gallons",
+    accessorKey: "gallons",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant={"ghost"}
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Gallons
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelTransactionId);
+      return (
+        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
+          {row.original.gallons}
+        </span>
+      );
+    },
+  },
+  {
+    id: "cost",
+    accessorKey: "cost",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant={"ghost"}
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Cost
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelTransactionId);
+      return (
+        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
+          {formatCurrency(row.original.cost)}
         </span>
       );
     },
