@@ -251,28 +251,9 @@ export function getFuelExpenseDiscrepancies(
         (transaction) => {
           // Check if this transaction exists in fuel report
           const matchingFuelTransaction =
-            matchingFuelReport.fuelTransactions.find((fuelTransaction) => {
-              // Compare transaction date and amount
-              const transactionDate = new Date(transaction.transactionDate);
-              const fuelTransactionDate = new Date(fuelTransaction.date);
-
-              // Primary comparison: date and cost
-              const dateAndCostMatch =
-                transactionDate.toDateString() ===
-                  fuelTransactionDate.toDateString() &&
-                Math.abs(transaction.billingAmount - fuelTransaction.cost) <
-                  0.01;
-
-              // Secondary comparison: date and fuel quantity (if both have fuel data)
-              const dateAndQuantityMatch =
-                transactionDate.toDateString() ===
-                  fuelTransactionDate.toDateString() &&
-                transaction.fuelQuantity !== undefined &&
-                Math.abs(transaction.fuelQuantity - fuelTransaction.gallons) <
-                  0.01;
-
-              return dateAndCostMatch || dateAndQuantityMatch;
-            });
+            matchingFuelReport.fuelTransactions.find((fuelTransaction) =>
+              isTransactionMatch(fuelTransaction, transaction)
+            );
 
           // Return true if no matching fuel transaction was found (meaning it's missing)
           return !matchingFuelTransaction;
@@ -301,25 +282,9 @@ export function getMissingFuelTransactions(
   const missingTransactions: Transaction[] = [];
 
   for (const transaction of transactions) {
-    const matchingFuelTransaction = fuelTransactions.find((fuelTransaction) => {
-      const transactionDate = new Date(
-        transaction.transactionDate
-      ).toDateString();
-      const fuelTransactionDate = new Date(fuelTransaction.date).toDateString();
-
-      // Primary comparison: date and cost
-      const dateAndCostMatch =
-        transactionDate === fuelTransactionDate &&
-        Math.abs(fuelTransaction.cost - transaction.billingAmount) < 0.01;
-
-      // Secondary comparison: date and fuel quantity (if both have fuel data)
-      const dateAndQuantityMatch =
-        transactionDate === fuelTransactionDate &&
-        transaction.fuelQuantity !== undefined &&
-        Math.abs(fuelTransaction.gallons - transaction.fuelQuantity) < 0.01;
-
-      return dateAndCostMatch || dateAndQuantityMatch;
-    });
+    const matchingFuelTransaction = fuelTransactions.find((fuelTransaction) =>
+      isTransactionMatch(fuelTransaction, transaction)
+    );
 
     if (!matchingFuelTransaction) {
       missingTransactions.push(transaction);
@@ -344,6 +309,28 @@ export function getMissingFuelTransactions(
   return filteredMissingTransactions;
 }
 
+// Helper function to check if a fuel transaction matches an expense transaction
+function isTransactionMatch(
+  fuelTransaction: FuelTransaction,
+  transaction: Transaction
+): boolean {
+  const transactionDate = new Date(transaction.transactionDate).toDateString();
+  const fuelTransactionDate = new Date(fuelTransaction.date).toDateString();
+
+  // Primary comparison: date and cost
+  const dateAndCostMatch =
+    transactionDate === fuelTransactionDate &&
+    Math.abs(fuelTransaction.cost - transaction.billingAmount) < 0.01;
+
+  // Secondary comparison: date and fuel quantity (if both have fuel data)
+  const dateAndQuantityMatch =
+    transactionDate === fuelTransactionDate &&
+    transaction.fuelQuantity !== undefined &&
+    Math.abs(fuelTransaction.gallons - transaction.fuelQuantity) < 0.01;
+
+  return dateAndCostMatch || dateAndQuantityMatch;
+}
+
 export function getMatchingFuelTransactions(
   fuelTransactions: FuelTransaction[],
   transactions: Transaction[]
@@ -351,25 +338,9 @@ export function getMatchingFuelTransactions(
   const matchingFuelTransactionIds = new Set<string>();
 
   for (const fuelTransaction of fuelTransactions) {
-    const matchingTransaction = transactions.find((transaction) => {
-      const transactionDate = new Date(
-        transaction.transactionDate
-      ).toDateString();
-      const fuelTransactionDate = new Date(fuelTransaction.date).toDateString();
-
-      // Primary comparison: date and cost
-      const dateAndCostMatch =
-        transactionDate === fuelTransactionDate &&
-        Math.abs(fuelTransaction.cost - transaction.billingAmount) < 0.01;
-
-      // Secondary comparison: date and fuel quantity (if both have fuel data)
-      const dateAndQuantityMatch =
-        transactionDate === fuelTransactionDate &&
-        transaction.fuelQuantity !== undefined &&
-        Math.abs(fuelTransaction.gallons - transaction.fuelQuantity) < 0.01;
-
-      return dateAndCostMatch || dateAndQuantityMatch;
-    });
+    const matchingTransaction = transactions.find((transaction) =>
+      isTransactionMatch(fuelTransaction, transaction)
+    );
 
     if (matchingTransaction) {
       // Create a unique identifier for the fuel transaction
@@ -388,25 +359,9 @@ export function getMatchingTransactions(
   const matchingTransactionIds = new Set<string>();
 
   for (const transaction of transactions) {
-    const matchingFuelTransaction = fuelTransactions.find((fuelTransaction) => {
-      const transactionDate = new Date(
-        transaction.transactionDate
-      ).toDateString();
-      const fuelTransactionDate = new Date(fuelTransaction.date).toDateString();
-
-      // Primary comparison: date and cost
-      const dateAndCostMatch =
-        transactionDate === fuelTransactionDate &&
-        Math.abs(fuelTransaction.cost - transaction.billingAmount) < 0.01;
-
-      // Secondary comparison: date and fuel quantity (if both have fuel data)
-      const dateAndQuantityMatch =
-        transactionDate === fuelTransactionDate &&
-        transaction.fuelQuantity !== undefined &&
-        Math.abs(fuelTransaction.gallons - transaction.fuelQuantity) < 0.01;
-
-      return dateAndCostMatch || dateAndQuantityMatch;
-    });
+    const matchingFuelTransaction = fuelTransactions.find((fuelTransaction) =>
+      isTransactionMatch(fuelTransaction, transaction)
+    );
 
     if (matchingFuelTransaction) {
       matchingTransactionIds.add(transaction.transactionReference);
