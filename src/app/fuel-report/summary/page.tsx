@@ -1,13 +1,55 @@
-import { getFuelCsvData } from "@/lib/read-fuel-csv";
-import { createFuelSummaryData } from "@/lib/data";
+"use client";
+
 import { FuelSummaryTable } from "@/components/tables/fuel-summary-table";
+import { FuelSummaryExportButton } from "@/components/fuel-summary-export-button";
+import { useEffect, useState } from "react";
+import { FuelSummaryData } from "@/lib/types";
 
-export default async function FuelSummaryPage() {
-  // Load fuel data
-  const fuelData = await getFuelCsvData();
+export default function FuelSummaryPage() {
+  const [summaryData, setSummaryData] = useState<FuelSummaryData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Generate summary data
-  const summaryData = createFuelSummaryData(fuelData);
+  useEffect(() => {
+    async function loadData() {
+      try {
+        // Fetch data from API endpoint instead of direct file access
+        const response = await fetch("/api/fuel-summary");
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data: ${response.statusText}`);
+        }
+
+        const summary = await response.json();
+        setSummaryData(summary);
+      } catch (error) {
+        console.error("Error loading fuel data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <main className="container mx-auto py-10">
+        <div className="text-center">
+          <p>Loading fuel summary...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!summaryData) {
+    return (
+      <main className="container mx-auto py-10">
+        <div className="text-center">
+          <p>Error loading fuel data.</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="container mx-auto py-10">
@@ -31,6 +73,13 @@ export default async function FuelSummaryPage() {
                 Total gallons consumed per state with breakdown by truck ID
               </p>
             </div>
+            <FuelSummaryExportButton
+              summaryData={summaryData}
+              filename={`fuel_summary_${
+                new Date().toISOString().split("T")[0]
+              }.csv`}
+              label="Export Summary"
+            />
           </div>
 
           <FuelSummaryTable summaryData={summaryData} />

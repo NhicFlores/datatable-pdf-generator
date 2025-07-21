@@ -1,4 +1,4 @@
-import { FuelTransaction, Transaction } from "./types";
+import { FuelTransaction, Transaction, FuelSummaryData } from "./types";
 
 // Generic CSV download function
 export function downloadCSV(
@@ -136,6 +136,55 @@ export function downloadExpenseTransactionsCSV(
   }));
 
   const defaultFilename = `missing_fuel_transactions_${
+    new Date().toISOString().split("T")[0]
+  }.csv`;
+  downloadCSV(formattedData, filename || defaultFilename, headers);
+}
+
+// Function to export fuel summary data
+export function downloadFuelSummaryCSV(
+  summaryData: FuelSummaryData,
+  filename?: string
+) {
+  const { summaryRows, uniqueTruckIds } = summaryData;
+
+  // Create headers: State, Total Gallons, then each truck ID
+  const headers = ["state", "totalGallons", ...uniqueTruckIds];
+
+  // Format data for CSV export
+  const formattedData = summaryRows.map((row) => {
+    const baseData = {
+      state: row.state,
+      totalGallons: row.totalGallons.toFixed(2),
+    };
+
+    // Add gallons for each truck
+    const truckData = uniqueTruckIds.reduce((acc, truckId) => {
+      acc[truckId] = row.truckGallons[truckId]?.toFixed(2) || "0.00";
+      return acc;
+    }, {} as Record<string, string>);
+
+    return { ...baseData, ...truckData };
+  });
+
+  // Add totals row
+  const totalGallons = summaryRows.reduce((sum, row) => sum + row.totalGallons, 0);
+  const truckTotals = uniqueTruckIds.reduce((totals, truckId) => {
+    totals[truckId] = summaryRows
+      .reduce((sum, row) => sum + (row.truckGallons[truckId] || 0), 0)
+      .toFixed(2);
+    return totals;
+  }, {} as Record<string, string>);
+
+  const totalsRow = {
+    state: "TOTAL",
+    totalGallons: totalGallons.toFixed(2),
+    ...truckTotals,
+  };
+
+  formattedData.push(totalsRow);
+
+  const defaultFilename = `fuel_summary_${
     new Date().toISOString().split("T")[0]
   }.csv`;
   downloadCSV(formattedData, filename || defaultFilename, headers);
