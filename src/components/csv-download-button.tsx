@@ -39,7 +39,11 @@ export function CSVDownloadButton({
     // Check if it's fuel transactions or expense transactions
     if ("vehicleId" in data[0]) {
       // It's fuel transactions
-      downloadFuelTransactionsCSV(data as FuelTransaction[], driverName, filename);
+      downloadFuelTransactionsCSV(
+        data as FuelTransaction[],
+        driverName,
+        filename
+      );
     } else {
       // It's expense transactions
       downloadExpenseTransactionsCSV(data as Transaction[], filename);
