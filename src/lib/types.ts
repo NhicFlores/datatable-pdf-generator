@@ -63,14 +63,14 @@ export type Transaction = {
   odometerReading?: number; // parse into number
   fuelQuantity?: number;
   fuelType?: string;
-  fuelUnitCost?: number; // parse into number 
+  fuelUnitCost?: number; // parse into number
   fuelUnitOfMeasure?: string;
 };
 
 export type FuelStatement = {
   cardHolderName: string;
   transactions: Transaction[];
-}
+};
 
 export type Fuel_CSV_Row = {
   vehicleId: string;
@@ -106,6 +106,17 @@ export type FuelReport = {
 export type FuelExpenseDiscrepancy = {
   driver: string;
   Transactions: Transaction[];
+};
+
+export type FuelSummaryRow = {
+  state: string;
+  totalGallons: number;
+  truckGallons: { [truckId: string]: number };
+};
+
+export type FuelSummaryData = {
+  summaryRows: FuelSummaryRow[];
+  uniqueTruckIds: string[];
 };
 
 export const column_names = [

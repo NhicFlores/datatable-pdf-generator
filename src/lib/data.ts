@@ -7,6 +7,8 @@ import {
   FuelTransaction,
   Transaction,
   FuelStatement,
+  FuelSummaryData,
+  FuelSummaryRow,
 } from "./types";
 import { cleanName } from "./utils";
 
@@ -369,4 +371,49 @@ export function getMatchingTransactions(
   }
 
   return matchingTransactionIds;
+}
+
+export function createFuelSummaryData(data: Fuel_CSV_Row[]): FuelSummaryData {
+  // Get all unique truck IDs and states
+  const uniqueTruckIds = [...new Set(data.map((row) => row.vehicleId))].sort();
+  const uniqueStates = [...new Set(data.map((row) => row.sellerState))].sort();
+
+  // Create summary rows for each state
+  const summaryRows: FuelSummaryRow[] = uniqueStates.map((state) => {
+    // filter data for the current state 
+    const stateData = data.filter((row) => row.sellerState === state);
+
+    // Calculate total gallons for this state
+    const totalGallons = stateData.reduce(
+      (sum, row) => sum + (row.gallons || 0),
+      0
+    );
+
+    // Calculate gallons per truck ID for this state
+    const truckGallons: { [truckId: string]: number } = {};
+
+    // Initialize all truck IDs with 0
+    uniqueTruckIds.forEach((truckId) => {
+      truckGallons[truckId] = 0;
+    });
+
+    // Sum gallons for each truck in this state
+    stateData.forEach((row) => {
+      if (row.vehicleId && row.gallons) {
+        truckGallons[row.vehicleId] =
+          (truckGallons[row.vehicleId] || 0) + row.gallons;
+      }
+    });
+
+    return {
+      state,
+      totalGallons,
+      truckGallons,
+    };
+  });
+
+  return {
+    summaryRows,
+    uniqueTruckIds,
+  };
 }
