@@ -1,11 +1,12 @@
 import { Transaction } from "@/lib/types";
 import { formatCurrency, formatDateStringToLocal } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Plus } from "lucide-react";
 import { Button } from "../ui/button";
 
 export const createFuelStatementColumns = (
-  matchingIds: Set<string>
+  matchingIds: Set<string>,
+  onAddToFuelReport?: (transaction: Transaction) => void
 ): ColumnDef<Transaction>[] => [
   {
     id: "workflowStatus",
@@ -199,6 +200,34 @@ export const createFuelStatementColumns = (
           </div>
           <div>{formatCurrency(row.original.lineAmount)}</div>
         </div>
+      );
+    },
+  },
+  // Add to Fuel Report Action Column
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      const isMatched = matchingIds.has(row.original.transactionReference);
+      
+      if (isMatched) {
+        return (
+          <span className="text-green-600 text-sm">
+            Already Matched
+          </span>
+        );
+      }
+
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onAddToFuelReport?.(row.original)}
+          className="flex items-center gap-1"
+        >
+          <Plus className="h-3 w-3" />
+          Add to Fuel Report
+        </Button>
       );
     },
   },

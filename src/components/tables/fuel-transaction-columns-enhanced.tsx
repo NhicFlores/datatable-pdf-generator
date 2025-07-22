@@ -4,9 +4,11 @@ import { formatCurrency, formatDateStringToLocal } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "../ui/button";
+import { EditableGallonsCell } from "./editable-gallons-cell";
 
 export const createFuelTransactionColumns = (
-  matchingIds: Set<string>
+  matchingIds: Set<string>,
+  onUpdateGallons?: (transactionId: string, gallons: number) => void
 ): ColumnDef<FuelTransaction>[] => [
   {
     id: "vehicleId",
@@ -174,6 +176,18 @@ export const createFuelTransactionColumns = (
     cell: ({ row }) => {
       const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
       const isMatched = matchingIds.has(fuelTransactionId);
+      
+      if (onUpdateGallons) {
+        return (
+          <EditableGallonsCell
+            value={row.original.gallons}
+            transactionId={fuelTransactionId}
+            onUpdate={onUpdateGallons}
+            isMatched={isMatched}
+          />
+        );
+      }
+      
       return (
         <span className={isMatched ? "text-green-600 font-semibold" : ""}>
           {row.original.gallons}

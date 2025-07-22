@@ -10,6 +10,8 @@ import {
   Fuel_CSV_Row,
   FuelReport,
   FuelStatement,
+  FuelTransaction,
+  Transaction,
 } from "@/lib/types";
 import React, { createContext, useContext } from "react";
 
@@ -23,6 +25,8 @@ interface StatementsContextType {
   fuelStatements: FuelStatement[];
   selectedFuelStatement: FuelStatement | null;
   setSelectedFuelStatement: (fuelStatement: FuelStatement | null) => void;
+  addTransactionToFuelReport: (transaction: Transaction) => void;
+  updateFuelTransaction: (transactionId: string, gallons: number) => void;
 }
 
 // initialize context
@@ -62,6 +66,17 @@ export const useFuelStatements = () => {
   };
 };
 
+// custom hook for fuel report actions
+export const useFuelReportActions = () => {
+  const context = useContext(StatementsContext);
+  if (!context)
+    throw new Error("useFuelReportActions must be used within StatementsProvider");
+  return {
+    addTransactionToFuelReport: context.addTransactionToFuelReport,
+    updateFuelTransaction: context.updateFuelTransaction,
+  };
+};
+
 interface StatementsProviderProps {
   data: Expense_CSV_Row[];
   fuelData: Fuel_CSV_Row[];
@@ -75,7 +90,9 @@ export const StatementsProvider = ({
   children,
 }: StatementsProviderProps) => {
   const statements = createStatements(data);
-  const fuelReports = createFuelReports(fuelData);
+  const [fuelReports, setFuelReports] = React.useState<FuelReport[]>(
+    createFuelReports(fuelData)
+  );
   const fuelStatements = createFuelStatements(data);
   const [selectedStatement, setSelectedStatement] =
     React.useState<Statement | null>(null);
@@ -83,6 +100,87 @@ export const StatementsProvider = ({
     React.useState<FuelReport | null>(null);
   const [selectedFuelStatement, setSelectedFuelStatement] =
     React.useState<FuelStatement | null>(null);
+
+  const addTransactionToFuelReport = React.useCallback((transaction: Transaction) => {
+    if (!selectedFuelReport) return;
+
+    // Create a new fuel transaction from the expense transaction
+    const newFuelTransaction: FuelTransaction = {
+      vehicleId: selectedFuelReport.fuelTransactions[0]?.vehicleId || "Unknown", // Use first vehicle ID as default
+      date: transaction.transactionDate,
+      invoiceNumber: `INV-${Date.now()}`, // Generate a unique invoice number
+      gallons: 0, // Default to 0, will be editable
+      cost: transaction.billingAmount,
+      sellerState: transaction.supplierState,
+      sellerName: transaction.supplierName,
+      odometer: 0, // Default value
+      receipt: "", // Empty for now
+    };
+
+    // Update the fuel reports
+    setFuelReports(prevReports => {
+      const updatedReports = prevReports.map(report => {
+        if (report.driver === selectedFuelReport.driver && 
+            report.vehicleBranch === selectedFuelReport.vehicleBranch) {
+          return {
+            ...report,
+            fuelTransactions: [...report.fuelTransactions, newFuelTransaction]
+          };
+        }
+        return report;
+      });
+      return updatedReports;
+    });
+
+    // Update the selected fuel report
+    setSelectedFuelReport(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        fuelTransactions: [...prev.fuelTransactions, newFuelTransaction]
+      };
+    });
+  }, [selectedFuelReport]);
+
+  const updateFuelTransaction = React.useCallback((transactionId: string, gallons: number) => {
+    if (!selectedFuelReport) return;
+
+    // Update the fuel reports
+    setFuelReports(prevReports => {
+      const updatedReports = prevReports.map(report => {
+        if (report.driver === selectedFuelReport.driver && 
+            report.vehicleBranch === selectedFuelReport.vehicleBranch) {
+          return {
+            ...report,
+            fuelTransactions: report.fuelTransactions.map(transaction => {
+              const txId = `${transaction.vehicleId}-${transaction.date}-${transaction.invoiceNumber}`;
+              if (txId === transactionId) {
+                return { ...transaction, gallons };
+              }
+              return transaction;
+            })
+          };
+        }
+        return report;
+      });
+      return updatedReports;
+    });
+
+    // Update the selected fuel report
+    setSelectedFuelReport(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        fuelTransactions: prev.fuelTransactions.map(transaction => {
+          const txId = `${transaction.vehicleId}-${transaction.date}-${transaction.invoiceNumber}`;
+          if (txId === transactionId) {
+            return { ...transaction, gallons };
+          }
+          return transaction;
+        })
+      };
+    });
+  }, [selectedFuelReport]);
 
   return (
     <StatementsContext.Provider
@@ -96,6 +194,8 @@ export const StatementsProvider = ({
         fuelStatements,
         selectedFuelStatement,
         setSelectedFuelStatement,
+        addTransactionToFuelReport,
+        updateFuelTransaction,
       }}
     >
       {children}

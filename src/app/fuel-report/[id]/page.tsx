@@ -1,5 +1,5 @@
 "use client";
-import { useFuelReports, useFuelStatements } from "@/components/data-context";
+import { useFuelReports, useFuelStatements, useFuelReportActions } from "@/components/data-context";
 import { DataTable } from "@/components/tables/data-table";
 import { createFuelStatementColumns } from "@/components/tables/fuel-statement-columns-enhanced";
 import { createFuelTransactionColumns } from "@/components/tables/fuel-transaction-columns-enhanced";
@@ -15,6 +15,7 @@ import React, { useMemo } from "react";
 const FuelReportPage = () => {
   const { selectedFuelReport } = useFuelReports();
   const { selectedFuelStatement } = useFuelStatements();
+  const { addTransactionToFuelReport, updateFuelTransaction } = useFuelReportActions();
 
   const fuelTransactionDiscrepancies = getMissingFuelTransactions(
     selectedFuelReport?.fuelTransactions || [],
@@ -40,13 +41,13 @@ const FuelReportPage = () => {
 
   // Create enhanced columns with matching information
   const enhancedFuelStatementColumns = useMemo(
-    () => createFuelStatementColumns(matchingTransactionIds),
-    [matchingTransactionIds]
+    () => createFuelStatementColumns(matchingTransactionIds, addTransactionToFuelReport),
+    [matchingTransactionIds, addTransactionToFuelReport]
   );
 
   const enhancedFuelTransactionColumns = useMemo(
-    () => createFuelTransactionColumns(matchingFuelTransactionIds),
-    [matchingFuelTransactionIds]
+    () => createFuelTransactionColumns(matchingFuelTransactionIds, updateFuelTransaction),
+    [matchingFuelTransactionIds, updateFuelTransaction]
   );
 
   return (
