@@ -148,19 +148,81 @@ export function downloadFuelSummaryCSV(
 ) {
   const { summaryRows, uniqueTruckIds } = summaryData;
 
+  // List of all 50 US states in alphabetical order
+  const allStates = [
+    "Alabama",
+    "Alaska",
+    "Arizona",
+    "Arkansas",
+    "California",
+    "Colorado",
+    "Connecticut",
+    "Delaware",
+    "Florida",
+    "Georgia",
+    "Hawaii",
+    "Idaho",
+    "Illinois",
+    "Indiana",
+    "Iowa",
+    "Kansas",
+    "Kentucky",
+    "Louisiana",
+    "Maine",
+    "Maryland",
+    "Massachusetts",
+    "Michigan",
+    "Minnesota",
+    "Mississippi",
+    "Missouri",
+    "Montana",
+    "Nebraska",
+    "Nevada",
+    "New Hampshire",
+    "New Jersey",
+    "New Mexico",
+    "New York",
+    "North Carolina",
+    "North Dakota",
+    "Ohio",
+    "Oklahoma",
+    "Oregon",
+    "Pennsylvania",
+    "Rhode Island",
+    "South Carolina",
+    "South Dakota",
+    "Tennessee",
+    "Texas",
+    "Utah",
+    "Vermont",
+    "Virginia",
+    "Washington",
+    "West Virginia",
+    "Wisconsin",
+    "Wyoming",
+  ];
+
   // Create headers: State, Total Gallons, then each truck ID
   const headers = ["state", "totalGallons", ...uniqueTruckIds];
 
-  // Format data for CSV export
-  const formattedData = summaryRows.map((row) => {
+  // Create a map of existing summary data for quick lookup
+  const summaryMap = new Map(summaryRows.map((row) => [row.state, row]));
+
+  // Format data for CSV export - include all states
+  const formattedData = allStates.map((state) => {
+    const existingRow = summaryMap.get(state);
+
     const baseData = {
-      state: row.state,
-      totalGallons: row.totalGallons.toFixed(2),
+      state: state,
+      totalGallons: existingRow ? existingRow.totalGallons.toFixed(2) : "0.00",
     };
 
     // Add gallons for each truck
     const truckData = uniqueTruckIds.reduce((acc, truckId) => {
-      acc[truckId] = row.truckGallons[truckId]?.toFixed(2) || "0.00";
+      acc[truckId] =
+        existingRow && existingRow.truckGallons[truckId]
+          ? existingRow.truckGallons[truckId].toFixed(2)
+          : "0.00";
       return acc;
     }, {} as Record<string, string>);
 
@@ -168,7 +230,10 @@ export function downloadFuelSummaryCSV(
   });
 
   // Add totals row
-  const totalGallons = summaryRows.reduce((sum, row) => sum + row.totalGallons, 0);
+  const totalGallons = summaryRows.reduce(
+    (sum, row) => sum + row.totalGallons,
+    0
+  );
   const truckTotals = uniqueTruckIds.reduce((totals, truckId) => {
     totals[truckId] = summaryRows
       .reduce((sum, row) => sum + (row.truckGallons[truckId] || 0), 0)
