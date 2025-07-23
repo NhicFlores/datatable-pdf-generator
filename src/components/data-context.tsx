@@ -124,10 +124,7 @@ export const StatementsProvider = ({
       // Update the fuel reports
       setFuelReports((prevReports) => {
         const updatedReports = prevReports.map((report) => {
-          if (
-            report.driver === selectedFuelReport.driver &&
-            report.vehicleBranch === selectedFuelReport.vehicleBranch
-          ) {
+          if (report.driver === selectedFuelReport.driver) {
             return {
               ...report,
               fuelTransactions: [
@@ -160,10 +157,7 @@ export const StatementsProvider = ({
       // Update the fuel reports
       setFuelReports((prevReports) => {
         const updatedReports = prevReports.map((report) => {
-          if (
-            report.driver === selectedFuelReport.driver &&
-            report.vehicleBranch === selectedFuelReport.vehicleBranch
-          ) {
+          if (report.driver === selectedFuelReport.driver) {
             return {
               ...report,
               fuelTransactions: report.fuelTransactions.map((transaction) => {

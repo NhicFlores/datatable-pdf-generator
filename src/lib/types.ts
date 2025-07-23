@@ -99,7 +99,8 @@ export type FuelTransaction = {
 
 export type FuelReport = {
   driver: string;
-  vehicleBranch: string;
+  vehicleBranches: string[];
+  vehicleIds: string[];
   fuelTransactions: FuelTransaction[];
 };
 

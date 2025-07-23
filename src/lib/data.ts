@@ -187,14 +187,10 @@ export function createFuelReports(data: Fuel_CSV_Row[]): FuelReport[] {
     (acc: FuelReport[], row: Fuel_CSV_Row) => {
       const { driver, vehicleId } = row;
 
-      const vehicleBranch = vehicleId ? vehicleId.split("-")[0] : "";
-
-      const existingReport = acc.find(
-        (report) =>
-          report.driver === driver && report.vehicleBranch === vehicleBranch
-      );
+      const existingReport = acc.find((report) => report.driver === driver);
 
       if (existingReport) {
+        // Add the new fuel transaction
         existingReport.fuelTransactions.push({
           vehicleId: row.vehicleId,
           date: row.date,
@@ -206,10 +202,29 @@ export function createFuelReports(data: Fuel_CSV_Row[]): FuelReport[] {
           odometer: row.odometer || 0,
           receipt: row.receipt,
         });
+
+        // Update vehicleBranches array with unique branch prefixes
+        if (vehicleId) {
+          const branch = vehicleId.split("-")[0];
+          if (branch && !existingReport.vehicleBranches.includes(branch)) {
+            existingReport.vehicleBranches.push(branch);
+          }
+        }
+
+        // Update vehicleIds array with unique vehicle IDs
+        if (vehicleId && !existingReport.vehicleIds.includes(vehicleId)) {
+          existingReport.vehicleIds.push(vehicleId);
+        }
       } else {
+        // Extract branch prefix and create initial arrays
+        const branch = vehicleId ? vehicleId.split("-")[0] : "";
+        const vehicleBranches = branch ? [branch] : [];
+        const vehicleIds = vehicleId ? [vehicleId] : [];
+
         acc.push({
           driver,
-          vehicleBranch,
+          vehicleBranches,
+          vehicleIds,
           fuelTransactions: [
             {
               vehicleId: row.vehicleId,
@@ -380,7 +395,7 @@ export function createFuelSummaryData(data: Fuel_CSV_Row[]): FuelSummaryData {
 
   // Create summary rows for each state
   const summaryRows: FuelSummaryRow[] = uniqueStates.map((state) => {
-    // filter data for the current state 
+    // filter data for the current state
     const stateData = data.filter((row) => row.sellerState === state);
 
     // Calculate total gallons for this state
