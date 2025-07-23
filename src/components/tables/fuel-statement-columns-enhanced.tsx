@@ -209,13 +209,9 @@ export const createFuelStatementColumns = (
     header: "Actions",
     cell: ({ row }) => {
       const isMatched = matchingIds.has(row.original.transactionReference);
-      
+
       if (isMatched) {
-        return (
-          <span className="text-green-600 text-sm">
-            Already Matched
-          </span>
-        );
+        return <span className="text-green-600 text-sm">Already Matched</span>;
       }
 
       return (

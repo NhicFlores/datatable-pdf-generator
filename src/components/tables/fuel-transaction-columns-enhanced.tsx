@@ -25,7 +25,7 @@ export const createFuelTransactionColumns = (
       );
     },
     cell: ({ row }) => {
-        // console.log("date", row.original.date);
+      // console.log("date", row.original.date);
       const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
       const isMatched = matchingIds.has(fuelTransactionId);
       return (
@@ -81,7 +81,7 @@ export const createFuelTransactionColumns = (
       const sellerState = row.original.sellerState;
       return (
         <span className={isMatched ? "text-green-600 font-semibold" : ""}>
-         {sellerName}, {sellerState}
+          {sellerName}, {sellerState}
         </span>
       );
     },
@@ -159,7 +159,7 @@ export const createFuelTransactionColumns = (
       );
     },
   },
-    {
+  {
     id: "gallons",
     accessorKey: "gallons",
     header: ({ column }) => {
@@ -176,7 +176,7 @@ export const createFuelTransactionColumns = (
     cell: ({ row }) => {
       const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
       const isMatched = matchingIds.has(fuelTransactionId);
-      
+
       if (onUpdateGallons) {
         return (
           <EditableGallonsCell
@@ -187,7 +187,7 @@ export const createFuelTransactionColumns = (
           />
         );
       }
-      
+
       return (
         <span className={isMatched ? "text-green-600 font-semibold" : ""}>
           {row.original.gallons}

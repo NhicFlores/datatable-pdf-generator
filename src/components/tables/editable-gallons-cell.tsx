@@ -10,11 +10,11 @@ interface EditableGallonsCellProps {
   isMatched: boolean;
 }
 
-export function EditableGallonsCell({ 
-  value, 
-  transactionId, 
-  onUpdate, 
-  isMatched 
+export function EditableGallonsCell({
+  value,
+  transactionId,
+  onUpdate,
+  isMatched,
 }: EditableGallonsCellProps) {
   const [gallons, setGallons] = useState(value.toString());
   const [isEditing, setIsEditing] = useState(value === 0); // Auto-edit if gallons is 0
@@ -30,10 +30,10 @@ export function EditableGallonsCell({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleBlur();
     }
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       setGallons(value.toString());
       setIsEditing(false);
     }
@@ -57,7 +57,7 @@ export function EditableGallonsCell({
   }
 
   return (
-    <span 
+    <span
       className={`cursor-pointer hover:bg-gray-100 px-2 py-1 rounded ${
         isMatched ? "text-green-600 font-semibold" : ""
       } ${value === 0 ? "text-red-500 font-semibold" : ""}`}
