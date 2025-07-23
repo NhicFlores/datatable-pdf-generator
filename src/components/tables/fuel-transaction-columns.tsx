@@ -4,8 +4,12 @@ import { formatCurrency, formatDateStringToLocal } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "../ui/button";
+import { EditableGallonsCell } from "./editable-gallons-cell";
 
-export const FuelTransactionColumns: ColumnDef<FuelTransaction>[] = [
+export const createFuelTransactionColumns = (
+  matchingIds: Set<string>,
+  onUpdateGallons?: (transactionId: string, gallons: number) => void
+): ColumnDef<FuelTransaction>[] => [
   {
     id: "vehicleId",
     accessorKey: "vehicleId",
@@ -21,7 +25,14 @@ export const FuelTransactionColumns: ColumnDef<FuelTransaction>[] = [
       );
     },
     cell: ({ row }) => {
-      return <span>{row.original.vehicleId}</span>;
+      // console.log("date", row.original.date);
+      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelTransactionId);
+      return (
+        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
+          {row.original.vehicleId}
+        </span>
+      );
     },
   },
   {
@@ -39,11 +50,16 @@ export const FuelTransactionColumns: ColumnDef<FuelTransaction>[] = [
       );
     },
     cell: ({ row }) => {
-        const date = formatDateStringToLocal(row.original.date)
-      return <span>{date}</span>;
+      const date = formatDateStringToLocal(row.original.date);
+      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelTransactionId);
+      return (
+        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
+          {date}
+        </span>
+      );
     },
   },
-
   {
     id: "sellerState",
     accessorKey: "sellerState",
@@ -53,16 +69,19 @@ export const FuelTransactionColumns: ColumnDef<FuelTransaction>[] = [
           variant={"ghost"}
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Seller / State
+          Supplier / State
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => {
-      const name = row.original.sellerName;
+      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelTransactionId);
+      const sellerName = row.original.sellerName;
+      const sellerState = row.original.sellerState;
       return (
-        <span>
-          {name}, {row.original.sellerState}
+        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
+          {sellerName}, {sellerState}
         </span>
       );
     },
@@ -82,9 +101,16 @@ export const FuelTransactionColumns: ColumnDef<FuelTransaction>[] = [
       );
     },
     cell: ({ row }) => {
-      return <span>{row.original.invoiceNumber}</span>;
+      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelTransactionId);
+      return (
+        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
+          {row.original.invoiceNumber}
+        </span>
+      );
     },
   },
+
   {
     id: "odometer",
     accessorKey: "odometer",
@@ -100,7 +126,13 @@ export const FuelTransactionColumns: ColumnDef<FuelTransaction>[] = [
       );
     },
     cell: ({ row }) => {
-      return <span>{row.original.odometer}</span>;
+      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelTransactionId);
+      return (
+        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
+          {row.original.odometer.toLocaleString()}
+        </span>
+      );
     },
   },
   {
@@ -118,7 +150,13 @@ export const FuelTransactionColumns: ColumnDef<FuelTransaction>[] = [
       );
     },
     cell: ({ row }) => {
-      return <span>{row.original.receipt ? "Yes" : "No"}</span>;
+      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelTransactionId);
+      return (
+        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
+          {row.original.receipt ? "Yes" : "No"}
+        </span>
+      );
     },
   },
   {
@@ -136,7 +174,25 @@ export const FuelTransactionColumns: ColumnDef<FuelTransaction>[] = [
       );
     },
     cell: ({ row }) => {
-      return <span>{row.original.gallons}</span>;
+      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelTransactionId);
+
+      if (onUpdateGallons) {
+        return (
+          <EditableGallonsCell
+            value={row.original.gallons}
+            transactionId={fuelTransactionId}
+            onUpdate={onUpdateGallons}
+            isMatched={isMatched}
+          />
+        );
+      }
+
+      return (
+        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
+          {row.original.gallons}
+        </span>
+      );
     },
   },
   {
@@ -148,13 +204,19 @@ export const FuelTransactionColumns: ColumnDef<FuelTransaction>[] = [
           variant={"ghost"}
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Total
+          Cost
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => {
-      return <span>{formatCurrency(row.original.cost)}</span>;
+      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelTransactionId);
+      return (
+        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
+          {formatCurrency(row.original.cost)}
+        </span>
+      );
     },
   },
 ];

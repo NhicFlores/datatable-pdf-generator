@@ -1,10 +1,36 @@
 import { Transaction } from "@/lib/types";
 import { formatCurrency, formatDateStringToLocal } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Plus } from "lucide-react";
 import { Button } from "../ui/button";
 
-export const FuelStatementColumns: ColumnDef<Transaction>[] = [
+export const createFuelStatementColumns = (
+  matchingIds: Set<string>,
+  onAddToFuelReport?: (transaction: Transaction) => void
+): ColumnDef<Transaction>[] => [
+  {
+    id: "workflowStatus",
+    accessorKey: "workflowStatus",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant={"ghost"}
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Workflow Status
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const isMatched = matchingIds.has(row.original.transactionReference);
+      return (
+        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
+          {row.original.workflowStatus}
+        </span>
+      );
+    },
+  },
   {
     id: "transactionDate",
     accessorKey: "transactionDate",
@@ -12,7 +38,6 @@ export const FuelStatementColumns: ColumnDef<Transaction>[] = [
       return (
         <Button
           variant={"ghost"}
-          
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           <div>
@@ -28,9 +53,10 @@ export const FuelStatementColumns: ColumnDef<Transaction>[] = [
         row.original.transactionDate
       );
       const postingDate = formatDateStringToLocal(row.original.postingDate);
+      const isMatched = matchingIds.has(row.original.transactionReference);
 
       return (
-        <div>
+        <div className={isMatched ? "text-green-600 font-semibold" : ""}>
           <div className="font-bold">{transactionDate}</div>
           <div>{postingDate}</div>
         </div>
@@ -38,33 +64,32 @@ export const FuelStatementColumns: ColumnDef<Transaction>[] = [
     },
   },
   {
-    id: "supplierName",
-    accessorKey: "supplierName",
+    id: "supplierState",
+    accessorKey: "supplierState",
     header: ({ column }) => {
       return (
         <Button
           variant={"ghost"}
-          
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Supplier
+          Supplier / State
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => {
-      const supplierName = row.original.supplierName;
-      const supplierCity = row.original.supplierCity;
-      const supplierState = row.original.supplierState;
-      const supplierCityState = `${supplierCity}, ${supplierState}`;
-      // const supplierCityStateFormatted = supplierCityState.replace(/, /g, ",");
+      const isMatched = matchingIds.has(row.original.transactionReference);
       return (
-        <div>
-          {supplierName}, {supplierCityState}
+        <div className={isMatched ? "text-green-600 font-semibold" : ""}>
+          <div className="font-bold">{row.original.supplierName}</div>
+          <div>
+            {row.original.supplierCity}, {row.original.supplierState}
+          </div>
         </div>
       );
     },
   },
+
   {
     id: "glCode",
     accessorKey: "glCode",
@@ -72,17 +97,26 @@ export const FuelStatementColumns: ColumnDef<Transaction>[] = [
       return (
         <Button
           variant={"ghost"}
-          
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          GL Code
+          <div>
+            <div>GL Code</div>
+            <div>GL Description</div>
+          </div>
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => {
-      const glCode = row.original.glCode;
-      return <div>{glCode}</div>;
+      const isMatched = matchingIds.has(row.original.transactionReference);
+      return (
+        <div className={isMatched ? "text-green-600 font-semibold" : ""}>
+          <div className="font-bold">{row.original.glCode}</div>
+          <div className="text-sm text-gray-600">
+            {row.original.glCodeDescription}
+          </div>
+        </div>
+      );
     },
   },
   {
@@ -92,7 +126,6 @@ export const FuelStatementColumns: ColumnDef<Transaction>[] = [
       return (
         <Button
           variant={"ghost"}
-          
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Reason for Expense
@@ -101,60 +134,11 @@ export const FuelStatementColumns: ColumnDef<Transaction>[] = [
       );
     },
     cell: ({ row }) => {
-      const reasonForExpense = row.original.reasonForExpense;
-      return <div>{reasonForExpense}</div>;
-    },
-  },
-  {
-    id: "receiptImageReferenceId",
-    accessorKey: "receiptImageReferenceId",
-    header: ({ column }) => {
+      const isMatched = matchingIds.has(row.original.transactionReference);
       return (
-        <Button
-          variant={"ghost"}
-          
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Receipt Image Reference ID
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const receipt = row.original.receiptImageReferenceId ? "Yes" : "No";
-      return <div>{receipt}</div>;
-    },
-  },
-  {
-    id: "lineAmount",
-    accessorKey: "lineAmount",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant={"ghost"}
-          
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Line Amount
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      // const amount = row.original.lineAmount;
-      // const formattedAmount = formatCurrency(Number(amount));
-      const lineNum = row.original.lineNumber;
-      const formattedLineAmount = formatCurrency(
-        Number(row.original.lineAmount)
-      );
-      return (
-        <div>
-          {
-            <div>
-              Line {lineNum}: {formattedLineAmount}
-            </div>
-          }
-        </div>
+        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
+          {row.original.reasonForExpense}
+        </span>
       );
     },
   },
@@ -165,12 +149,28 @@ export const FuelStatementColumns: ColumnDef<Transaction>[] = [
       return (
         <Button
           variant={"ghost"}
-          
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Fuel Quantity
+          <div>
+            <div>Fuel Quantity</div>
+            <div>Fuel Type</div>
+          </div>
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const isMatched = matchingIds.has(row.original.transactionReference);
+      const fuelQuantity = row.original.fuelQuantity;
+      const fuelType = row.original.fuelType;
+
+      return (
+        <div className={isMatched ? "text-green-600 font-semibold" : ""}>
+          <div className="font-bold">
+            {fuelQuantity ? `${fuelQuantity.toFixed(2)}` : "N/A"}
+          </div>
+          <div className="text-sm text-gray-600">{fuelType || "N/A"}</div>
+        </div>
       );
     },
   },
@@ -181,24 +181,50 @@ export const FuelStatementColumns: ColumnDef<Transaction>[] = [
       return (
         <Button
           variant={"ghost"}
-          
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Billing Amount
+          <div>
+            <div>Billing Amount</div>
+            <div>Line Amount</div>
+          </div>
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => {
-      const amount = row.original.billingAmount;
+      const isMatched = matchingIds.has(row.original.transactionReference);
+      return (
+        <div className={isMatched ? "text-green-600 font-semibold" : ""}>
+          <div className="font-bold">
+            {formatCurrency(row.original.billingAmount)}
+          </div>
+          <div>{formatCurrency(row.original.lineAmount)}</div>
+        </div>
+      );
+    },
+  },
+  // Add to Fuel Report Action Column
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      const isMatched = matchingIds.has(row.original.transactionReference);
 
-      // Check if amount is null, undefined, or not a valid number
-      if (amount === null || amount === undefined || isNaN(Number(amount))) {
-        return <div>-</div>;
+      if (isMatched) {
+        return <span className="text-green-600 text-sm">Already Matched</span>;
       }
 
-      const formattedAmount = formatCurrency(Number(amount));
-      return <div>{formattedAmount}</div>;
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onAddToFuelReport?.(row.original)}
+          className="flex items-center gap-1"
+        >
+          <Plus className="h-3 w-3" />
+          Add to Fuel Report
+        </Button>
+      );
     },
   },
 ];

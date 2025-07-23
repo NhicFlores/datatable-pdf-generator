@@ -5,8 +5,8 @@ import {
   useFuelReportActions,
 } from "@/components/data-context";
 import { DataTable } from "@/components/tables/data-table";
-import { createFuelStatementColumns } from "@/components/tables/fuel-statement-columns-enhanced";
-import { createFuelTransactionColumns } from "@/components/tables/fuel-transaction-columns-enhanced";
+import { createFuelStatementColumns } from "@/components/tables/fuel-statement-columns";
+import { createFuelTransactionColumns } from "@/components/tables/fuel-transaction-columns";
 import { CSVDownloadButton } from "@/components/csv-download-button";
 
 import {
@@ -44,8 +44,7 @@ const FuelReportPage = () => {
     );
   }, [selectedFuelReport, selectedFuelStatement]);
 
-  // Create enhanced columns with matching information
-  const enhancedFuelStatementColumns = useMemo(
+  const fuelStatementColumns = useMemo(
     () =>
       createFuelStatementColumns(
         matchingTransactionIds,
@@ -54,7 +53,7 @@ const FuelReportPage = () => {
     [matchingTransactionIds, addTransactionToFuelReport]
   );
 
-  const enhancedFuelTransactionColumns = useMemo(
+  const fuelTransactionColumns = useMemo(
     () =>
       createFuelTransactionColumns(
         matchingFuelTransactionIds,
@@ -100,7 +99,7 @@ const FuelReportPage = () => {
         {selectedFuelStatement ? (
           <div>
             <DataTable
-              columns={enhancedFuelStatementColumns}
+              columns={fuelStatementColumns}
               data={fuelTransactionDiscrepancies}
             />
           </div>
@@ -132,7 +131,7 @@ const FuelReportPage = () => {
         {selectedFuelReport ? (
           <div>
             <DataTable
-              columns={enhancedFuelTransactionColumns}
+              columns={fuelTransactionColumns}
               data={selectedFuelReport.fuelTransactions}
             />
           </div>
