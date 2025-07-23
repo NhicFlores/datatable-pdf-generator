@@ -26,7 +26,11 @@ interface StatementsContextType {
   selectedFuelStatement: FuelStatement | null;
   setSelectedFuelStatement: (fuelStatement: FuelStatement | null) => void;
   addTransactionToFuelReport: (transaction: Transaction) => void;
-  updateFuelTransaction: (transactionId: string, gallons: number) => void;
+  updateFuelTransactionField: (
+    transactionId: string,
+    field: keyof FuelTransaction,
+    value: string | number
+  ) => void;
 }
 
 // initialize context
@@ -75,7 +79,7 @@ export const useFuelReportActions = () => {
     );
   return {
     addTransactionToFuelReport: context.addTransactionToFuelReport,
-    updateFuelTransaction: context.updateFuelTransaction,
+    updateFuelTransactionField: context.updateFuelTransactionField,
   };
 };
 
@@ -150,8 +154,12 @@ export const StatementsProvider = ({
     [selectedFuelReport]
   );
 
-  const updateFuelTransaction = React.useCallback(
-    (transactionId: string, gallons: number) => {
+  const updateFuelTransactionField = React.useCallback(
+    (
+      transactionId: string,
+      field: keyof FuelTransaction,
+      value: string | number
+    ) => {
       if (!selectedFuelReport) return;
 
       // Update the fuel reports
@@ -163,7 +171,7 @@ export const StatementsProvider = ({
               fuelTransactions: report.fuelTransactions.map((transaction) => {
                 const txId = `${transaction.vehicleId}-${transaction.date}-${transaction.invoiceNumber}`;
                 if (txId === transactionId) {
-                  return { ...transaction, gallons };
+                  return { ...transaction, [field]: value };
                 }
                 return transaction;
               }),
@@ -182,7 +190,7 @@ export const StatementsProvider = ({
           fuelTransactions: prev.fuelTransactions.map((transaction) => {
             const txId = `${transaction.vehicleId}-${transaction.date}-${transaction.invoiceNumber}`;
             if (txId === transactionId) {
-              return { ...transaction, gallons };
+              return { ...transaction, [field]: value };
             }
             return transaction;
           }),
@@ -205,7 +213,7 @@ export const StatementsProvider = ({
         selectedFuelStatement,
         setSelectedFuelStatement,
         addTransactionToFuelReport,
-        updateFuelTransaction,
+        updateFuelTransactionField,
       }}
     >
       {children}

@@ -19,7 +19,7 @@ import React, { useMemo } from "react";
 const FuelReportPage = () => {
   const { selectedFuelReport } = useFuelReports();
   const { selectedFuelStatement } = useFuelStatements();
-  const { addTransactionToFuelReport, updateFuelTransaction } =
+  const { addTransactionToFuelReport, updateFuelTransactionField } =
     useFuelReportActions();
 
   const fuelTransactionDiscrepancies = getMissingFuelTransactions(
@@ -57,9 +57,10 @@ const FuelReportPage = () => {
     () =>
       createFuelTransactionColumns(
         matchingFuelTransactionIds,
-        updateFuelTransaction
+        updateFuelTransactionField,
+        true
       ),
-    [matchingFuelTransactionIds, updateFuelTransaction]
+    [matchingFuelTransactionIds, updateFuelTransactionField]
   );
 
   return (
