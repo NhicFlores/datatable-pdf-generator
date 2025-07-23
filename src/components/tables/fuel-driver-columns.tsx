@@ -54,7 +54,7 @@ export const FuelReportColumns: ColumnDef<FuelReport>[] = [
     cell: ({ row }) => {
       return (
         <div>
-          {row.original.vehicleIds.map((vehicleId) => (
+          {row.original.vehicleIds.sort().map((vehicleId) => (
             <span
               key={vehicleId}
               className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded-full"
