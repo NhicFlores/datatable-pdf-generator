@@ -326,7 +326,107 @@ export function getMissingFuelTransactions(
   return filteredMissingTransactions;
 }
 
+// Helper function to clean strings of non-alphanumeric characters
+function cleanString(str: string): string {
+  return str ? str.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() : "";
+}
+
+// Helper function to check if states match (handles abbreviations vs full names)
+function statesMatch(state1: string, state2: string): boolean {
+  if (!state1 || !state2) return false;
+
+  // State abbreviation to full name mapping
+  const stateMap: { [key: string]: string } = {
+    al: "alabama",
+    ak: "alaska",
+    az: "arizona",
+    ar: "arkansas",
+    ca: "california",
+    co: "colorado",
+    ct: "connecticut",
+    de: "delaware",
+    fl: "florida",
+    ga: "georgia",
+    hi: "hawaii",
+    id: "idaho",
+    il: "illinois",
+    in: "indiana",
+    ia: "iowa",
+    ks: "kansas",
+    ky: "kentucky",
+    la: "louisiana",
+    me: "maine",
+    md: "maryland",
+    ma: "massachusetts",
+    mi: "michigan",
+    mn: "minnesota",
+    ms: "mississippi",
+    mo: "missouri",
+    mt: "montana",
+    ne: "nebraska",
+    nv: "nevada",
+    nh: "newhampshire",
+    nj: "newjersey",
+    nm: "newmexico",
+    ny: "newyork",
+    nc: "northcarolina",
+    nd: "northdakota",
+    oh: "ohio",
+    ok: "oklahoma",
+    or: "oregon",
+    pa: "pennsylvania",
+    ri: "rhodeisland",
+    sc: "southcarolina",
+    sd: "southdakota",
+    tn: "tennessee",
+    tx: "texas",
+    ut: "utah",
+    vt: "vermont",
+    va: "virginia",
+    wa: "washington",
+    wv: "westvirginia",
+    wi: "wisconsin",
+    wy: "wyoming",
+    // Common variations
+    dc: "districtofcolumbia",
+    pr: "puertorico",
+  };
+
+  const cleanState1 = cleanString(state1);
+  const cleanState2 = cleanString(state2);
+
+  // Direct match
+  if (cleanState1 === cleanState2) return true;
+
+  // Check if one is abbreviation and other is full name
+  const fullName1 = stateMap[cleanState1] || cleanState1;
+  const fullName2 = stateMap[cleanState2] || cleanState2;
+
+  return fullName1 === fullName2;
+}
+
+// Helper function to check if supplier names match (partial matching)
+function supplierNamesMatch(supplierName: string, sellerName: string): boolean {
+  if (!supplierName || !sellerName) return false;
+
+  const cleanSupplier = cleanString(supplierName);
+  const cleanSeller = cleanString(sellerName);
+
+  // Check if either name contains the other (bidirectional partial matching)
+  // Examples:
+  // - "Shell Oil" contains "Shell" ✓
+  // - "EXXON MOBIL" contains "Exxon" ✓
+  // - "BP America Inc." contains "BP" ✓
+  return (
+    cleanSupplier.includes(cleanSeller) || cleanSeller.includes(cleanSupplier)
+  );
+}
+
 // Helper function to check if a fuel transaction matches an expense transaction
+// Uses three matching strategies:
+// 1. Date + Cost match (exact amounts within $0.01)
+// 2. Date + Fuel quantity match (exact gallons within 0.01)
+// 3. Date + Supplier name (partial match) + State (handles abbreviations vs full names)
 function isTransactionMatch(
   fuelTransaction: FuelTransaction,
   transaction: Transaction
@@ -345,7 +445,16 @@ function isTransactionMatch(
     transaction.fuelQuantity !== undefined &&
     Math.abs(fuelTransaction.gallons - transaction.fuelQuantity) < 0.01;
 
-  return dateAndCostMatch || dateAndQuantityMatch;
+  // Enhanced tertiary comparison: date, supplier name (partial match), and state (handles abbreviations)
+  const dateAndSupplierPlusStateMatch =
+    transactionDate === fuelTransactionDate &&
+    supplierNamesMatch(transaction.supplierName, fuelTransaction.sellerName) &&
+    statesMatch(transaction.supplierState, fuelTransaction.sellerState);
+    // IMPLEMENTATION NOTE: add the cost comparison with a tolerance of ~15% 
+
+  return (
+    dateAndCostMatch || dateAndQuantityMatch || dateAndSupplierPlusStateMatch
+  );
 }
 
 export function getMatchingFuelTransactions(
