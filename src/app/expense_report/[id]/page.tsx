@@ -8,19 +8,17 @@ import { TransactionColumns } from "@/components/tables/transaction-columns";
 import { Button } from "@/components/ui/button";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Download } from "lucide-react";
-// import React from "react";
-// import { use } from 'react';
+import { use } from "react";
 
 interface ExpenseReportPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function ExpenseReportPage({ params }: ExpenseReportPageProps) {
   const { selectedStatement } = useStatements();
-  //   const unwrappedParams = React.use(params);
-  // const unwrappedParams = use(params);
+  const resolvedParams = use(params);
 
   return (
     <main className="min-h-screen w-full flex items-center justify-center bg-slate-300">
@@ -44,7 +42,7 @@ export default function ExpenseReportPage({ params }: ExpenseReportPageProps) {
                       transactions={selectedStatement.transactions}
                     />
                   }
-                  fileName={`${params.id}-expense-report.pdf`}
+                  fileName={`${resolvedParams.id}-expense-report.pdf`}
                 >
                   {({ loading }) =>
                     loading
