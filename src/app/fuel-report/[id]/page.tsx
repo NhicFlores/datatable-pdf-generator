@@ -15,7 +15,7 @@ import {
   getMatchingTransactions,
   getMissingFuelTransactions,
 } from "@/lib/data";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 
 const FuelReportPage = () => {
   const { selectedFuelReport } = useFuelReports();
@@ -30,6 +30,26 @@ const FuelReportPage = () => {
   const [transactionFilter, setTransactionFilter] = useState<
     "all" | "matched" | "unmatched"
   >("unmatched");
+
+  // State to track temporarily removed transactions during audit
+  const [removedTransactionIds, setRemovedTransactionIds] = useState<
+    Set<string>
+  >(new Set());
+
+  // Function to remove transaction from audit view
+  const handleRemoveTransaction = useCallback(
+    (transactionReference: string) => {
+      setRemovedTransactionIds(
+        (prev) => new Set([...prev, transactionReference])
+      );
+    },
+    []
+  );
+
+  // Function to restore all removed transactions
+  const handleRestoreTransactions = useCallback(() => {
+    setRemovedTransactionIds(new Set());
+  }, []);
 
   // Get discrepancies for quick access
   const fuelTransactionDiscrepancies = useMemo(() => {
@@ -60,7 +80,9 @@ const FuelReportPage = () => {
   const filteredStatementTransactions = useMemo(() => {
     if (!selectedFuelStatement) return [];
 
-    const allTransactions = selectedFuelStatement.transactions;
+    const allTransactions = selectedFuelStatement.transactions.filter(
+      (t) => !removedTransactionIds.has(t.transactionReference)
+    );
 
     switch (statementFilter) {
       case "matched":
@@ -75,7 +97,12 @@ const FuelReportPage = () => {
       default:
         return allTransactions;
     }
-  }, [selectedFuelStatement, matchingTransactionIds, statementFilter]);
+  }, [
+    selectedFuelStatement,
+    matchingTransactionIds,
+    statementFilter,
+    removedTransactionIds,
+  ]);
 
   // Filtered data for fuel transactions
   const filteredFuelTransactions = useMemo(() => {
@@ -104,9 +131,14 @@ const FuelReportPage = () => {
     () =>
       createFuelStatementColumns(
         matchingTransactionIds,
-        addTransactionToFuelReport
+        addTransactionToFuelReport,
+        handleRemoveTransaction
       ),
-    [matchingTransactionIds, addTransactionToFuelReport]
+    [
+      matchingTransactionIds,
+      addTransactionToFuelReport,
+      handleRemoveTransaction,
+    ]
   );
 
   const fuelTransactionColumns = useMemo(
@@ -184,21 +216,44 @@ const FuelReportPage = () => {
 
         {selectedFuelStatement ? (
           <div className="space-y-4">
-            <FilterTabs
-              activeFilter={statementFilter}
-              onFilterChange={setStatementFilter}
-              totalCount={selectedFuelStatement.transactions.length}
-              matchedCount={
-                selectedFuelStatement.transactions.filter((t) =>
-                  matchingTransactionIds.has(t.transactionReference)
-                ).length
-              }
-              unmatchedCount={
-                selectedFuelStatement.transactions.filter(
-                  (t) => !matchingTransactionIds.has(t.transactionReference)
-                ).length
-              }
-            />
+            <div className="flex items-center justify-between">
+              <FilterTabs
+                activeFilter={statementFilter}
+                onFilterChange={setStatementFilter}
+                totalCount={
+                  selectedFuelStatement.transactions.filter(
+                    (t) => !removedTransactionIds.has(t.transactionReference)
+                  ).length
+                }
+                matchedCount={
+                  selectedFuelStatement.transactions.filter(
+                    (t) =>
+                      matchingTransactionIds.has(t.transactionReference) &&
+                      !removedTransactionIds.has(t.transactionReference)
+                  ).length
+                }
+                unmatchedCount={
+                  selectedFuelStatement.transactions.filter(
+                    (t) =>
+                      !matchingTransactionIds.has(t.transactionReference) &&
+                      !removedTransactionIds.has(t.transactionReference)
+                  ).length
+                }
+              />
+              {removedTransactionIds.size > 0 && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span>
+                    {removedTransactionIds.size} transactions removed from view
+                  </span>
+                  <button
+                    onClick={handleRestoreTransactions}
+                    className="text-blue-600 hover:text-blue-700 underline"
+                  >
+                    Restore All
+                  </button>
+                </div>
+              )}
+            </div>
             <DataTable
               columns={fuelStatementColumns}
               data={filteredStatementTransactions}

@@ -1,12 +1,13 @@
 import { Transaction } from "@/lib/types";
 import { formatCurrency, formatDateStringToLocal } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Plus } from "lucide-react";
+import { ArrowUpDown, Plus, X } from "lucide-react";
 import { Button } from "../ui/button";
 
 export const createFuelStatementColumns = (
   matchingIds: Set<string>,
-  onAddToFuelReport?: (transaction: Transaction) => void
+  onAddToFuelReport?: (transaction: Transaction) => void,
+  onRemoveFromAudit?: (transactionReference: string) => void
 ): ColumnDef<Transaction>[] => [
   {
     id: "workflowStatus",
@@ -210,20 +211,41 @@ export const createFuelStatementColumns = (
     cell: ({ row }) => {
       const isMatched = matchingIds.has(row.original.transactionReference);
 
-      if (isMatched) {
-        return <span className="text-green-600 text-sm">Already Matched</span>;
-      }
-
       return (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onAddToFuelReport?.(row.original)}
-          className="flex items-center gap-1"
-        >
-          <Plus className="h-3 w-3" />
-          Add to Fuel Report
-        </Button>
+        <div className="flex items-center gap-2">
+          {!isMatched && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onAddToFuelReport?.(row.original)}
+              className="flex items-center gap-1"
+              title="Add this transaction to the fuel report"
+            >
+              <Plus className="h-3 w-3" />
+              Add to Report
+            </Button>
+          )}
+
+          {/* Remove from audit button - available for unmatched transactions */}
+          {!isMatched && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                onRemoveFromAudit?.(row.original.transactionReference)
+              }
+              className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+              title="Remove from audit view (temporary)"
+            >
+              <X className="h-3 w-3" />
+              Remove
+            </Button>
+          )}
+
+          {isMatched && (
+            <span className="text-green-600 text-sm">Already Matched</span>
+          )}
+        </div>
       );
     },
   },
