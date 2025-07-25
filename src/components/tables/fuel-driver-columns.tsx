@@ -26,11 +26,10 @@ export const FuelReportColumns: ColumnDef<FuelReport>[] = [
       return (
         <div>
           {row.original.vehicleBranches.map((branch, index) => (
-            <span
-              key={branch}
-              
-            >
-              {index < row.original.vehicleBranches.length - 1 ? branch + ", " : branch}
+            <span key={branch}>
+              {index < row.original.vehicleBranches.length - 1
+                ? branch + ", "
+                : branch}
             </span>
           ))}
         </div>

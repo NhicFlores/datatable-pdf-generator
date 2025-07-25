@@ -259,7 +259,7 @@ export const createFuelTransactionColumns = (
             step="0.01"
             min="0"
             isMatched={isMatched}
-            autoEdit={true}
+            autoEdit={false}
             autoEditCondition={(val) => typeof val === "number" && val === 0}
             zeroValueText="Enter gallons"
             className="w-20"

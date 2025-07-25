@@ -222,7 +222,7 @@ export const createFuelStatementColumns = (
               title="Add this transaction to the fuel report"
             >
               <Plus className="h-3 w-3" />
-              Add to Report
+              Add to Fuel Report
             </Button>
           )}
 
