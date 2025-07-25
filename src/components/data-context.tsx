@@ -12,6 +12,8 @@ import {
   FuelStatement,
   FuelTransaction,
   Transaction,
+  FuelSummaryData,
+  FuelSummaryRow,
 } from "@/lib/types";
 import React, { createContext, useContext } from "react";
 
@@ -31,6 +33,7 @@ interface StatementsContextType {
     field: keyof FuelTransaction,
     value: string | number
   ) => void;
+  getFuelSummaryData: () => FuelSummaryData;
 }
 
 // initialize context
@@ -80,6 +83,16 @@ export const useFuelReportActions = () => {
   return {
     addTransactionToFuelReport: context.addTransactionToFuelReport,
     updateFuelTransactionField: context.updateFuelTransactionField,
+  };
+};
+
+// custom hook for fuel summary data
+export const useFuelSummary = () => {
+  const context = useContext(StatementsContext);
+  if (!context)
+    throw new Error("useFuelSummary must be used within StatementsProvider");
+  return {
+    getFuelSummaryData: context.getFuelSummaryData,
   };
 };
 
@@ -200,6 +213,62 @@ export const StatementsProvider = ({
     [selectedFuelReport]
   );
 
+  const getFuelSummaryData = React.useCallback((): FuelSummaryData => {
+    // Flatten all fuel transactions from all reports
+    const allTransactions = fuelReports.flatMap(
+      (report) => report.fuelTransactions
+    );
+
+    // Get all unique truck IDs and states
+    const uniqueTruckIds = [
+      ...new Set(allTransactions.map((t) => t.vehicleId)),
+    ].sort();
+    const uniqueStates = [
+      ...new Set(allTransactions.map((t) => t.sellerState)),
+    ].sort();
+
+    // Create summary rows for each state
+    const summaryRows: FuelSummaryRow[] = uniqueStates.map((state) => {
+      // Filter transactions for the current state
+      const stateTransactions = allTransactions.filter(
+        (t) => t.sellerState === state
+      );
+
+      // Calculate total gallons for this state
+      const totalGallons = stateTransactions.reduce(
+        (sum, t) => sum + (t.gallons || 0),
+        0
+      );
+
+      // Calculate gallons per truck ID for this state
+      const truckGallons: { [truckId: string]: number } = {};
+
+      // Initialize all truck IDs with 0
+      uniqueTruckIds.forEach((truckId) => {
+        truckGallons[truckId] = 0;
+      });
+
+      // Sum gallons for each truck in this state
+      stateTransactions.forEach((t) => {
+        if (t.vehicleId && t.gallons) {
+          truckGallons[t.vehicleId] =
+            (truckGallons[t.vehicleId] || 0) + t.gallons;
+        }
+      });
+
+      return {
+        state,
+        totalGallons,
+        truckGallons,
+      };
+    });
+
+    return {
+      summaryRows,
+      uniqueTruckIds,
+    };
+  }, [fuelReports]);
+
   return (
     <StatementsContext.Provider
       value={{
@@ -214,6 +283,7 @@ export const StatementsProvider = ({
         setSelectedFuelStatement,
         addTransactionToFuelReport,
         updateFuelTransactionField,
+        getFuelSummaryData,
       }}
     >
       {children}

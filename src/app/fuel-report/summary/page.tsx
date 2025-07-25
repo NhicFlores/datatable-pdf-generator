@@ -2,50 +2,26 @@
 
 import { FuelSummaryTable } from "@/components/tables/fuel-summary-table";
 import { FuelSummaryExportButton } from "@/components/fuel-summary-export-button";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { FuelSummaryData } from "@/lib/types";
+import { useFuelSummary } from "@/components/data-context";
 
 export default function FuelSummaryPage() {
-  const [summaryData, setSummaryData] = useState<FuelSummaryData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { getFuelSummaryData } = useFuelSummary();
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        // Fetch data from API endpoint instead of direct file access
-        const response = await fetch("/api/fuel-summary");
+  // Get live summary data
+  const summaryData: FuelSummaryData = useMemo(() => {
+    return getFuelSummaryData();
+  }, [getFuelSummaryData]);
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch data: ${response.statusText}`);
-        }
+  // Check if there's any data to display
+  const hasData = summaryData.summaryRows.length > 0;
 
-        const summary = await response.json();
-        setSummaryData(summary);
-      } catch (error) {
-        console.error("Error loading fuel data:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadData();
-  }, []);
-
-  if (loading) {
+  if (!hasData) {
     return (
       <main className="container mx-auto py-10">
         <div className="text-center">
-          <p>Loading fuel summary...</p>
-        </div>
-      </main>
-    );
-  }
-
-  if (!summaryData) {
-    return (
-      <main className="container mx-auto py-10">
-        <div className="text-center">
-          <p>Error loading fuel data.</p>
+          <p>No fuel data available.</p>
         </div>
       </main>
     );
