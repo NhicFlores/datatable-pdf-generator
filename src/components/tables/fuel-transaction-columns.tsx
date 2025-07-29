@@ -109,7 +109,9 @@ export const createFuelTransactionColumns = (
     cell: ({ row }) => {
       const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
       const isMatched = matchingIds.has(fuelTransactionId);
-      const sellerName = row.original.sellerName;
+      const sellerName = row.original.sellerName
+        ? row.original.sellerName
+        : "-";
       const sellerState = row.original.sellerState;
 
       if (editable && onUpdateField) {

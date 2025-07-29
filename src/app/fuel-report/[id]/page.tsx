@@ -155,7 +155,7 @@ const FuelReportPage = () => {
     <main className="container mx-auto py-10 space-y-8">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Fuel Report Analysis
+          {selectedFuelReport?.driver || "Unknown Driver"} Fuel Report Analysis
         </h1>
         <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
           <div className="flex items-center space-x-2">

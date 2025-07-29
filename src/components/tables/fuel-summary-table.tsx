@@ -47,8 +47,8 @@ export function FuelSummaryTable({ summaryData }: FuelSummaryTableProps) {
               <TableHead className="font-medium text-right">
                 Total Gallons
               </TableHead>
-              {uniqueTruckIds.map((truckId) => (
-                <TableHead key={truckId} className="font-medium text-center">
+              {uniqueTruckIds.map((truckId, index) => (
+                <TableHead key={index} className="font-medium text-center">
                   {truckId}
                 </TableHead>
               ))}
