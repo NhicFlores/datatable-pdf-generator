@@ -2,6 +2,7 @@
 
 import { FuelSummaryTable } from "@/components/tables/fuel-summary-table";
 import { FuelSummaryExportButton } from "@/components/fuel-summary-export-button";
+import { AllFuelTransactionsExportButton } from "@/components/all-fuel-transactions-export-button";
 import { useMemo } from "react";
 import { FuelSummaryData } from "@/lib/types";
 import { useFuelSummary } from "@/components/data-context";
@@ -39,23 +40,45 @@ export default function FuelSummaryPage() {
           </p>
         </div>
 
-        <div className="space-y-4">
+        {/* Export Controls Section */}
+        <div className="bg-gray-50 p-4 rounded-lg border">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold">
-                Summary by State and Truck
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Total gallons consumed per state with breakdown by truck ID
+              <h3 className="text-md font-medium text-gray-900">
+                Export Options
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Download summary data or the complete updated fuel report
               </p>
             </div>
-            <FuelSummaryExportButton
-              summaryData={summaryData}
-              filename={`fuel_summary_${
-                new Date().toISOString().split("T")[0]
-              }.csv`}
-              label="Export Summary"
-            />
+            <div className="flex items-center gap-3">
+              <FuelSummaryExportButton
+                summaryData={summaryData}
+                filename={`fuel_summary_${
+                  new Date().toISOString().split("T")[0]
+                }.csv`}
+                label="Export Summary"
+                variant="outline"
+                size="sm"
+              />
+              <AllFuelTransactionsExportButton
+                filename="updated-fuel-report.csv"
+                label="Download Updated Report"
+                variant="default"
+                size="sm"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">
+              Summary by State and Truck
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Total gallons consumed per state with breakdown by truck ID
+            </p>
           </div>
 
           <FuelSummaryTable summaryData={summaryData} />

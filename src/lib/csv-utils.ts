@@ -1,4 +1,9 @@
-import { FuelTransaction, Transaction, FuelSummaryData } from "./types";
+import {
+  FuelTransaction,
+  Transaction,
+  FuelSummaryData,
+  FuelReport,
+} from "./types";
 
 // Generic CSV download function
 export function downloadCSV(
@@ -142,6 +147,45 @@ export function downloadExpenseTransactionsCSV(
 }
 
 // Function to export fuel summary data
+// Function to download all fuel transactions in original fuel-report.csv format
+export function downloadAllFuelTransactionsCSV(
+  fuelReports: FuelReport[],
+  filename?: string
+) {
+  // Headers matching the original fuel-report.csv format
+  const headers = [
+    "vehicle",
+    "driver",
+    "startTime",
+    "invoiceNumber",
+    "gallons",
+    "Cost",
+    "sellerStateFullName",
+    "sellerName",
+    "odometer",
+    "receipt",
+  ];
+
+  // Flatten all fuel transactions from all reports
+  const allTransactions = fuelReports.flatMap((report) =>
+    report.fuelTransactions.map((tx: FuelTransaction) => ({
+      vehicle: tx.vehicleId,
+      driver: report.driver,
+      startTime: tx.date,
+      invoiceNumber: tx.invoiceNumber,
+      gallons: tx.gallons,
+      Cost: tx.cost,
+      sellerStateFullName: tx.sellerState,
+      sellerName: tx.sellerName,
+      odometer: tx.odometer,
+      receipt: tx.receipt,
+    }))
+  );
+
+  const defaultFilename = filename || "updated-fuel-report.csv";
+  downloadCSV(allTransactions, defaultFilename, headers);
+}
+
 export function downloadFuelSummaryCSV(
   summaryData: FuelSummaryData,
   filename?: string
