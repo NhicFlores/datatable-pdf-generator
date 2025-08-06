@@ -26,9 +26,14 @@ export function BulkDownloadButton({ statements }: BulkDownloadButtonProps) {
 
       // Generate PDF for each statement
       for (const statement of statements) {
+        const name =
+          (statement.employeeFirstName
+            ? statement.employeeFirstName + " "
+            : "") +
+          (statement.employeeLastName ? statement.employeeLastName : "");
         const pdfDocument = (
           <ExpenseReportPDF
-            cardHolderName={statement.cardHolderName}
+            cardHolderName={name}
             lastFourDigits={statement.lastFourDigits}
             statementPeriodStartDate={statement.statementPeriodStartDate}
             statementPeriodEndDate={statement.statementPeriodEndDate}
@@ -38,11 +43,9 @@ export function BulkDownloadButton({ statements }: BulkDownloadButtonProps) {
 
         // Generate PDF blob
         const pdfBlob = await pdf(pdfDocument).toBlob();
-
+        const cleanedName = name.replace(/[^a-zA-Z0-9]/g, "");
         // Create filename based on statement details
-        const fileName = `${statement.cardHolderName.replace(/\s+/g, "_")}-${
-          statement.lastFourDigits
-        }_exp.pdf`;
+        const fileName = `${cleanedName}_exp.pdf`;
         // NOTE: if you want to add statement period to the filename, remove '\' from date strings to
         // avoid creating folders in windows file system
 
