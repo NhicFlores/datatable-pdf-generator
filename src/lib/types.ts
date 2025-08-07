@@ -29,18 +29,6 @@ export type Expense_CSV_Row = {
   fuelUnitOfMeasure?: string;
 };
 
-export type Statement = {
-  statementPeriodStartDate: string;
-  statementPeriodEndDate: string;
-  lastFourDigits: string;
-  cardHolderName: string;
-  employeeId?: string;
-  employeeFirstName?: string;
-  employeeLastName?: string;
-  // totalAmount: number;
-  transactions: Transaction[];
-};
-
 export type Transaction = {
   transactionReference: string;
   cardholderName: string;

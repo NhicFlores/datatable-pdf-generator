@@ -1,12 +1,10 @@
 "use client";
 import {
-  createStatements,
   createFuelReports,
   createFuelStatements,
 } from "@/lib/data";
 import {
   Expense_CSV_Row,
-  Statement,
   Fuel_CSV_Row,
   FuelReport,
   FuelStatement,
@@ -18,9 +16,6 @@ import {
 import React, { createContext, useContext } from "react";
 
 interface StatementsContextType {
-  statements: Statement[];
-  selectedStatement: Statement | null;
-  setSelectedStatement: (statement: Statement | null) => void;
   fuelReports: FuelReport[];
   selectedFuelReport: FuelReport | null;
   setSelectedFuelReport: (fuelReport: FuelReport | null) => void;
@@ -41,7 +36,8 @@ const StatementsContext = createContext<StatementsContextType | undefined>(
   undefined
 );
 
-// custom hook to use the context
+// custom hook to use the context 
+// unused 
 export const useStatements = () => {
   const context = useContext(StatementsContext);
   if (!context)
@@ -108,17 +104,16 @@ export const StatementsProvider = ({
   fuelData,
   children,
 }: StatementsProviderProps) => {
-  const statements = createStatements(data);
+
+  const fuelStatements = createFuelStatements(data);
+  const [selectedFuelStatement, setSelectedFuelStatement] =
+    React.useState<FuelStatement | null>(null);
+
   const [fuelReports, setFuelReports] = React.useState<FuelReport[]>(
     createFuelReports(fuelData)
   );
-  const fuelStatements = createFuelStatements(data);
-  const [selectedStatement, setSelectedStatement] =
-    React.useState<Statement | null>(null);
   const [selectedFuelReport, setSelectedFuelReport] =
     React.useState<FuelReport | null>(null);
-  const [selectedFuelStatement, setSelectedFuelStatement] =
-    React.useState<FuelStatement | null>(null);
 
   const addTransactionToFuelReport = React.useCallback(
     (transaction: Transaction) => {
@@ -130,7 +125,7 @@ export const StatementsProvider = ({
           selectedFuelReport.fuelTransactions[0]?.vehicleId || "Unknown", // Use first vehicle ID as default
         date: transaction.transactionDate,
         invoiceNumber: `INV-${Date.now()}`, // Generate a unique invoice number
-        gallons: 0, // Default to 0, will be editable
+        gallons: transaction.fuelQuantity || 0, // Default to 0, will be editable
         cost: transaction.billingAmount,
         sellerState: transaction.supplierState,
         sellerName: transaction.supplierName,
@@ -272,9 +267,6 @@ export const StatementsProvider = ({
   return (
     <StatementsContext.Provider
       value={{
-        statements,
-        selectedStatement,
-        setSelectedStatement,
         fuelReports,
         selectedFuelReport,
         setSelectedFuelReport,

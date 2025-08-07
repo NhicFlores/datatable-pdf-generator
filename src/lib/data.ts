@@ -1,6 +1,5 @@
 import {
   Expense_CSV_Row,
-  Statement,
   Fuel_CSV_Row,
   FuelReport,
   FuelExpenseDiscrepancy,
@@ -11,99 +10,6 @@ import {
   FuelSummaryRow,
 } from "./types";
 import { cleanName } from "./utils";
-
-export function createStatements(data: Expense_CSV_Row[]): Statement[] {
-  // Group transactions by employeeId
-  const statements: Statement[] = data.reduce(
-    (acc: Statement[], row: Expense_CSV_Row) => {
-      const {
-        statementPeriodStartDate,
-        statementPeriodEndDate,
-        employeeId,
-        employeeFirstName,
-        employeeLastName,
-        cardHolderName,
-        lastFourDigits,
-      } = row;
-
-      const existingStatement = acc.find(
-        (statement) =>
-          statement.employeeId === employeeId &&
-          statement.statementPeriodStartDate === statementPeriodStartDate &&
-          statement.statementPeriodEndDate === statementPeriodEndDate
-      );
-
-      if (existingStatement) {
-        existingStatement.transactions.push({
-          transactionReference: row.transactionReference,
-          cardholderName: row.cardHolderName,
-          lastFourDigits: row.lastFourDigits,
-          transactionDate: row.transactionDate,
-          postingDate: row.postingDate,
-          billingAmount: parseFloat(row.billingAmount),
-          lineAmount: parseFloat(row.lineAmount),
-          lineNumber: parseInt(row.lineNumber, 10),
-          glCode: row.glCode,
-          glCodeDescription: row.glCodeDescription,
-          reasonForExpense: row.reasonForExpense,
-          receiptImageName: row.receiptImageName,
-          receiptImageReferenceId: row.receiptImageReferenceId,
-          supplierName: row.supplierName,
-          supplierCity: row.supplierCity,
-          supplierState: row.supplierState,
-          workflowStatus: row.workflowStatus,
-          merchantCategoryCode: row.merchantCategoryCode,
-          odometerReading: row.odometerReading,
-          fuelQuantity: row.fuelQuantity,
-          fuelType: row.fuelType,
-          fuelUnitCost: row.fuelUnitCost,
-          fuelUnitOfMeasure: row.fuelUnitOfMeasure,
-        });
-      } else {
-        acc.push({
-          statementPeriodStartDate,
-          statementPeriodEndDate,
-          employeeId,
-          employeeFirstName,
-          employeeLastName,
-          cardHolderName,
-          lastFourDigits,
-          transactions: [
-            {
-              transactionReference: row.transactionReference,
-              cardholderName: row.cardHolderName,
-              lastFourDigits: row.lastFourDigits,
-              transactionDate: row.transactionDate,
-              postingDate: row.postingDate,
-              billingAmount: parseFloat(row.billingAmount),
-              lineAmount: parseFloat(row.lineAmount),
-              lineNumber: parseInt(row.lineNumber, 10),
-              glCode: row.glCode,
-              glCodeDescription: row.glCodeDescription,
-              reasonForExpense: row.reasonForExpense,
-              receiptImageName: row.receiptImageName,
-              receiptImageReferenceId: row.receiptImageReferenceId,
-              supplierName: row.supplierName,
-              supplierCity: row.supplierCity,
-              supplierState: row.supplierState,
-              workflowStatus: row.workflowStatus,
-              merchantCategoryCode: row.merchantCategoryCode,
-              odometerReading: row.odometerReading,
-              fuelQuantity: row.fuelQuantity,
-              fuelType: row.fuelType,
-              fuelUnitCost: row.fuelUnitCost,
-              fuelUnitOfMeasure: row.fuelUnitOfMeasure,
-            },
-          ],
-        });
-      }
-      return acc;
-    },
-    []
-  );
-
-  return statements;
-}
 
 export function createFuelStatements(data: Expense_CSV_Row[]): FuelStatement[] {
   // Group transactions by cardHolderName
