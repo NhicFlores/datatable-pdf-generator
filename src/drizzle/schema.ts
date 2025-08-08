@@ -8,8 +8,30 @@ import {
   integer,
   index,
 } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
 export const dbSchema = pgSchema("dev-reports");
+
+// Drivers table - normalized driver information
+export const drivers = dbSchema.table(
+  "drivers",
+  {
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
+    branch: varchar("branch", { length: 100 }).notNull(),
+
+    // Metadata
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    // Indexes for better query performance
+    index("drivers_name_idx").on(table.name),
+    index("drivers_branch_idx").on(table.branch),
+    // Composite index for unique driver-branch combinations
+    index("drivers_name_branch_idx").on(table.name, table.branch),
+  ]
+);
 
 // Transactions table - matches Transaction type
 export const transactions = dbSchema.table(
@@ -67,25 +89,17 @@ export const transactions = dbSchema.table(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => ({
+  (table) => [
     // Indexes for better query performance
-    cardholderNameIdx: index("transactions_cardholder_name_idx").on(
-      table.cardholderName
-    ),
-    transactionDateIdx: index("transactions_transaction_date_idx").on(
-      table.transactionDate
-    ),
-    glCodeIdx: index("transactions_gl_code_idx").on(table.glCode),
-    supplierStateIdx: index("transactions_supplier_state_idx").on(
-      table.supplierState
-    ),
-    workflowStatusIdx: index("transactions_workflow_status_idx").on(
-      table.workflowStatus
-    ),
-  })
+    index("transactions_cardholder_name_idx").on(table.cardholderName),
+    index("transactions_transaction_date_idx").on(table.transactionDate),
+    index("transactions_gl_code_idx").on(table.glCode),
+    index("transactions_supplier_state_idx").on(table.supplierState),
+    index("transactions_workflow_status_idx").on(table.workflowStatus),
+  ]
 );
 
-// Fuel Transactions table - matches FuelTransaction type
+// Fuel Transactions table - matches FuelTransaction type (normalized)
 export const fuelTransactions = dbSchema.table(
   "fuel_transactions",
   {
@@ -93,7 +107,9 @@ export const fuelTransactions = dbSchema.table(
 
     // Core fuel transaction fields
     vehicleId: varchar("vehicle_id", { length: 100 }).notNull(),
-    driver: varchar("driver", { length: 255 }).notNull(),
+    driverId: uuid("driver_id")
+      .notNull()
+      .references(() => drivers.id),
 
     // Date and invoice
     date: timestamp("date").notNull(),
@@ -115,18 +131,31 @@ export const fuelTransactions = dbSchema.table(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => ({
+  (table) => [
     // Indexes for better query performance
-    vehicleIdIdx: index("fuel_transactions_vehicle_id_idx").on(table.vehicleId),
-    driverIdx: index("fuel_transactions_driver_idx").on(table.driver),
-    dateIdx: index("fuel_transactions_date_idx").on(table.date),
-    sellerStateIdx: index("fuel_transactions_seller_state_idx").on(
-      table.sellerState
-    ),
+    index("fuel_transactions_vehicle_id_idx").on(table.vehicleId),
+    index("fuel_transactions_driver_id_idx").on(table.driverId),
+    index("fuel_transactions_date_idx").on(table.date),
+    index("fuel_transactions_seller_state_idx").on(table.sellerState),
     // Composite index for common queries
-    vehicleDriverIdx: index("fuel_transactions_vehicle_driver_idx").on(
+    index("fuel_transactions_vehicle_driver_idx").on(
       table.vehicleId,
-      table.driver
+      table.driverId
     ),
+  ]
+);
+
+// Relations for better querying
+export const driversRelations = relations(drivers, ({ many }) => ({
+  fuelTransactions: many(fuelTransactions),
+}));
+
+export const fuelTransactionsRelations = relations(
+  fuelTransactions,
+  ({ one }) => ({
+    driver: one(drivers, {
+      fields: [fuelTransactions.driverId],
+      references: [drivers.id],
+    }),
   })
 );
