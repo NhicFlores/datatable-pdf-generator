@@ -11,7 +11,8 @@
     "migrate": "drizzle-kit migrate",
     "studio": "drizzle-kit studio",
     "push": "drizzle-kit push",
-    "pull": "drizzle-kit pull"
+    "pull": "drizzle-kit pull",
+    "drop": "drizzle-kit drop"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.1",

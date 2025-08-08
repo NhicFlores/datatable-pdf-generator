@@ -1,9 +1,107 @@
 {
-  "id": "24d7a234-db1d-4610-9aec-e34ca6e83c1b",
+  "id": "dcb671bf-5365-4798-9e8a-439c30140613",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "dev-reports.drivers": {
+      "name": "drivers",
+      "schema": "dev-reports",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "branch": {
+          "name": "branch",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "drivers_name_idx": {
+          "name": "drivers_name_idx",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "drivers_branch_idx": {
+          "name": "drivers_branch_idx",
+          "columns": [
+            {
+              "expression": "branch",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "drivers_name_branch_idx": {
+          "name": "drivers_name_branch_idx",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "branch",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "dev-reports.fuel_transactions": {
       "name": "fuel_transactions",
       "schema": "dev-reports",
@@ -21,9 +119,9 @@
           "primaryKey": false,
           "notNull": true
         },
-        "driver": {
-          "name": "driver",
-          "type": "varchar(255)",
+        "driver_id": {
+          "name": "driver_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
@@ -106,11 +204,11 @@
           "method": "btree",
           "with": {}
         },
-        "fuel_transactions_driver_idx": {
-          "name": "fuel_transactions_driver_idx",
+        "fuel_transactions_driver_id_idx": {
+          "name": "fuel_transactions_driver_id_idx",
           "columns": [
             {
-              "expression": "driver",
+              "expression": "driver_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -161,7 +259,7 @@
               "nulls": "last"
             },
             {
-              "expression": "driver",
+              "expression": "driver_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -173,7 +271,22 @@
           "with": {}
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "fuel_transactions_driver_id_drivers_id_fk": {
+          "name": "fuel_transactions_driver_id_drivers_id_fk",
+          "tableFrom": "fuel_transactions",
+          "tableTo": "drivers",
+          "schemaTo": "dev-reports",
+          "columnsFrom": [
+            "driver_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
