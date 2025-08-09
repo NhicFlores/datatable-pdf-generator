@@ -13,10 +13,44 @@ import { FuelReportSummaryRoute } from "@/lib/routes";
 const FuelReportsPage = () => {
   const { fuelReports } = useFuelReports();
 
-  const handleTransactionsData = (data: Expense_CSV_Row[]) => {
+  const handleTransactionsData = async (data: Expense_CSV_Row[]) => {
     console.log("Transactions data received:", data.length, "records");
-    // TODO: Process and save to database
-    alert(`Successfully parsed ${data.length} transaction records!`);
+
+    try {
+      const response = await fetch("/api/transactions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ transactions: data }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(`✅ Success! 
+        • ${result.details.transactionsCreated} transactions saved
+        • ${result.details.duplicatesSkipped} duplicates skipped
+        • ${result.details.nonDriversSkipped} non-driver transactions skipped
+        ${
+          result.details.errors.length > 0
+            ? `\n⚠️ ${result.details.errors.length} errors occurred`
+            : ""
+        }`);
+
+        // TODO: Refresh the transactions data to show new records
+        console.log("Processing complete:", result);
+      } else {
+        throw new Error(result.error || "Failed to save data");
+      }
+    } catch (error) {
+      console.error("Error saving transaction data:", error);
+      alert(
+        `❌ Failed to save transaction data: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
   };
 
   const handleFuelData = async (data: Fuel_CSV_Row[]) => {
