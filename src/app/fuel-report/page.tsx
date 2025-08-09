@@ -19,10 +19,43 @@ const FuelReportsPage = () => {
     alert(`Successfully parsed ${data.length} transaction records!`);
   };
 
-  const handleFuelData = (data: Fuel_CSV_Row[]) => {
+  const handleFuelData = async (data: Fuel_CSV_Row[]) => {
     console.log("Fuel data received:", data.length, "records");
-    // TODO: Process and save to database
-    alert(`Successfully parsed ${data.length} fuel transaction records!`);
+
+    try {
+      const response = await fetch("/api/fuel-transactions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ transactions: data }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(`✅ Success! 
+        • ${result.details.driversCreated} drivers created/found
+        • ${result.details.transactionsCreated} fuel transactions saved
+        ${
+          result.details.errors.length > 0
+            ? `\n⚠️ ${result.details.errors.length} errors occurred`
+            : ""
+        }`);
+
+        // TODO: Refresh the fuel reports data to show new records
+        console.log("Processing complete:", result);
+      } else {
+        throw new Error(result.error || "Failed to save data");
+      }
+    } catch (error) {
+      console.error("Error saving fuel data:", error);
+      alert(
+        `❌ Failed to save fuel data: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
   };
 
   return (
@@ -31,8 +64,8 @@ const FuelReportsPage = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold">Fuel Reports</h1>
-          <Link 
-            href={FuelReportSummaryRoute.page} 
+          <Link
+            href={FuelReportSummaryRoute.page}
             className="border p-2 rounded hover:bg-gray-100"
           >
             View Summary
@@ -53,7 +86,8 @@ const FuelReportsPage = () => {
           <div>
             <h3 className="text-lg font-medium mb-2">Transaction Data</h3>
             <p className="text-sm text-gray-600 mb-3">
-              Upload expense transaction CSV files to import transaction data into the system.
+              Upload expense transaction CSV files to import transaction data
+              into the system.
             </p>
             <TransactionsUploadButton
               onDataParsed={handleTransactionsData}
@@ -64,7 +98,8 @@ const FuelReportsPage = () => {
           <div>
             <h3 className="text-lg font-medium mb-2">Fuel Transaction Data</h3>
             <p className="text-sm text-gray-600 mb-3">
-              Upload fuel transaction CSV files to import fuel usage data into the system.
+              Upload fuel transaction CSV files to import fuel usage data into
+              the system.
             </p>
             <FuelTransactionsUploadButton
               onDataParsed={handleFuelData}
