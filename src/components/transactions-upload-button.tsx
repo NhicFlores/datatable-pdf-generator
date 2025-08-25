@@ -33,11 +33,10 @@ export function TransactionsUploadButton({
 
         // Header mapping for expense CSV
         const headerMap: { [key: string]: string } = {
-          "Statement Period - Start Date": "statementPeriodStartDate",
-          "Statement Period - End Date": "statementPeriodEndDate",
           "Employee - ID": "employeeId",
           "Employee - First Name": "employeeFirstName",
           "Employee - Last Name": "employeeLastName",
+          "Employee - Company Unit": "employeeCompanyUnit",
           "Cardholder Name": "cardHolderName",
           "Account - Last Four Digits": "lastFourDigits",
           "Transaction - Transaction Reference": "transactionReference",
@@ -51,10 +50,10 @@ export function TransactionsUploadButton({
           "Transaction - Reason for Expense": "reasonForExpense",
           "Transaction - Receipt Image Name": "receiptImageName",
           "Transaction - Receipt Image Reference ID": "receiptImageReferenceId",
+          "Transaction - Workflow Status": "workflowStatus",
           "Supplier - Name": "supplierName",
           "Supplier - City": "supplierCity",
           "Supplier - State": "supplierState",
-          "Transaction - Workflow Status": "workflowStatus",
           "Supplier - Merchant Category Code": "merchantCategoryCode",
           "Fuel - Odometer Reading": "odometerReading",
           "Fuel - Fuel Quantity": "fuelQuantity",
@@ -75,17 +74,94 @@ export function TransactionsUploadButton({
           ): string | number | undefined => {
             // Handle empty values for optional numeric fields
             if (!value || value.trim() === "") {
-              return undefined;
+              switch (field) {
+                case "employeeId":
+                  return "NO_ID";
+                case "employeeFirstName":
+                  return "NO_FIRST_NAME";
+                case "employeeLastName":
+                  return "NO_LAST_NAME";
+                case "employeeCompanyUnit":
+                  return "NO_COMPANY_UNIT";
+                case "cardHolderName":
+                  return "NO_CARDHOLDER_NAME";
+                case "lastFourDigits":
+                  return "XXXX";
+                case "transactionReference":
+                  return "NO_TRANSACTION_REFERENCE";
+                case "transactionDate":
+                  return new Date().toDateString();
+                case "postingDate":
+                  return new Date().toDateString();
+                case "billingAmount":
+                  return "0";
+                case "lineAmount":
+                  return "0";
+                case "lineNumber":
+                  return "NO_LINE_NUMBER";
+                case "glCode":
+                  return "NO_GL_CODE";
+                case "glCodeDescription":
+                  return "NO_GL_CODE_DESCRIPTION";
+                case "reasonForExpense":
+                  return "NO_REASON_FOR_EXPENSE";
+                case "receiptImageName":
+                  return "NO_RECEIPT_IMAGE_NAME";
+                case "receiptImageReferenceId":
+                  return "NO_RECEIPT_IMAGE_REFERENCE_ID";
+                case "workflowStatus":
+                  return "NO_WORKFLOW_STATUS";
+                case "supplierName":
+                  return "NO_SUPPLIER_NAME";
+                case "supplierCity":
+                  return "NO_SUPPLIER_CITY";
+                case "supplierState":
+                  return "NO_SUPPLIER_STATE";
+                case "merchantCategoryCode":
+                  return "NO_MERCHANT_CATEGORY_CODE";
+                case "odometerReading":
+                  return "0";
+                case "fuelQuantity":
+                  return "0";
+                case "fuelType":
+                  return "NO_FUEL_TYPE";
+                case "fuelUnitCost":
+                  return "0";
+                case "fuelUnitOfMeasure":
+                  return "NO_UNIT";
+              }
+              return "NEW_FIELD";
             }
 
-            // Parse numeric fields
-            if (
-              field === "fuelQuantity" ||
-              field === "fuelUnitCost" ||
-              field === "odometerReading"
-            ) {
-              const parsed = parseFloat(value);
-              return isNaN(parsed) ? undefined : parsed;
+            // Parse numeric fields with improved validation
+            const numericFields = [
+              "billingAmount",
+              "lineAmount",
+              "fuelQuantity",
+              "fuelUnitCost",
+              "odometerReading",
+            ];
+            if (numericFields.includes(field)) {
+              // Clean the value: remove currency symbols, commas, spaces, parentheses
+              const cleanedValue = value.replace(/[$,\s()]/g, "");
+
+              const parsed = parseFloat(cleanedValue);
+
+              // Debug logging for problematic values
+              if (
+                (field === "billingAmount" || field === "lineAmount") &&
+                isNaN(parsed)
+              ) {
+                console.log(
+                  `🔍 Cleaning ${field}: "${value}" → "${cleanedValue}" → ${parsed}`
+                );
+              }
+
+              if (isNaN(parsed)) {
+                return "0";
+              }
+
+              return parsed.toString();
             }
 
             return value;
@@ -97,8 +173,37 @@ export function TransactionsUploadButton({
               return;
             }
 
-            console.log(`Parsed ${results.data.length} transaction records`);
-            onDataParsed(results.data);
+            console.log(
+              `Parsed ${results.data.length} total transaction records`
+            );
+
+            // Filter for drivers only using employeeCompanyUnit
+            const driverTransactions = results.data.filter((row) => {
+              const companyUnit = row.employeeCompanyUnit
+                ?.toString()
+                .toLowerCase();
+              return companyUnit === "drivers" || companyUnit === "driver";
+            });
+
+            const nonDriverCount =
+              results.data.length - driverTransactions.length;
+
+            console.log(`📊 Filtered results:`, {
+              total: results.data.length,
+              drivers: driverTransactions.length,
+              nonDriversFiltered: nonDriverCount,
+            });
+
+            if (driverTransactions.length === 0) {
+              reject(
+                new Error(
+                  "No driver transactions found in CSV. Please check that the 'Employee - Company Unit' column contains 'Drivers' for the records you want to import."
+                )
+              );
+              return;
+            }
+
+            onDataParsed(driverTransactions);
             resolve();
           },
           error: (error: Error) => {

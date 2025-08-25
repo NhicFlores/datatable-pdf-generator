@@ -4,9 +4,8 @@ import {
   varchar,
   text,
   timestamp,
-  decimal,
-  integer,
   index,
+  numeric,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -38,11 +37,10 @@ export const transactions = dbSchema.table(
   "transactions",
   {
     id: uuid().defaultRandom().primaryKey().notNull(),
-
     // Core transaction fields
-    transactionReference: varchar("transaction_reference", { length: 255 })
-      .notNull()
-      .unique(),
+    transactionReference: varchar("transaction_reference", {
+      length: 255,
+    }).notNull(),
     cardholderName: varchar("cardholder_name", { length: 255 }).notNull(),
     lastFourDigits: varchar("last_four_digits", { length: 4 }).notNull(),
 
@@ -51,15 +49,15 @@ export const transactions = dbSchema.table(
     postingDate: timestamp("posting_date").notNull(),
 
     // Financial amounts (using decimal for precision)
-    billingAmount: decimal("billing_amount", {
+    billingAmount: numeric("billing_amount", {
       precision: 10,
       scale: 2,
     }).notNull(),
-    lineAmount: decimal("line_amount", { precision: 10, scale: 2 }).notNull(),
-    lineNumber: integer("line_number").notNull(),
+    lineAmount: numeric("line_amount", { precision: 10, scale: 2 }).notNull(),
+    lineNumber: varchar("line_number", { length: 50 }).notNull(),
 
     // GL Code information
-    glCode: varchar("gl_code", { length: 50 }).notNull(),
+    glCode: varchar("gl_code", { length: 150 }),
     glCodeDescription: text("gl_code_description"),
 
     // Transaction details
@@ -68,21 +66,19 @@ export const transactions = dbSchema.table(
     receiptImageReferenceId: varchar("receipt_image_reference_id", {
       length: 255,
     }),
+    workflowStatus: varchar("workflow_status", { length: 100 }),
 
     // Supplier information
     supplierName: varchar("supplier_name", { length: 255 }),
     supplierCity: varchar("supplier_city", { length: 100 }),
     supplierState: varchar("supplier_state", { length: 100 }),
-
-    // Status and categorization
-    workflowStatus: varchar("workflow_status", { length: 100 }),
     merchantCategoryCode: varchar("merchant_category_code", { length: 10 }),
 
     // Fuel-specific fields (optional for fuel transactions)
-    odometerReading: integer("odometer_reading"),
-    fuelQuantity: decimal("fuel_quantity", { precision: 8, scale: 3 }),
+    odometerReading: numeric("odometer_reading", { precision: 10, scale: 3 }),
+    fuelQuantity: numeric("fuel_quantity", { precision: 8, scale: 3 }),
     fuelType: varchar("fuel_type", { length: 50 }),
-    fuelUnitCost: decimal("fuel_unit_cost", { precision: 8, scale: 4 }),
+    fuelUnitCost: numeric("fuel_unit_cost", { precision: 8, scale: 4 }),
     fuelUnitOfMeasure: varchar("fuel_unit_of_measure", { length: 20 }),
 
     // Metadata
@@ -98,6 +94,9 @@ export const transactions = dbSchema.table(
     index("transactions_workflow_status_idx").on(table.workflowStatus),
   ]
 );
+
+export type SelectTransaction = typeof transactions.$inferSelect;
+export type InsertTransaction = typeof transactions.$inferInsert;
 
 // Fuel Transactions table - matches FuelTransaction type (normalized)
 export const fuelTransactions = dbSchema.table(
@@ -116,15 +115,15 @@ export const fuelTransactions = dbSchema.table(
     invoiceNumber: varchar("invoice_number", { length: 255 }).notNull(),
 
     // Fuel details
-    gallons: decimal("gallons", { precision: 8, scale: 3 }).notNull(),
-    cost: decimal("cost", { precision: 10, scale: 2 }).notNull(),
+    gallons: numeric("gallons", { precision: 8, scale: 3 }).notNull(),
+    cost: numeric("cost", { precision: 10, scale: 2 }).notNull(),
 
     // Location information
     sellerState: varchar("seller_state", { length: 100 }).notNull(),
     sellerName: varchar("seller_name", { length: 255 }).notNull(),
 
     // Vehicle information
-    odometer: integer("odometer").notNull(),
+    odometer: numeric("odometer", { precision: 10, scale: 2 }).notNull(),
     receipt: varchar("receipt", { length: 500 }),
 
     // Metadata
@@ -159,3 +158,4 @@ export const fuelTransactionsRelations = relations(
     }),
   })
 );
+

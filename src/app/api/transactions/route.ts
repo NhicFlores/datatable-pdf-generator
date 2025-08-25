@@ -1,47 +1,74 @@
 import { NextRequest, NextResponse } from "next/server";
 import { processTransactionCSVData } from "@/lib/db/services/transaction-service";
-import { Expense_CSV_Row } from "@/lib/types";
+import { TransactionUploadRequestSchema } from "@/lib/validations/transaction";
 
+/**
+ * Modern API route with Zod validation and better error handling
+ */
 export async function POST(request: NextRequest) {
   try {
+    console.log("📥 Transaction upload request received");
+
+    // Parse and validate request body with Zod
     const body = await request.json();
-    const { transactions } = body;
+    const validation = TransactionUploadRequestSchema.safeParse(body);
 
-    // Validate request body
-    if (!transactions || !Array.isArray(transactions)) {
+    if (!validation.success) {
+      const errorMessages = validation.error.issues
+        .map((err) => `${err.path.join(".")}: ${err.message}`)
+        .join(", ");
+
+      console.error("❌ Request validation failed:", errorMessages);
       return NextResponse.json(
-        { error: "Invalid request body. Expected 'transactions' array." },
+        {
+          success: false,
+          error: "Invalid request format",
+          details: errorMessages,
+        },
         { status: 400 }
       );
     }
 
-    // Validate data structure
-    const transactionData: Expense_CSV_Row[] = transactions;
-    if (transactionData.length === 0) {
-      return NextResponse.json(
-        { error: "No transaction data provided" },
-        { status: 400 }
-      );
-    }
+    // Process the validated data
+    const result = await processTransactionCSVData(
+      validation.data.transactions
+    );
 
-    // Process the data
-    const result = await processTransactionCSVData(transactionData);
+    // Determine response status based on results
+    const hasErrors =
+      result.validationErrors.length > 0 || result.databaseErrors.length > 0;
+    const statusCode = hasErrors ? 207 : 200; // 207 Multi-Status for partial success
 
-    // Return success response with details
-    return NextResponse.json({
-      success: true,
-      message: `Successfully processed ${result.transactionsCreated} transactions`,
-      details: {
-        transactionsCreated: result.transactionsCreated,
-        duplicatesSkipped: result.duplicatesSkipped,
-        nonDriversSkipped: result.nonDriversSkipped,
-        errors: result.errors,
-      },
-    });
-  } catch (error) {
-    console.error("Error processing transactions:", error);
+    console.log(
+      `✅ Processing complete: ${result.transactionsCreated} created, ${
+        result.duplicatesSkipped + result.nonDriversSkipped
+      } skipped`
+    );
+
     return NextResponse.json(
       {
+        success: result.transactionsCreated > 0,
+        message:
+          result.transactionsCreated > 0
+            ? `Successfully processed ${result.transactionsCreated} transactions`
+            : "No transactions were processed",
+        data: {
+          transactionsCreated: result.transactionsCreated,
+          duplicatesSkipped: result.duplicatesSkipped,
+          nonDriversSkipped: result.nonDriversSkipped,
+          totalErrors:
+            result.validationErrors.length + result.databaseErrors.length,
+          validationErrors: result.validationErrors,
+          databaseErrors: result.databaseErrors,
+        },
+      },
+      { status: statusCode }
+    );
+  } catch (error) {
+    console.error("💥 API route error:", error);
+    return NextResponse.json(
+      {
+        success: false,
         error: "Internal server error",
         details: error instanceof Error ? error.message : "Unknown error",
       },
@@ -51,21 +78,18 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-  try {
-    // TODO: Implement GET endpoint to retrieve transactions
-    // This could return paginated transactions, summary data, etc.
-    return NextResponse.json({
-      message: "Transactions API endpoint",
-      endpoints: {
-        POST: "Upload and process expense transaction CSV data",
-        GET: "Retrieve transactions (coming soon)",
-      },
-    });
-  } catch (error) {
-    console.error("Error in transactions GET:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({
+    message: "Modern Transactions API",
+    endpoints: {
+      POST: "Upload and process expense transaction CSV data with Zod validation",
+      GET: "API information (this endpoint)",
+    },
+    features: [
+      "Zod schema validation",
+      "Database transactions",
+      "Enhanced error handling",
+      "Driver validation",
+      "Duplicate detection",
+    ],
+  });
 }

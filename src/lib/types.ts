@@ -1,9 +1,8 @@
 export type Expense_CSV_Row = {
-  statementPeriodStartDate: string;
-  statementPeriodEndDate: string;
   employeeId: string;
   employeeFirstName: string;
   employeeLastName: string;
+  employeeCompanyUnit: string;
   cardHolderName: string;
   lastFourDigits: string;
   transactionReference: string;
@@ -17,10 +16,10 @@ export type Expense_CSV_Row = {
   reasonForExpense: string;
   receiptImageName: string;
   receiptImageReferenceId: string;
+  workflowStatus: string;
   supplierName: string;
   supplierCity: string;
   supplierState: string;
-  workflowStatus: string;
   merchantCategoryCode?: string;
   odometerReading?: number; // parse into number
   fuelQuantity?: number;
@@ -108,23 +107,3 @@ export type FuelSummaryData = {
   uniqueTruckIds: string[];
 };
 
-export const column_names = [
-  "Statement Period - Start Date",
-  "Statement Period - End Date",
-  "Account - Last Four Digits",
-  "Cardholder Name",
-  "Transaction - Transaction Date",
-  "Transaction - Posting Date",
-  "Transaction - Billing Amount",
-  "Transaction - Line Amount",
-  "Transaction - Line Number",
-  "Transaction Line Coding - GL Code",
-  "Transaction Line Coding Description - GL Code",
-  "Transaction - Reason for Expense",
-  "Transaction - Receipt Image Name",
-  "Transaction - Receipt Image Reference ID",
-  "Supplier - Name",
-  "Supplier - City",
-  "Supplier - State",
-  "Transaction - Workflow Status",
-];

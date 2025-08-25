@@ -1,188 +1,228 @@
-import { Expense_CSV_Row } from "@/lib/types";
-import { createManyTransactions } from "../mutations/transactions";
-import { findDriverByName } from "../queries/drivers";
-
-/**
- * Service layer for transaction business logic
- */
-
-export interface ProcessedTransactionData {
-  transactionsCreated: number;
-  duplicatesSkipped: number;
-  nonDriversSkipped: number;
-  errors: string[];
-}
+import { db, schema } from "@/lib/db";
+// import { eq } from "drizzle-orm"; // Temporarily disabled for testing
+import {
+  ExpenseCSVRowSchema,
+  type ExpenseCSVRow,
+  type ProcessedTransactionResult,
+} from "@/lib/validations/transaction";
 
 export async function processTransactionCSVData(
-  data: Expense_CSV_Row[]
-): Promise<ProcessedTransactionData> {
-  const result: ProcessedTransactionData = {
+  rows: ExpenseCSVRow[]
+): Promise<ProcessedTransactionResult> {
+  const result: ProcessedTransactionResult = {
     transactionsCreated: 0,
     duplicatesSkipped: 0,
     nonDriversSkipped: 0,
-    errors: [],
+    validationErrors: [],
+    databaseErrors: [],
   };
 
-  if (!data || data.length === 0) {
-    result.errors.push("No data provided");
-    return result;
-  }
-
   try {
-    // Step 1: Validate and transform data
-    const transactionsToInsert = [];
-    const processedReferences = new Set<string>();
+    await db.transaction(async (trx) => {
+      console.log("-------- TRANSACTION PROCESSING STARTED --------");
+      console.log(`💾 Processing ${rows.length} transactions...`);
 
-    for (const row of data) {
-      try {
-        // Validate required fields
-        if (!row.transactionReference) {
-          result.errors.push(
-            `Missing transaction reference in row: ${JSON.stringify(row)}`
+      // Track processed references to detect duplicates within batch
+      // const processedReferences = new Set<string>();
+
+      for (const row of rows) {
+        try {
+          // Step 1: Validate row with Zod
+          const validation = ExpenseCSVRowSchema.safeParse(row);
+          if (!validation.success) {
+            const errorMessages = validation.error.issues
+              .map((err) => `${err.path.join(".")}: ${err.message}`)
+              .join(", ");
+            result.validationErrors.push(`Validation failed: ${errorMessages}`);
+            continue;
+          }
+
+          const validRow = validation.data;
+
+          // REF_NUMBER-LINE_NUMBER to enforce uniqueness for split transactions 
+          const refNumberWithLineNumber = `${validRow.transactionReference}-${
+            validRow.lineNumber || "1"
+          }`;
+
+          // // Step 2: Check for duplicates within batch
+          // if (processedReferences.has(validRow.transactionReference)) {
+          //   result.duplicatesSkipped++;
+          //   result.validationErrors.push(
+          //     `Duplicate transaction reference: ${validRow.transactionReference}`
+          //   );
+          //   continue;
+          // }
+          // processedReferences.add(validRow.transactionReference);
+
+          // Step 3: Validate required fields and constraints
+          if (
+            !validRow.transactionReference ||
+            !validRow.cardHolderName ||
+            !validRow.glCode
+          ) {
+            result.validationErrors.push(
+              `Missing required fields: ${JSON.stringify(validRow)}`
+            );
+            continue;
+          }
+
+          // Step 3.1: Validate field length constraints
+          if (validRow.lastFourDigits.length !== 4) {
+            result.validationErrors.push(
+              `Invalid last four digits length: "${validRow.lastFourDigits}" (expected 4 chars, got ${validRow.lastFourDigits.length})`
+            );
+            continue;
+          }
+
+          if (validRow.glCode.length > 150) {
+            result.validationErrors.push(
+              `GL Code too long: "${validRow.glCode}" (max 150 chars, got ${validRow.glCode.length})`
+            );
+            continue;
+          }
+
+          if (validRow.cardHolderName.length > 255) {
+            result.validationErrors.push(
+              `Cardholder name too long: "${validRow.cardHolderName}" (max 255 chars, got ${validRow.cardHolderName.length})`
+            );
+            continue;
+          }
+
+          // Step 4: Validate numeric fields
+          if (
+            typeof validRow.billingAmount !== "number" ||
+            typeof validRow.lineAmount !== "number"
+          ) {
+            result.validationErrors.push(
+              `Invalid numeric data: ${JSON.stringify(validRow)}`
+            );
+            continue;
+          }
+
+          // Step 5: Parse dates
+          const transactionDate = new Date(validRow.transactionDate);
+          const postingDate = new Date(validRow.postingDate);
+
+          if (
+            isNaN(transactionDate.getTime()) ||
+            isNaN(postingDate.getTime())
+          ) {
+            result.validationErrors.push(
+              `Invalid date format: transactionDate=${validRow.transactionDate}, postingDate=${validRow.postingDate}`
+            );
+            continue;
+          }
+
+          // Step 6: Check for existing transaction with same reference
+          // TODO: Re-enable duplicate check after confirming INSERT works
+          /*
+          const existingTransaction = await trx
+            .select({ id: schema.transactions.id })
+            .from(schema.transactions)
+            .where(
+              eq(
+                schema.transactions.transactionReference,
+                validRow.transactionReference
+              )
+            )
+            .limit(1);
+
+          if (existingTransaction.length > 0) {
+            console.log(
+              `⚠️ Skipping duplicate transaction: ${validRow.transactionReference}`
+            );
+            result.duplicatesSkipped++;
+            continue;
+          }
+          */
+
+          // Step 7: Insert transaction using Drizzle ORM
+          console.log(
+            `🔄 Attempting to insert transaction: ${validRow.transactionReference}`
           );
-          continue;
-        }
-
-        if (!row.cardHolderName) {
-          result.errors.push(
-            `Missing cardholder name in row: ${JSON.stringify(row)}`
+          console.log(
+            `   Data validation: cardHolderName="${validRow.cardHolderName}", lastFourDigits="${validRow.lastFourDigits}" (length: ${validRow.lastFourDigits.length}), lineNumber="${validRow.lineNumber}"`
           );
-          continue;
-        }
+          console.log("");
+          console.log("XXXXXXXXX");
+          console.log("");
+          console.log("INSERTING TRANSACTION");
+          console.log("");
+          console.log("XXXXXXXXX");
+          console.log("");
 
-        if (!row.lastFourDigits) {
-          result.errors.push(
-            `Missing last four digits in row: ${JSON.stringify(row)}`
+          await trx.insert(schema.transactions).values({
+            transactionReference: refNumberWithLineNumber,
+            cardholderName: validRow.cardHolderName,
+            lastFourDigits: validRow.lastFourDigits,
+            transactionDate: transactionDate,
+            postingDate: postingDate,
+            billingAmount: validRow.billingAmount.toString(),
+            lineAmount: validRow.lineAmount.toString(),
+            lineNumber: validRow.lineNumber || "1", // Ensure we have a line number
+            glCode: validRow.glCode,
+            glCodeDescription: validRow.glCodeDescription || null,
+            reasonForExpense: validRow.reasonForExpense || null,
+            receiptImageName: validRow.receiptImageName || null,
+            receiptImageReferenceId: validRow.receiptImageReferenceId || null,
+            supplierName: validRow.supplierName || null,
+            supplierCity: validRow.supplierCity || null,
+            supplierState: validRow.supplierState || null,
+            workflowStatus: validRow.workflowStatus || null,
+            merchantCategoryCode: validRow.merchantCategoryCode || null,
+            odometerReading: validRow.odometerReading?.toString() || null,
+            fuelQuantity: validRow.fuelQuantity?.toString() || null,
+            fuelType: validRow.fuelType || null,
+            fuelUnitCost: validRow.fuelUnitCost?.toString() || null,
+            fuelUnitOfMeasure: validRow.fuelUnitOfMeasure || null,
+          });
+          // .returning({ id: schema.transactions.id });
+
+          result.transactionsCreated++;
+          // console.log(
+          //   `✓ Inserted transaction: ${validRow.transactionReference} - ID: ${insertResult[0].id}`
+          // );
+        } catch (error) {
+          // Log detailed error for debugging
+          const errorDetails = {
+            message: error instanceof Error ? error.message : "Unknown error",
+            stack: error instanceof Error ? error.stack : "No stack trace",
+            name: error instanceof Error ? error.name : "Unknown",
+            code: (error as { code?: string })?.code || "No code",
+            detail: (error as { detail?: string })?.detail || "No detail",
+            constraint:
+              (error as { constraint?: string })?.constraint || "No constraint",
+            table: (error as { table?: string })?.table || "No table",
+            column: (error as { column?: string })?.column || "No column",
+          };
+
+          console.error(`❌ Failed to insert transaction:`, {
+            errorDetails,
+            rowData: JSON.stringify(row),
+          });
+
+          result.databaseErrors.push(
+            `Failed to insert transaction: ${errorDetails.message} (Code: ${errorDetails.code}, Detail: ${errorDetails.detail})`
           );
+
+          // Continue with next row instead of aborting entire transaction
           continue;
         }
-
-        if (!row.transactionDate) {
-          result.errors.push(
-            `Missing transaction date in row: ${JSON.stringify(row)}`
-          );
-          continue;
-        }
-
-        if (!row.glCode) {
-          result.errors.push(`Missing GL code in row: ${JSON.stringify(row)}`);
-          continue;
-        }
-
-        // Check if cardholder is a driver
-        const driver = await findDriverByName(row.cardHolderName);
-        if (!driver) {
-          result.nonDriversSkipped++;
-          result.errors.push(
-            `Skipping transaction for non-driver employee: ${row.cardHolderName}`
-          );
-          continue;
-        }
-
-        // Check for duplicates within this batch
-        if (processedReferences.has(row.transactionReference)) {
-          result.duplicatesSkipped++;
-          result.errors.push(
-            `Duplicate transaction reference found: ${row.transactionReference}`
-          );
-          continue;
-        }
-        processedReferences.add(row.transactionReference);
-
-        // Parse dates
-        const transactionDate = new Date(row.transactionDate);
-        if (isNaN(transactionDate.getTime())) {
-          result.errors.push(
-            `Invalid transaction date format: ${row.transactionDate}`
-          );
-          continue;
-        }
-
-        const postingDate = new Date(row.postingDate);
-        if (isNaN(postingDate.getTime())) {
-          result.errors.push(`Invalid posting date format: ${row.postingDate}`);
-          continue;
-        }
-
-        // Parse numeric fields
-        const billingAmount = parseFloat(row.billingAmount);
-        if (isNaN(billingAmount)) {
-          result.errors.push(`Invalid billing amount: ${row.billingAmount}`);
-          continue;
-        }
-
-        const lineAmount = parseFloat(row.lineAmount);
-        if (isNaN(lineAmount)) {
-          result.errors.push(`Invalid line amount: ${row.lineAmount}`);
-          continue;
-        }
-
-        const lineNumber = parseInt(row.lineNumber, 10);
-        if (isNaN(lineNumber)) {
-          result.errors.push(`Invalid line number: ${row.lineNumber}`);
-          continue;
-        }
-
-        // Prepare transaction data
-        const transactionData = {
-          transactionReference: row.transactionReference,
-          cardholderName: row.cardHolderName,
-          lastFourDigits: row.lastFourDigits,
-          transactionDate: transactionDate,
-          postingDate: postingDate,
-          billingAmount: billingAmount,
-          lineAmount: lineAmount,
-          lineNumber: lineNumber,
-          glCode: row.glCode,
-          glCodeDescription: row.glCodeDescription || undefined,
-          reasonForExpense: row.reasonForExpense || undefined,
-          receiptImageName: row.receiptImageName || undefined,
-          receiptImageReferenceId: row.receiptImageReferenceId || undefined,
-          supplierName: row.supplierName || undefined,
-          supplierCity: row.supplierCity || undefined,
-          supplierState: row.supplierState || undefined,
-          workflowStatus: row.workflowStatus || undefined,
-          merchantCategoryCode: row.merchantCategoryCode || undefined,
-          odometerReading: row.odometerReading || undefined,
-          fuelQuantity: row.fuelQuantity || undefined,
-          fuelType: row.fuelType || undefined,
-          fuelUnitCost: row.fuelUnitCost || undefined,
-          fuelUnitOfMeasure: row.fuelUnitOfMeasure || undefined,
-        };
-
-        transactionsToInsert.push(transactionData);
-      } catch (error) {
-        result.errors.push(`Error processing row: ${error}`);
       }
-    }
 
-    // Step 2: Bulk insert transactions
-    if (transactionsToInsert.length > 0) {
-      try {
-        const createdTransactions = await createManyTransactions(
-          transactionsToInsert
-        );
-        result.transactionsCreated = createdTransactions.length;
-      } catch (error) {
-        // Handle unique constraint violations (duplicates in database)
-        if (
-          error instanceof Error &&
-          error.message.includes("unique constraint")
-        ) {
-          // For now, count as duplicates - in production you might want more sophisticated handling
-          result.duplicatesSkipped += transactionsToInsert.length;
-          result.errors.push(`Some transactions already exist in the database`);
-        } else {
-          result.errors.push(`Failed to insert transactions: ${error}`);
-        }
-      }
-    }
-
-    return result;
+      console.log(
+        `✅ Transaction processing complete: ${result.transactionsCreated} transactions created`
+      );
+      console.log("-------- TRANSACTION PROCESSING COMPLETED --------");
+    });
   } catch (error) {
-    result.errors.push(
-      `Unexpected error processing transaction data: ${error}`
+    console.error("💥 Database transaction failed:", error);
+    result.databaseErrors.push(
+      `Database transaction failed: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
     );
-    return result;
   }
+
+  return result;
 }

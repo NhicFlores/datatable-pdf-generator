@@ -1,6 +1,6 @@
 CREATE SCHEMA IF NOT EXISTS "dev-reports";
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "dev-reports"."drivers" (
+CREATE TABLE "dev-reports"."drivers" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"branch" varchar(100) NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS "dev-reports"."drivers" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "dev-reports"."fuel_transactions" (
+CREATE TABLE "dev-reports"."fuel_transactions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"vehicle_id" varchar(100) NOT NULL,
 	"driver_id" uuid NOT NULL,
@@ -18,13 +18,13 @@ CREATE TABLE IF NOT EXISTS "dev-reports"."fuel_transactions" (
 	"cost" numeric(10, 2) NOT NULL,
 	"seller_state" varchar(100) NOT NULL,
 	"seller_name" varchar(255) NOT NULL,
-	"odometer" integer NOT NULL,
+	"odometer" numeric(10, 2) NOT NULL,
 	"receipt" varchar(500),
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "dev-reports"."transactions" (
+CREATE TABLE "dev-reports"."transactions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"transaction_reference" varchar(255) NOT NULL,
 	"cardholder_name" varchar(255) NOT NULL,
@@ -33,25 +33,24 @@ CREATE TABLE IF NOT EXISTS "dev-reports"."transactions" (
 	"posting_date" timestamp NOT NULL,
 	"billing_amount" numeric(10, 2) NOT NULL,
 	"line_amount" numeric(10, 2) NOT NULL,
-	"line_number" integer NOT NULL,
-	"gl_code" varchar(50) NOT NULL,
+	"line_number" varchar(50) NOT NULL,
+	"gl_code" varchar(150),
 	"gl_code_description" text,
 	"reason_for_expense" text,
 	"receipt_image_name" varchar(500),
 	"receipt_image_reference_id" varchar(255),
+	"workflow_status" varchar(100),
 	"supplier_name" varchar(255),
 	"supplier_city" varchar(100),
 	"supplier_state" varchar(100),
-	"workflow_status" varchar(100),
 	"merchant_category_code" varchar(10),
-	"odometer_reading" integer,
+	"odometer_reading" numeric(10, 3),
 	"fuel_quantity" numeric(8, 3),
 	"fuel_type" varchar(50),
 	"fuel_unit_cost" numeric(8, 4),
 	"fuel_unit_of_measure" varchar(20),
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "transactions_transaction_reference_unique" UNIQUE("transaction_reference")
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 ALTER TABLE "dev-reports"."fuel_transactions" ADD CONSTRAINT "fuel_transactions_driver_id_drivers_id_fk" FOREIGN KEY ("driver_id") REFERENCES "dev-reports"."drivers"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

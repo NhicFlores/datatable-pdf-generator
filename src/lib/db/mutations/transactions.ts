@@ -1,34 +1,11 @@
+import { InsertTransaction } from "@/drizzle/schema";
 import { db, schema, eq } from "@/lib/db";
 
 /**
  * Transaction mutation operations
  */
 
-export async function createTransaction(data: {
-  transactionReference: string;
-  cardholderName: string;
-  lastFourDigits: string;
-  transactionDate: Date;
-  postingDate: Date;
-  billingAmount: number;
-  lineAmount: number;
-  lineNumber: number;
-  glCode: string;
-  glCodeDescription?: string;
-  reasonForExpense?: string;
-  receiptImageName?: string;
-  receiptImageReferenceId?: string;
-  supplierName?: string;
-  supplierCity?: string;
-  supplierState?: string;
-  workflowStatus?: string;
-  merchantCategoryCode?: string;
-  odometerReading?: number;
-  fuelQuantity?: number;
-  fuelType?: string;
-  fuelUnitCost?: number;
-  fuelUnitOfMeasure?: string;
-}) {
+export async function createTransaction(data: InsertTransaction) {
   const result = await db
     .insert(schema.transactions)
     .values({
@@ -62,31 +39,7 @@ export async function createTransaction(data: {
 }
 
 export async function createManyTransactions(
-  transactions: Array<{
-    transactionReference: string;
-    cardholderName: string;
-    lastFourDigits: string;
-    transactionDate: Date;
-    postingDate: Date;
-    billingAmount: number;
-    lineAmount: number;
-    lineNumber: number;
-    glCode: string;
-    glCodeDescription?: string;
-    reasonForExpense?: string;
-    receiptImageName?: string;
-    receiptImageReferenceId?: string;
-    supplierName?: string;
-    supplierCity?: string;
-    supplierState?: string;
-    workflowStatus?: string;
-    merchantCategoryCode?: string;
-    odometerReading?: number;
-    fuelQuantity?: number;
-    fuelType?: string;
-    fuelUnitCost?: number;
-    fuelUnitOfMeasure?: string;
-  }>
+  transactions: Array<InsertTransaction>
 ) {
   const formattedTransactions = transactions.map((tx) => ({
     transactionReference: tx.transactionReference,

@@ -5,17 +5,17 @@ import { FuelReportColumns } from "@/components/tables/fuel-driver-columns";
 import { AllFuelTransactionsExportButton } from "@/components/all-fuel-transactions-export-button";
 import { TransactionsUploadButton } from "@/components/transactions-upload-button";
 import { FuelTransactionsUploadButton } from "@/components/fuel-transactions-upload-button";
-import { Expense_CSV_Row, Fuel_CSV_Row } from "@/lib/types";
+import { Expense_CSV_Row } from "@/lib/types";
+import { FuelCSVRow } from "@/lib/validations/fuel";
 import React from "react";
 import Link from "next/link";
 import { FuelReportSummaryRoute } from "@/lib/routes";
 
 const FuelReportsPage = () => {
   const { fuelReports } = useFuelReports();
-
+  // receive parsed csv data, send to API endpoint, handle server response, provide user feedback
   const handleTransactionsData = async (data: Expense_CSV_Row[]) => {
-    console.log("Transactions data received:", data.length, "records");
-
+    console.log("🔄 Processing transactions:", data.length, "records");
     try {
       const response = await fetch("/api/transactions", {
         method: "POST",
@@ -27,34 +27,40 @@ const FuelReportsPage = () => {
 
       const result = await response.json();
 
-      if (response.ok) {
-        alert(`✅ Success! 
-        • ${result.details.transactionsCreated} transactions saved
-        • ${result.details.duplicatesSkipped} duplicates skipped
-        • ${result.details.nonDriversSkipped} non-driver transactions skipped
-        ${
-          result.details.errors.length > 0
-            ? `\n⚠️ ${result.details.errors.length} errors occurred`
-            : ""
-        }`);
+      if (result.success || response.status === 207) {
+        // Show detailed success message with error breakdown
+        const errorSummary =
+          result.data.totalErrors > 0
+            ? `\n⚠️ ${
+                result.data.totalErrors
+              } issues found:\n${result.data.validationErrors
+                .slice(0, 3)
+                .join("\n")}${
+                result.data.validationErrors.length > 3 ? "\n..." : ""
+              }`
+            : "";
 
-        // TODO: Refresh the transactions data to show new records
-        console.log("Processing complete:", result);
+        alert(`✅ Processing Complete!
+        • ${result.data.transactionsCreated} transactions saved
+        • ${result.data.duplicatesSkipped} duplicates skipped  
+        • ${result.data.nonDriversSkipped} non-driver transactions skipped${errorSummary}`);
+
+        console.log("✅ Processing complete:", result);
       } else {
-        throw new Error(result.error || "Failed to save data");
+        throw new Error(result.error || "Failed to process data");
       }
     } catch (error) {
-      console.error("Error saving transaction data:", error);
+      console.error("💥 Error processing transaction data:", error);
       alert(
-        `❌ Failed to save transaction data: ${
+        `❌ Failed to process transaction data: ${
           error instanceof Error ? error.message : "Unknown error"
         }`
       );
     }
   };
 
-  const handleFuelData = async (data: Fuel_CSV_Row[]) => {
-    console.log("Fuel data received:", data.length, "records");
+  const handleFuelData = async (data: FuelCSVRow[]) => {
+    console.log("🔄 Processing fuel data:", data.length, "records");
 
     try {
       const response = await fetch("/api/fuel-transactions", {
@@ -67,25 +73,32 @@ const FuelReportsPage = () => {
 
       const result = await response.json();
 
-      if (response.ok) {
-        alert(`✅ Success! 
+      if (result.success) {
+        const validationErrorSummary =
+          result.details.validationErrors?.length > 0
+            ? `\n⚠️ ${result.details.validationErrors.length} validation issues found`
+            : "";
+
+        const databaseErrorSummary =
+          result.details.databaseErrors?.length > 0
+            ? `\n❌ ${result.details.databaseErrors.length} database errors occurred`
+            : "";
+
+        alert(`✅ Processing Complete! 
         • ${result.details.driversCreated} drivers created/found
         • ${result.details.transactionsCreated} fuel transactions saved
-        ${
-          result.details.errors.length > 0
-            ? `\n⚠️ ${result.details.errors.length} errors occurred`
-            : ""
-        }`);
+        • ${
+          result.details.insertedIds?.length || 0
+        } records inserted${validationErrorSummary}${databaseErrorSummary}`);
 
-        // TODO: Refresh the fuel reports data to show new records
-        console.log("Processing complete:", result);
+        console.log("✅ Fuel processing complete:", result);
       } else {
-        throw new Error(result.error || "Failed to save data");
+        throw new Error(result.error || "Failed to process data");
       }
     } catch (error) {
-      console.error("Error saving fuel data:", error);
+      console.error("💥 Error processing fuel data:", error);
       alert(
-        `❌ Failed to save fuel data: ${
+        `❌ Failed to process fuel data: ${
           error instanceof Error ? error.message : "Unknown error"
         }`
       );

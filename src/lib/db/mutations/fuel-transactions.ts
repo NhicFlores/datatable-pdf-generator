@@ -27,7 +27,7 @@ export async function createFuelTransaction(data: {
       cost: data.cost.toString(), // Convert to string for decimal field
       sellerState: data.sellerState,
       sellerName: data.sellerName,
-      odometer: data.odometer,
+      odometer: data.odometer.toString(),
       receipt: data.receipt || "",
     })
     .returning();
@@ -58,7 +58,7 @@ export async function createManyFuelTransactions(
     cost: tx.cost.toString(),
     sellerState: tx.sellerState,
     sellerName: tx.sellerName,
-    odometer: tx.odometer,
+    odometer: tx.odometer.toString(),
     receipt: tx.receipt || "",
   }));
 

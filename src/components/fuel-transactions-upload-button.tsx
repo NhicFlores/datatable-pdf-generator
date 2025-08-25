@@ -3,10 +3,10 @@
 import React from "react";
 import { CSVUploadButton } from "./csv-upload-button";
 import Papa from "papaparse";
-import { Fuel_CSV_Row } from "@/lib/types";
+import { FuelCSVRow } from "@/lib/validations/fuel";
 
 interface FuelTransactionsUploadButtonProps {
-  onDataParsed: (data: Fuel_CSV_Row[]) => void;
+  onDataParsed: (data: FuelCSVRow[]) => void;
   variant?:
     | "default"
     | "outline"
@@ -45,7 +45,7 @@ export function FuelTransactionsUploadButton({
           receipt: "receipt",
         };
 
-        Papa.parse<Fuel_CSV_Row>(csvText, {
+        Papa.parse<FuelCSVRow>(csvText, {
           header: true,
           skipEmptyLines: true,
           transformHeader: (header: string): string => {
@@ -54,22 +54,39 @@ export function FuelTransactionsUploadButton({
           transform: (value: string, field: string): string | number => {
             // Handle empty values
             if (!value || value.trim() === "") {
-              return field === "gallons" ||
-                field === "cost" ||
-                field === "odometer"
-                ? 0
-                : "";
+              // For numeric fields, return "0" string for Zod coercion
+              switch (field) {
+                case "vehicleId":
+                  return "NO_VEHICLE_ID";
+                case "driver":
+                  return "NO_DRIVER";
+                case "date":
+                  return new Date().toString();
+                case "invoiceNumber":
+                  return "NO_INVOICE_NUMBER";
+                case "sellerState":
+                  return "NO_SELLER_STATE";
+                case "sellerName":
+                  return "NO_SELLER_NAME";
+                case "receipt":
+                  return "NO_RECEIPT";
+                case "gallons":
+                case "cost":
+                case "odometer":
+                  return "0";
+              }
+              return "";
             }
 
-            // Parse numeric fields
-            if (field === "gallons" || field === "cost") {
-              const parsed = parseFloat(value);
-              return isNaN(parsed) ? 0 : parsed;
-            }
+            if (
+              field === "gallons" ||
+              field === "cost" ||
+              field === "odometer"
+            ) {
+              const cleanedValue = value.replace(/[$,\s()]/g, "");
 
-            if (field === "odometer") {
-              const parsed = parseInt(value, 10);
-              return isNaN(parsed) ? 0 : parsed;
+              const numericValue = parseFloat(cleanedValue);
+              return isNaN(numericValue) ? "0" : numericValue.toString();
             }
 
             return value;

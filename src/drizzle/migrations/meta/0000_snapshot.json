@@ -1,5 +1,5 @@
 {
-  "id": "dcb671bf-5365-4798-9e8a-439c30140613",
+  "id": "eb65b482-ec8b-41be-8a67-3a431dcc913d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -163,7 +163,7 @@
         },
         "odometer": {
           "name": "odometer",
-          "type": "integer",
+          "type": "numeric(10, 2)",
           "primaryKey": false,
           "notNull": true
         },
@@ -348,15 +348,15 @@
         },
         "line_number": {
           "name": "line_number",
-          "type": "integer",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": true
         },
         "gl_code": {
           "name": "gl_code",
-          "type": "varchar(50)",
+          "type": "varchar(150)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "gl_code_description": {
           "name": "gl_code_description",
@@ -382,6 +382,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "workflow_status": {
+          "name": "workflow_status",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "supplier_name": {
           "name": "supplier_name",
           "type": "varchar(255)",
@@ -400,12 +406,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "workflow_status": {
-          "name": "workflow_status",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
-        },
         "merchant_category_code": {
           "name": "merchant_category_code",
           "type": "varchar(10)",
@@ -414,7 +414,7 @@
         },
         "odometer_reading": {
           "name": "odometer_reading",
-          "type": "integer",
+          "type": "numeric(10, 3)",
           "primaryKey": false,
           "notNull": false
         },
@@ -536,15 +536,7 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "transactions_transaction_reference_unique": {
-          "name": "transactions_transaction_reference_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "transaction_reference"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
