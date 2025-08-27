@@ -1,0 +1,73 @@
+import {
+  BaseFuelTransaction,
+  SelectDriver,
+  SelectFuelTransaction,
+} from "./schema-types";
+
+export type FuelReport = Omit<SelectDriver, "createdAt" | "updatedAt"> & {
+  vehicleIds: string[];
+  fuelTransactions: BaseFuelTransaction[];
+};
+
+// Define the exact return type for fuel transactions with driver info
+export type FuelTransactionWithDriver = Omit<
+  SelectFuelTransaction,
+  "driverId"
+> & {
+  driverId: string;
+  driverName: string | null;
+  driverBranch: string | null;
+};
+
+// Summary type for list page performance optimization
+export type FuelReportSummary = SelectDriver & {
+  vehicleIds: string[];
+};
+
+// Type for driver-specific transaction queries
+export type DriverTransactions = {
+  driverId: string;
+  driverName: string;
+  transactions: SelectTransaction[];
+};
+
+// Import SelectTransaction from schema-types
+import type { SelectTransaction } from "./schema-types";
+
+// Fuel summary data for dashboard/summary page
+export type FuelSummaryData = {
+  totalDrivers: number;
+  totalTransactions: number;
+  totalGallons: number;
+  totalCost: number;
+  summaryByState: FuelSummaryByState[];
+  summaryByVehicle: FuelSummaryByVehicle[];
+};
+
+export type FuelSummaryByState = {
+  state: string;
+  totalGallons: number;
+  totalCost: number;
+  transactionCount: number;
+  uniqueVehicles: number;
+};
+
+export type FuelSummaryByVehicle = {
+  vehicleId: string;
+  driverName: string;
+  totalGallons: number;
+  totalCost: number;
+  transactionCount: number;
+};
+
+// New types that match the deprecated FuelSummaryData structure
+export type FuelSummaryRow = {
+  state: string;
+  totalGallons: number;
+  truckGallons: { [truckId: string]: number };
+};
+
+export type FuelSummaryTableData = {
+  summaryRows: FuelSummaryRow[];
+  uniqueTruckIds: string[];
+};

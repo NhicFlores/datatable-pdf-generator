@@ -1,19 +1,11 @@
-"use client";
-
+import { getFuelSummaryTableFromDB } from "@/lib/db/data-fetchers";
 import { FuelSummaryTable } from "@/components/tables/fuel-summary-table";
-import { FuelSummaryExportButton } from "@/components/fuel-summary-export-button";
-import { AllFuelTransactionsExportButton } from "@/components/all-fuel-transactions-export-button";
-import { useMemo } from "react";
-import { FuelSummaryData } from "@/lib/types";
-import { useFuelSummary } from "@/components/data-context";
+import { FuelSummaryExportButton } from "@/components/csv/fuel-summary-export-button";
+// import { AllFuelTransactionsExportButton } from "@/components/all-fuel-transactions-export-button";
 
-export default function FuelSummaryPage() {
-  const { getFuelSummaryData } = useFuelSummary();
-
-  // Get live summary data
-  const summaryData: FuelSummaryData = useMemo(() => {
-    return getFuelSummaryData();
-  }, [getFuelSummaryData]);
+// Server Component - pre-fetches fuel summary data
+export default async function FuelSummaryPage() {
+  const summaryData = await getFuelSummaryTableFromDB();
 
   // Check if there's any data to display
   const hasData = summaryData.summaryRows.length > 0;
@@ -61,12 +53,12 @@ export default function FuelSummaryPage() {
                 variant="outline"
                 size="sm"
               />
-              <AllFuelTransactionsExportButton
+              {/* <AllFuelTransactionsExportButton
                 filename="updated-fuel-report.csv"
                 label="Download Updated Report"
                 variant="default"
                 size="sm"
-              />
+              /> */}
             </div>
           </div>
         </div>

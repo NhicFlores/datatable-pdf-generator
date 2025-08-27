@@ -3,10 +3,10 @@
 import React from "react";
 import { CSVUploadButton } from "./csv-upload-button";
 import Papa from "papaparse";
-import { Expense_CSV_Row } from "@/lib/types";
+import { ExpenseCSVRow } from "@/lib/validations/transaction";
 
 interface TransactionsUploadButtonProps {
-  onDataParsed: (data: Expense_CSV_Row[]) => void;
+  onDataParsed: (data: ExpenseCSVRow[]) => void;
   variant?:
     | "default"
     | "outline"
@@ -62,7 +62,7 @@ export function TransactionsUploadButton({
           "Fuel - Fuel Unit of Measure": "fuelUnitOfMeasure",
         };
 
-        Papa.parse<Expense_CSV_Row>(csvText, {
+        Papa.parse<ExpenseCSVRow>(csvText, {
           header: true,
           skipEmptyLines: true,
           transformHeader: (header: string): string => {

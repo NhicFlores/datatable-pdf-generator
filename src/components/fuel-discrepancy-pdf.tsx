@@ -1,5 +1,6 @@
+// DEPRECATED OR REFACTOR
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
-import { FuelExpenseDiscrepancy } from "@/lib/types";
+import { FuelExpenseDiscrepancy } from "@/lib/data-model/DEPRECATED-TYPES";
 
 interface FuelDiscrepancyPDFProps {
   discrepancies: FuelExpenseDiscrepancy[];

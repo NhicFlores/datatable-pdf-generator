@@ -1,7 +1,11 @@
+// DEPRECATED OR REFACTOR
 import React from "react";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import { Download } from "lucide-react";
-import { FuelTransaction, Transaction } from "@/lib/types";
+import {
+  Transaction,
+  FuelTransaction,
+} from "@/lib/data-model/DEPRECATED-TYPES";
 import {
   downloadFuelTransactionsCSV,
   downloadExpenseTransactionsCSV,

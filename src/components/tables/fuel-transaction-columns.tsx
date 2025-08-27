@@ -1,5 +1,5 @@
 "use client";
-import { FuelTransaction } from "@/lib/types";
+import { BaseFuelTransaction } from "@/lib/data-model/schema-types";
 import { formatCurrency, formatDateStringToLocal } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
@@ -10,11 +10,11 @@ export const createFuelTransactionColumns = (
   matchingIds: Set<string>,
   onUpdateField?: (
     transactionId: string,
-    field: keyof FuelTransaction,
+    field: keyof BaseFuelTransaction,
     value: string | number
   ) => void,
   editable: boolean = false
-): ColumnDef<FuelTransaction>[] => [
+): ColumnDef<BaseFuelTransaction>[] => [
   {
     id: "vehicleId",
     accessorKey: "vehicleId",
@@ -74,7 +74,7 @@ export const createFuelTransactionColumns = (
       if (editable && onUpdateField) {
         return (
           <EditableCell
-            value={row.original.date}
+            value={formatDateStringToLocal(row.original.date.toDateString())}
             onUpdate={(value) =>
               onUpdateField(fuelTransactionId, "date", value as string)
             }
@@ -83,8 +83,8 @@ export const createFuelTransactionColumns = (
           />
         );
       }
-
-      const date = formatDateStringToLocal(row.original.date);
+      // NOTE TODO:REMOVE REDUNDANT DATE STRING CONVERSIONS
+      const date = formatDateStringToLocal(row.original.date.toDateString());
       return (
         <span className={isMatched ? "text-green-600 font-semibold" : ""}>
           {date}
@@ -311,7 +311,7 @@ export const createFuelTransactionColumns = (
 
       return (
         <span className={isMatched ? "text-green-600 font-semibold" : ""}>
-          {formatCurrency(row.original.cost)}
+          {formatCurrency(parseFloat(row.original.cost))}
         </span>
       );
     },

@@ -1,14 +1,14 @@
-import { Transaction } from "@/lib/types";
-import { formatCurrency, formatDateStringToLocal } from "@/lib/utils";
+import { SelectTransaction } from "@/lib/data-model/schema-types";
+import { formatCurrency } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Plus, X } from "lucide-react";
 import { Button } from "../ui/button";
 
 export const createFuelStatementColumns = (
   matchingIds: Set<string>,
-  onAddToFuelReport?: (transaction: Transaction) => void,
+  onAddToFuelReport?: (transaction: SelectTransaction) => void,
   onRemoveFromAudit?: (transactionReference: string) => void
-): ColumnDef<Transaction>[] => [
+): ColumnDef<SelectTransaction>[] => [
   {
     id: "workflowStatus",
     accessorKey: "workflowStatus",
@@ -50,16 +50,14 @@ export const createFuelStatementColumns = (
       );
     },
     cell: ({ row }) => {
-      const transactionDate = formatDateStringToLocal(
-        row.original.transactionDate
-      );
-      const postingDate = formatDateStringToLocal(row.original.postingDate);
+      const transactionDate = row.original.transactionDate;
+      const postingDate = row.original.postingDate;
       const isMatched = matchingIds.has(row.original.transactionReference);
 
       return (
         <div className={isMatched ? "text-green-600 font-semibold" : ""}>
-          <div className="font-bold">{transactionDate}</div>
-          <div>{postingDate}</div>
+          <div className="font-bold">{transactionDate.toDateString()}</div>
+          <div>{postingDate.toDateString()}</div>
         </div>
       );
     },
@@ -168,7 +166,7 @@ export const createFuelStatementColumns = (
       return (
         <div className={isMatched ? "text-green-600 font-semibold" : ""}>
           <div className="font-bold">
-            {fuelQuantity ? `${fuelQuantity.toFixed(2)}` : "N/A"}
+            {fuelQuantity ? `${parseFloat(fuelQuantity).toFixed(2)}` : "N/A"}
           </div>
           <div className="text-sm text-gray-600">{fuelType || "N/A"}</div>
         </div>
@@ -197,9 +195,9 @@ export const createFuelStatementColumns = (
       return (
         <div className={isMatched ? "text-green-600 font-semibold" : ""}>
           <div className="font-bold">
-            {formatCurrency(row.original.billingAmount)}
+            {formatCurrency(parseFloat(row.original.billingAmount))}
           </div>
-          <div>{formatCurrency(row.original.lineAmount)}</div>
+          <div>{formatCurrency(parseFloat(row.original.lineAmount))}</div>
         </div>
       );
     },

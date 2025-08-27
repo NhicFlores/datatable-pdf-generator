@@ -1,9 +1,10 @@
+// DEPRECATED OR REFACTOR
 import {
+  FuelReport_DEPRECATED,
   FuelTransaction,
   Transaction,
-  FuelSummaryData,
-  FuelReport,
-} from "./types";
+} from "./data-model/DEPRECATED-TYPES";
+import { FuelSummaryTableData } from "./data-model/query-types";
 
 // Generic CSV download function
 export function downloadCSV(
@@ -149,7 +150,7 @@ export function downloadExpenseTransactionsCSV(
 // Function to export fuel summary data
 // Function to download all fuel transactions in original fuel-report.csv format
 export function downloadAllFuelTransactionsCSV(
-  fuelReports: FuelReport[],
+  fuelReports: FuelReport_DEPRECATED[],
   filename?: string
 ) {
   // Headers matching the original fuel-report.csv format
@@ -187,7 +188,7 @@ export function downloadAllFuelTransactionsCSV(
 }
 
 export function downloadFuelSummaryCSV(
-  summaryData: FuelSummaryData,
+  summaryData: FuelSummaryTableData,
   filename?: string
 ) {
   const { summaryRows, uniqueTruckIds } = summaryData;

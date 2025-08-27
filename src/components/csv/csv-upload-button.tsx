@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import { Upload, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 
 interface CSVUploadButtonProps {

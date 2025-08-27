@@ -1,4 +1,4 @@
-import { InsertTransaction } from "@/drizzle/schema";
+import { InsertTransaction } from "@/lib/data-model/schema-types";
 import { db, schema, eq } from "@/lib/db";
 
 /**

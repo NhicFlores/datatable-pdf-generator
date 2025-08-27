@@ -1,13 +1,13 @@
 "use client";
 
 import React from "react";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import { Download } from "lucide-react";
-import { FuelSummaryData } from "@/lib/types";
+import { FuelSummaryTableData } from "@/lib/data-model/query-types";
 import { downloadFuelSummaryCSV } from "@/lib/csv-utils";
 
 interface FuelSummaryExportButtonProps {
-  summaryData: FuelSummaryData;
+  summaryData: FuelSummaryTableData;
   filename?: string;
   label?: string;
   variant?:

@@ -1,3 +1,4 @@
+// DEPRECATED
 export type Expense_CSV_Row = {
   employeeId: string;
   employeeFirstName: string;
@@ -28,6 +29,20 @@ export type Expense_CSV_Row = {
   fuelUnitOfMeasure?: string;
 };
 
+// DEPRECATED
+export type Fuel_CSV_Row = {
+  vehicleId: string;
+  driver: string;
+  date: string;
+  invoiceNumber: string;
+  gallons: number;
+  cost: number;
+  sellerState: string;
+  sellerName: string;
+  odometer: number;
+  receipt: string;
+};
+
 export type Transaction = {
   transactionReference: string;
   cardholderName: string;
@@ -54,24 +69,6 @@ export type Transaction = {
   fuelUnitOfMeasure?: string;
 };
 
-export type FuelStatement = {
-  cardHolderName: string;
-  transactions: Transaction[];
-};
-
-export type Fuel_CSV_Row = {
-  vehicleId: string;
-  driver: string;
-  date: string;
-  invoiceNumber: string;
-  gallons: number;
-  cost: number;
-  sellerState: string;
-  sellerName: string;
-  odometer: number;
-  receipt: string;
-};
-
 export type FuelTransaction = {
   vehicleId: string;
   date: string; // parse into date
@@ -84,11 +81,16 @@ export type FuelTransaction = {
   receipt: string;
 };
 
-export type FuelReport = {
+export type FuelReport_DEPRECATED = {
   driver: string;
   vehicleBranches: string[];
   vehicleIds: string[];
   fuelTransactions: FuelTransaction[];
+};
+
+export type FuelStatement = {
+  cardHolderName: string;
+  transactions: Transaction[];
 };
 
 export type FuelExpenseDiscrepancy = {
@@ -106,4 +108,3 @@ export type FuelSummaryData = {
   summaryRows: FuelSummaryRow[];
   uniqueTruckIds: string[];
 };
-

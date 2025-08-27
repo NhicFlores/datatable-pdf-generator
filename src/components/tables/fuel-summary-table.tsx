@@ -8,10 +8,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FuelSummaryData } from "@/lib/types";
+import { FuelSummaryTableData } from "@/lib/data-model/query-types";
 
 interface FuelSummaryTableProps {
-  summaryData: FuelSummaryData;
+  summaryData: FuelSummaryTableData;
 }
 
 export function FuelSummaryTable({ summaryData }: FuelSummaryTableProps) {

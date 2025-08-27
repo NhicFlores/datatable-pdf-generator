@@ -82,6 +82,7 @@ export const transactions = dbSchema.table(
     fuelUnitOfMeasure: varchar("fuel_unit_of_measure", { length: 20 }),
 
     // Metadata
+    // RENAME THIS TO UPLOAD DATE
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -94,9 +95,6 @@ export const transactions = dbSchema.table(
     index("transactions_workflow_status_idx").on(table.workflowStatus),
   ]
 );
-
-export type SelectTransaction = typeof transactions.$inferSelect;
-export type InsertTransaction = typeof transactions.$inferInsert;
 
 // Fuel Transactions table - matches FuelTransaction type (normalized)
 export const fuelTransactions = dbSchema.table(
@@ -158,4 +156,3 @@ export const fuelTransactionsRelations = relations(
     }),
   })
 );
-
