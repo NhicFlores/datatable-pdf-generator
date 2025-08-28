@@ -31,13 +31,13 @@ export function FuelReportDetail({
   // Server Action wrapper for updating fuel transaction fields
   const handleUpdateFuelLogField = useCallback(
     (
-      transactionId: string,
+      fuelLogId: string, // Now expects actual database UUID
       field: keyof SelectFuelLog,
       value: string | number
     ) => {
       startTransition(async () => {
         const result = await updateFuelLogFieldAction(
-          transactionId,
+          fuelLogId, // Pass the actual UUID to server action
           field,
           value
         );
@@ -185,11 +185,7 @@ export function FuelReportDetail({
 
   const fuelLogColumns = useMemo(
     () =>
-      createFuelLogColumns(
-        matchingFuelLogIds,
-        handleUpdateFuelLogField,
-        true
-      ),
+      createFuelLogColumns(matchingFuelLogIds, handleUpdateFuelLogField, true),
     [matchingFuelLogIds, handleUpdateFuelLogField]
   );
 
@@ -297,10 +293,7 @@ export function FuelReportDetail({
                 }).length
               }
             />
-            <DataTable
-              columns={fuelLogColumns}
-              data={filteredFuelLogs}
-            />
+            <DataTable columns={fuelLogColumns} data={filteredFuelLogs} />
           </div>
         ) : (
           <div className="text-center text-gray-500 mt-10">

@@ -17,13 +17,13 @@ import {
  * Replaces the updateFuelLogField function from context
  */
 export async function updateFuelLogFieldAction(
-  transactionId: string,
+  fuelLogId: string,
   field: keyof SelectFuelLog,
   value: string | number
 ) {
   try {
     console.log(
-      `🔄 Updating fuel transaction ${transactionId}: ${field} = ${value}`
+      `🔄 Updating fuel transaction ${fuelLogId}: ${field} = ${value}`
     );
 
     // Prepare update data based on field type
@@ -51,13 +51,13 @@ export async function updateFuelLogFieldAction(
         throw new Error(`Unsupported field: ${field}`);
     }
 
-    const updatedFuelLog = await updateFuelLogs(transactionId, updateData);
+    const updatedFuelLog = await updateFuelLogs(fuelLogId, updateData);
 
     if (!updatedFuelLog) {
       throw new Error("Failed to update fuel log");
     }
 
-    console.log(`✅ Successfully updated fuel transaction ${transactionId}`);
+    console.log(`✅ Successfully updated fuel transaction ${fuelLogId}`);
 
     // Revalidate the detail page to show updated data
     revalidatePath("/fuel-report/[id]", "page");
@@ -65,7 +65,7 @@ export async function updateFuelLogFieldAction(
     return { success: true, transaction: updatedFuelLog };
   } catch (error) {
     console.error(
-      `❌ Failed to update fuel transaction ${transactionId}:`,
+      `❌ Failed to update fuel transaction ${fuelLogId}:`,
       error
     );
     return {
