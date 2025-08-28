@@ -3,7 +3,7 @@
 import { DataTable } from "@/components/tables/data-table";
 import { FuelReportSummaryColumns } from "@/components/tables/fuel-report-summary-columns";
 import { TransactionsUploadButton } from "@/components/csv/transactions-upload-button";
-import { FuelTransactionsUploadButton } from "@/components/csv/fuel-transactions-upload-button";
+import { FuelLogUploadButton } from "@/components/csv/fuel-log-upload-button";
 import { FuelCSVRow } from "@/lib/validations/fuel";
 import React from "react";
 import Link from "next/link";
@@ -138,6 +138,14 @@ export function FuelReportsList({ fuelReportSummaries }: FuelReportsListProps) {
         <h2 className="text-xl font-semibold mb-4">Upload CSV Files</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
+            <h3 className="text-lg font-medium mb-2">Fuel Log Data</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              Upload fuel log CSV files to import fuel usage data into the
+              system.
+            </p>
+            <FuelLogUploadButton onDataParsed={handleFuelData} size="default" />
+          </div>
+          <div>
             <h3 className="text-lg font-medium mb-2">Transaction Data</h3>
             <p className="text-sm text-gray-600 mb-3">
               Upload expense transaction CSV files to import transaction data
@@ -145,18 +153,6 @@ export function FuelReportsList({ fuelReportSummaries }: FuelReportsListProps) {
             </p>
             <TransactionsUploadButton
               onDataParsed={handleTransactionsData}
-              size="default"
-            />
-          </div>
-
-          <div>
-            <h3 className="text-lg font-medium mb-2">Fuel Transaction Data</h3>
-            <p className="text-sm text-gray-600 mb-3">
-              Upload fuel transaction CSV files to import fuel usage data into
-              the system.
-            </p>
-            <FuelTransactionsUploadButton
-              onDataParsed={handleFuelData}
               size="default"
             />
           </div>

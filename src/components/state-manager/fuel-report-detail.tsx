@@ -1,16 +1,16 @@
 "use client";
 import { DataTable } from "@/components/tables/data-table";
-import { createFuelStatementColumns } from "@/components/tables/fuel-statement-columns";
-import { createFuelTransactionColumns } from "@/components/tables/fuel-transaction-columns";
+import { createTransactionColumns } from "@/components/tables/transaction-columns";
+import { createFuelLogColumns } from "@/components/tables/fuel-log-columns";
 import { FilterTabs } from "@/components/filter-tabs";
 import {
-  updateFuelTransactionFieldAction,
+  updateFuelLogFieldAction,
   addTransactionToFuelReportAction,
 } from "@/lib/actions/fuel-actions";
 import React, { useMemo, useState, useCallback, useTransition } from "react";
 import type {
   SelectTransaction,
-  SelectFuelTransaction,
+  SelectFuelLog,
 } from "@/lib/data-model/schema-types";
 import type {
   FuelReport,
@@ -29,14 +29,14 @@ export function FuelReportDetail({
   const [, startTransition] = useTransition();
 
   // Server Action wrapper for updating fuel transaction fields
-  const handleUpdateFuelTransactionField = useCallback(
+  const handleUpdateFuelLogField = useCallback(
     (
       transactionId: string,
-      field: keyof SelectFuelTransaction,
+      field: keyof SelectFuelLog,
       value: string | number
     ) => {
       startTransition(async () => {
-        const result = await updateFuelTransactionFieldAction(
+        const result = await updateFuelLogFieldAction(
           transactionId,
           field,
           value
@@ -107,7 +107,7 @@ export function FuelReportDetail({
   }, []);
 
   // Get matching transaction IDs for highlighting
-  const matchingFuelTransactionIds = useMemo(() => {
+  const matchingFuelLogIds = useMemo(() => {
     if (!fuelReport || !allTransactions.length) return new Set<string>();
     // TODO: Implement actual matching logic
     return new Set<string>(); // Placeholder during refactoring
@@ -147,31 +147,31 @@ export function FuelReportDetail({
   ]);
 
   // Filtered data for fuel transactions
-  const filteredFuelTransactions = useMemo(() => {
+  const filteredFuelLogs = useMemo(() => {
     if (!fuelReport) return [];
 
-    const allTransactions = fuelReport.fuelTransactions;
+    const allTransactions = fuelReport.fuelLogs;
 
     switch (transactionFilter) {
       case "matched":
         return allTransactions.filter((t) => {
-          const fuelTransactionId = `${t.vehicleId}-${t.date}-${t.invoiceNumber}`;
-          return matchingFuelTransactionIds.has(fuelTransactionId);
+          const fuelLogId = `${t.vehicleId}-${t.date}-${t.invoiceNumber}`;
+          return matchingFuelLogIds.has(fuelLogId);
         });
       case "unmatched":
         return allTransactions.filter((t) => {
-          const fuelTransactionId = `${t.vehicleId}-${t.date}-${t.invoiceNumber}`;
-          return !matchingFuelTransactionIds.has(fuelTransactionId);
+          const fuelLogId = `${t.vehicleId}-${t.date}-${t.invoiceNumber}`;
+          return !matchingFuelLogIds.has(fuelLogId);
         });
       case "all":
       default:
         return allTransactions;
     }
-  }, [fuelReport, matchingFuelTransactionIds, transactionFilter]);
+  }, [fuelReport, matchingFuelLogIds, transactionFilter]);
 
   const fuelStatementColumns = useMemo(
     () =>
-      createFuelStatementColumns(
+      createTransactionColumns(
         matchingTransactionIds,
         handleAddTransactionToFuelReport,
         handleRemoveTransaction
@@ -183,14 +183,14 @@ export function FuelReportDetail({
     ]
   );
 
-  const fuelTransactionColumns = useMemo(
+  const fuelLogColumns = useMemo(
     () =>
-      createFuelTransactionColumns(
-        matchingFuelTransactionIds,
-        handleUpdateFuelTransactionField,
+      createFuelLogColumns(
+        matchingFuelLogIds,
+        handleUpdateFuelLogField,
         true
       ),
-    [matchingFuelTransactionIds, handleUpdateFuelTransactionField]
+    [matchingFuelLogIds, handleUpdateFuelLogField]
   );
 
   return (
@@ -283,23 +283,23 @@ export function FuelReportDetail({
             <FilterTabs
               activeFilter={transactionFilter}
               onFilterChange={setTransactionFilter}
-              totalCount={fuelReport.fuelTransactions.length}
+              totalCount={fuelReport.fuelLogs.length}
               matchedCount={
-                fuelReport.fuelTransactions.filter((t) => {
-                  const fuelTransactionId = `${t.vehicleId}-${t.date}-${t.invoiceNumber}`;
-                  return matchingFuelTransactionIds.has(fuelTransactionId);
+                fuelReport.fuelLogs.filter((t) => {
+                  const fuelLogId = `${t.vehicleId}-${t.date}-${t.invoiceNumber}`;
+                  return matchingFuelLogIds.has(fuelLogId);
                 }).length
               }
               unmatchedCount={
-                fuelReport.fuelTransactions.filter((t) => {
-                  const fuelTransactionId = `${t.vehicleId}-${t.date}-${t.invoiceNumber}`;
-                  return !matchingFuelTransactionIds.has(fuelTransactionId);
+                fuelReport.fuelLogs.filter((t) => {
+                  const fuelLogId = `${t.vehicleId}-${t.date}-${t.invoiceNumber}`;
+                  return !matchingFuelLogIds.has(fuelLogId);
                 }).length
               }
             />
             <DataTable
-              columns={fuelTransactionColumns}
-              data={filteredFuelTransactions}
+              columns={fuelLogColumns}
+              data={filteredFuelLogs}
             />
           </div>
         ) : (

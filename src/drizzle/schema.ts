@@ -96,9 +96,9 @@ export const transactions = dbSchema.table(
   ]
 );
 
-// Fuel Transactions table - matches FuelTransaction type (normalized)
-export const fuelTransactions = dbSchema.table(
-  "fuel_transactions",
+// Fuel Logs table - matches FuelLog type (normalized)
+export const fuelLogs = dbSchema.table(
+  "fuel_logs",
   {
     id: uuid().defaultRandom().primaryKey().notNull(),
 
@@ -130,29 +130,23 @@ export const fuelTransactions = dbSchema.table(
   },
   (table) => [
     // Indexes for better query performance
-    index("fuel_transactions_vehicle_id_idx").on(table.vehicleId),
-    index("fuel_transactions_driver_id_idx").on(table.driverId),
-    index("fuel_transactions_date_idx").on(table.date),
-    index("fuel_transactions_seller_state_idx").on(table.sellerState),
+    index("fuel_logs_vehicle_id_idx").on(table.vehicleId),
+    index("fuel_logs_driver_id_idx").on(table.driverId),
+    index("fuel_logs_date_idx").on(table.date),
+    index("fuel_logs_seller_state_idx").on(table.sellerState),
     // Composite index for common queries
-    index("fuel_transactions_vehicle_driver_idx").on(
-      table.vehicleId,
-      table.driverId
-    ),
+    index("fuel_logs_vehicle_driver_idx").on(table.vehicleId, table.driverId),
   ]
 );
 
 // Relations for better querying
 export const driversRelations = relations(drivers, ({ many }) => ({
-  fuelTransactions: many(fuelTransactions),
+  fuelLogs: many(fuelLogs),
 }));
 
-export const fuelTransactionsRelations = relations(
-  fuelTransactions,
-  ({ one }) => ({
-    driver: one(drivers, {
-      fields: [fuelTransactions.driverId],
-      references: [drivers.id],
-    }),
-  })
-);
+export const fuelLogsRelations = relations(fuelLogs, ({ one }) => ({
+  driver: one(drivers, {
+    fields: [fuelLogs.driverId],
+    references: [drivers.id],
+  }),
+}));

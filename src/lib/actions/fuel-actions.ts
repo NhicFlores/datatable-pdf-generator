@@ -1,27 +1,24 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { updateFuelLogs, createFuelLog } from "@/lib/db/mutations/fuel-logs";
 import {
-  updateFuelTransaction,
-  createFuelTransaction,
-} from "@/lib/db/mutations/fuel-transactions";
-import {
-  SelectFuelTransaction,
+  SelectFuelLog,
   SelectTransaction,
 } from "@/lib/data-model/schema-types";
 
 /**
- * Server Actions for fuel transaction operations
+ * Server Actions for fuel log operations
  * These replace the client-side context operations
  */
 
 /**
- * Update a specific field of a fuel transaction
- * Replaces the updateFuelTransactionField function from context
+ * Update a specific field of a fuel log
+ * Replaces the updateFuelLogField function from context
  */
-export async function updateFuelTransactionFieldAction(
+export async function updateFuelLogFieldAction(
   transactionId: string,
-  field: keyof SelectFuelTransaction,
+  field: keyof SelectFuelLog,
   value: string | number
 ) {
   try {
@@ -54,13 +51,10 @@ export async function updateFuelTransactionFieldAction(
         throw new Error(`Unsupported field: ${field}`);
     }
 
-    const updatedTransaction = await updateFuelTransaction(
-      transactionId,
-      updateData
-    );
+    const updatedFuelLog = await updateFuelLogs(transactionId, updateData);
 
-    if (!updatedTransaction) {
-      throw new Error("Failed to update fuel transaction");
+    if (!updatedFuelLog) {
+      throw new Error("Failed to update fuel log");
     }
 
     console.log(`✅ Successfully updated fuel transaction ${transactionId}`);
@@ -68,7 +62,7 @@ export async function updateFuelTransactionFieldAction(
     // Revalidate the detail page to show updated data
     revalidatePath("/fuel-report/[id]", "page");
 
-    return { success: true, transaction: updatedTransaction };
+    return { success: true, transaction: updatedFuelLog };
   } catch (error) {
     console.error(
       `❌ Failed to update fuel transaction ${transactionId}:`,
@@ -96,7 +90,7 @@ export async function addTransactionToFuelReportAction(
     );
 
     // Create a new fuel transaction from the modern SelectTransaction
-    const newFuelTransactionData = {
+    const newFuelLogData = {
       vehicleId: "UNKNOWN", // Will need to be manually set later
       driverId: driverId,
       date: expenseTransaction.transactionDate, // Already a Date object
@@ -113,22 +107,18 @@ export async function addTransactionToFuelReportAction(
       receipt: expenseTransaction.receiptImageName || "",
     };
 
-    const newFuelTransaction = await createFuelTransaction(
-      newFuelTransactionData
-    );
+    const newFuelLog = await createFuelLog(newFuelLogData);
 
-    if (!newFuelTransaction) {
+    if (!newFuelLog) {
       throw new Error("Failed to create fuel transaction");
     }
 
-    console.log(
-      `✅ Successfully added fuel transaction ${newFuelTransaction.id}`
-    );
+    console.log(`✅ Successfully added fuel transaction ${newFuelLog.id}`);
 
     // Revalidate the detail page to show the new transaction
     revalidatePath("/fuel-report/[id]", "page");
 
-    return { success: true, transaction: newFuelTransaction };
+    return { success: true, transaction: newFuelLog };
   } catch (error) {
     console.error(`❌ Failed to add transaction to fuel report:`, error);
     return {
@@ -141,7 +131,7 @@ export async function addTransactionToFuelReportAction(
 /**
  * Delete a fuel transaction (for future use)
  */
-export async function deleteFuelTransactionAction(transactionId: string) {
+export async function deleteFuelLogAction(transactionId: string) {
   try {
     console.log(`🔄 Deleting fuel transaction ${transactionId}`);
 

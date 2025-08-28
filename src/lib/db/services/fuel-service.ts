@@ -143,7 +143,7 @@ export async function processFuelCSVData(
           );
 
           const insertResult = await trx
-            .insert(schema.fuelTransactions)
+            .insert(schema.fuelLogs)
             .values({
               vehicleId: row.vehicleId,
               driverId: driverId,
@@ -156,7 +156,7 @@ export async function processFuelCSVData(
               odometer: row.odometer?.toString() || "0.000",
               receipt: row.receipt || null, // Optional field can be null
             })
-            .returning({ id: schema.fuelTransactions.id });
+            .returning({ id: schema.fuelLogs.id });
 
           const transactionId = insertResult[0].id;
           result.insertedIds.push(transactionId);

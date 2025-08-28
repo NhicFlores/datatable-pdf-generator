@@ -6,11 +6,11 @@ import { cache } from "react";
 import type {
   SelectTransaction,
   SelectDriver,
-  SelectFuelTransaction,
+  SelectFuelLog,
 } from "@/lib/data-model/schema-types";
 import type {
   FuelReport,
-  FuelTransactionWithDriver,
+  FuelLogWithDriver,
   FuelReportSummary,
   DriverTransactions,
   FuelSummaryData,
@@ -21,12 +21,12 @@ import type {
 } from "../data-model/query-types";
 
 // Re-export types for convenience
-export type { SelectTransaction, SelectDriver, SelectFuelTransaction };
+export type { SelectTransaction, SelectDriver, SelectFuelLog };
 
 // Export new query types for convenience
 export type {
   FuelReport,
-  FuelTransactionWithDriver,
+  FuelLogWithDriver,
   FuelReportSummary,
   DriverTransactions,
   FuelSummaryData,
@@ -59,40 +59,40 @@ export const getTransactionsFromDB = cache(
   }
 );
 
-export const getFuelTransactionsFromDB = cache(
-  async (): Promise<FuelTransactionWithDriver[]> => {
+export const getFuelLogsFromDB = cache(
+  async (): Promise<FuelLogWithDriver[]> => {
     try {
       console.log("🔍 Fetching fuel transactions from database...");
 
-      const fuelTransactions = await db
+      const fuelLogs = await db
         .select({
-          id: schema.fuelTransactions.id,
-          vehicleId: schema.fuelTransactions.vehicleId,
-          driverId: schema.fuelTransactions.driverId,
-          date: schema.fuelTransactions.date,
-          invoiceNumber: schema.fuelTransactions.invoiceNumber,
-          gallons: schema.fuelTransactions.gallons,
-          cost: schema.fuelTransactions.cost,
-          sellerState: schema.fuelTransactions.sellerState,
-          sellerName: schema.fuelTransactions.sellerName,
-          odometer: schema.fuelTransactions.odometer,
-          receipt: schema.fuelTransactions.receipt,
-          createdAt: schema.fuelTransactions.createdAt,
-          updatedAt: schema.fuelTransactions.updatedAt,
+          id: schema.fuelLogs.id,
+          vehicleId: schema.fuelLogs.vehicleId,
+          driverId: schema.fuelLogs.driverId,
+          date: schema.fuelLogs.date,
+          invoiceNumber: schema.fuelLogs.invoiceNumber,
+          gallons: schema.fuelLogs.gallons,
+          cost: schema.fuelLogs.cost,
+          sellerState: schema.fuelLogs.sellerState,
+          sellerName: schema.fuelLogs.sellerName,
+          odometer: schema.fuelLogs.odometer,
+          receipt: schema.fuelLogs.receipt,
+          createdAt: schema.fuelLogs.createdAt,
+          updatedAt: schema.fuelLogs.updatedAt,
           // Include driver information
           driverName: schema.drivers.name,
           driverBranch: schema.drivers.branch,
         })
-        .from(schema.fuelTransactions)
+        .from(schema.fuelLogs)
         .leftJoin(
           schema.drivers,
-          eq(schema.fuelTransactions.driverId, schema.drivers.id)
+          eq(schema.fuelLogs.driverId, schema.drivers.id)
         );
 
       console.log(
-        `✅ Fetched ${fuelTransactions.length} fuel transactions from database`
+        `✅ Fetched ${fuelLogs.length} fuel transactions from database`
       );
-      return fuelTransactions;
+      return fuelLogs;
     } catch (error) {
       console.error(
         "❌ Failed to fetch fuel transactions from database:",
@@ -125,7 +125,7 @@ export const getFuelReportsFromDB = cache(async (): Promise<FuelReport[]> => {
     console.log("🔍 Fetching fuel reports from database...");
 
     // Fetch drivers and fuel transactions in parallel for better performance
-    const [drivers, fuelTransactions] = await Promise.all([
+    const [drivers, fuelLogs] = await Promise.all([
       db
         .select({
           id: schema.drivers.id,
@@ -137,35 +137,35 @@ export const getFuelReportsFromDB = cache(async (): Promise<FuelReport[]> => {
 
       db
         .select({
-          id: schema.fuelTransactions.id,
-          vehicleId: schema.fuelTransactions.vehicleId,
-          driverId: schema.fuelTransactions.driverId,
-          date: schema.fuelTransactions.date,
-          invoiceNumber: schema.fuelTransactions.invoiceNumber,
-          gallons: schema.fuelTransactions.gallons,
-          cost: schema.fuelTransactions.cost,
-          sellerState: schema.fuelTransactions.sellerState,
-          sellerName: schema.fuelTransactions.sellerName,
-          odometer: schema.fuelTransactions.odometer,
-          receipt: schema.fuelTransactions.receipt,
+          id: schema.fuelLogs.id,
+          vehicleId: schema.fuelLogs.vehicleId,
+          driverId: schema.fuelLogs.driverId,
+          date: schema.fuelLogs.date,
+          invoiceNumber: schema.fuelLogs.invoiceNumber,
+          gallons: schema.fuelLogs.gallons,
+          cost: schema.fuelLogs.cost,
+          sellerState: schema.fuelLogs.sellerState,
+          sellerName: schema.fuelLogs.sellerName,
+          odometer: schema.fuelLogs.odometer,
+          receipt: schema.fuelLogs.receipt,
         })
-        .from(schema.fuelTransactions)
-        .orderBy(schema.fuelTransactions.date),
+        .from(schema.fuelLogs)
+        .orderBy(schema.fuelLogs.date),
     ]);
 
     // Use Maps and Sets for efficient grouping and deduplication
-    const fuelTransactionsByDriver = new Map<string, typeof fuelTransactions>();
+    const fuelLogsByDriver = new Map<string, typeof fuelLogs>();
     const vehicleSetsByDriver = new Map<string, Set<string>>();
 
     // Single pass through fuel transactions for grouping and vehicle collection
-    fuelTransactions.forEach((transaction) => {
-      const { driverId, vehicleId } = transaction;
+    fuelLogs.forEach((fuelLog) => {
+      const { driverId, vehicleId } = fuelLog;
 
       // Group fuel transactions by driver
-      if (!fuelTransactionsByDriver.has(driverId)) {
-        fuelTransactionsByDriver.set(driverId, []);
+      if (!fuelLogsByDriver.has(driverId)) {
+        fuelLogsByDriver.set(driverId, []);
       }
-      fuelTransactionsByDriver.get(driverId)!.push(transaction);
+      fuelLogsByDriver.get(driverId)!.push(fuelLog);
 
       // Collect unique vehicle IDs per driver using Set for O(1) lookups
       if (vehicleId) {
@@ -182,7 +182,7 @@ export const getFuelReportsFromDB = cache(async (): Promise<FuelReport[]> => {
       name: driver.name,
       branch: driver.branch,
       vehicleIds: Array.from(vehicleSetsByDriver.get(driver.id) || []),
-      fuelTransactions: fuelTransactionsByDriver.get(driver.id) || [],
+      fuelLogs: fuelLogsByDriver.get(driver.id) || [],
     }));
 
     console.log(`✅ Fetched ${fuelReports.length} fuel reports from database`);
@@ -214,14 +214,14 @@ export const getFuelReportSummariesFromDB = cache(
           createdAt: schema.drivers.createdAt,
           updatedAt: schema.drivers.updatedAt,
           vehicleIds:
-            sql<string>`STRING_AGG(DISTINCT ${schema.fuelTransactions.vehicleId}, ',')`.as(
+            sql<string>`STRING_AGG(DISTINCT ${schema.fuelLogs.vehicleId}, ',')`.as(
               "vehicle_ids"
             ),
         })
         .from(schema.drivers)
         .leftJoin(
-          schema.fuelTransactions,
-          eq(schema.drivers.id, schema.fuelTransactions.driverId)
+          schema.fuelLogs,
+          eq(schema.drivers.id, schema.fuelLogs.driverId)
         )
         .groupBy(
           schema.drivers.id,
@@ -260,7 +260,7 @@ export const getFuelReportByIdFromDB = cache(
     try {
       console.log(`🔍 Fetching fuel report for driver ID: ${driverId}`);
 
-      const [driver, fuelTransactions] = await Promise.all([
+      const [driver, fuelLogs] = await Promise.all([
         db
           .select({
             id: schema.drivers.id,
@@ -273,21 +273,21 @@ export const getFuelReportByIdFromDB = cache(
 
         db
           .select({
-            id: schema.fuelTransactions.id,
-            vehicleId: schema.fuelTransactions.vehicleId,
-            driverId: schema.fuelTransactions.driverId,
-            date: schema.fuelTransactions.date,
-            invoiceNumber: schema.fuelTransactions.invoiceNumber,
-            gallons: schema.fuelTransactions.gallons,
-            cost: schema.fuelTransactions.cost,
-            sellerState: schema.fuelTransactions.sellerState,
-            sellerName: schema.fuelTransactions.sellerName,
-            odometer: schema.fuelTransactions.odometer,
-            receipt: schema.fuelTransactions.receipt,
+            id: schema.fuelLogs.id,
+            vehicleId: schema.fuelLogs.vehicleId,
+            driverId: schema.fuelLogs.driverId,
+            date: schema.fuelLogs.date,
+            invoiceNumber: schema.fuelLogs.invoiceNumber,
+            gallons: schema.fuelLogs.gallons,
+            cost: schema.fuelLogs.cost,
+            sellerState: schema.fuelLogs.sellerState,
+            sellerName: schema.fuelLogs.sellerName,
+            odometer: schema.fuelLogs.odometer,
+            receipt: schema.fuelLogs.receipt,
           })
-          .from(schema.fuelTransactions)
-          .where(eq(schema.fuelTransactions.driverId, driverId))
-          .orderBy(desc(schema.fuelTransactions.date)),
+          .from(schema.fuelLogs)
+          .where(eq(schema.fuelLogs.driverId, driverId))
+          .orderBy(desc(schema.fuelLogs.date)),
       ]);
 
       if (!driver[0]) {
@@ -296,18 +296,18 @@ export const getFuelReportByIdFromDB = cache(
       }
 
       // Collect unique vehicle IDs
-      const vehicleIds = [...new Set(fuelTransactions.map((t) => t.vehicleId))];
+      const vehicleIds = [...new Set(fuelLogs.map((t) => t.vehicleId))];
 
       const fuelReport: FuelReport = {
         id: driver[0].id,
         name: driver[0].name,
         branch: driver[0].branch,
         vehicleIds,
-        fuelTransactions,
+        fuelLogs: fuelLogs,
       };
 
       console.log(
-        `✅ Fetched fuel report for ${driver[0].name} with ${fuelTransactions.length} transactions`
+        `✅ Fetched fuel report for ${driver[0].name} with ${fuelLogs.length} transactions`
       );
       return fuelReport;
     } catch (error) {
@@ -387,75 +387,72 @@ export const getFuelSummaryFromDB = cache(
             totalDrivers: sql<number>`COUNT(DISTINCT ${schema.drivers.id})`.as(
               "total_drivers"
             ),
-            totalTransactions:
-              sql<number>`COUNT(${schema.fuelTransactions.id})`.as(
-                "total_transactions"
-              ),
+            totalTransactions: sql<number>`COUNT(${schema.fuelLogs.id})`.as(
+              "total_transactions"
+            ),
             totalGallons:
-              sql<number>`COALESCE(SUM(CAST(${schema.fuelTransactions.gallons} AS DECIMAL)), 0)`.as(
+              sql<number>`COALESCE(SUM(CAST(${schema.fuelLogs.gallons} AS DECIMAL)), 0)`.as(
                 "total_gallons"
               ),
             totalCost:
-              sql<number>`COALESCE(SUM(CAST(${schema.fuelTransactions.cost} AS DECIMAL)), 0)`.as(
+              sql<number>`COALESCE(SUM(CAST(${schema.fuelLogs.cost} AS DECIMAL)), 0)`.as(
                 "total_cost"
               ),
           })
           .from(schema.drivers)
           .leftJoin(
-            schema.fuelTransactions,
-            eq(schema.drivers.id, schema.fuelTransactions.driverId)
+            schema.fuelLogs,
+            eq(schema.drivers.id, schema.fuelLogs.driverId)
           ),
 
         // Statistics by state
         db
           .select({
-            state: schema.fuelTransactions.sellerState,
+            state: schema.fuelLogs.sellerState,
             totalGallons:
-              sql<number>`SUM(CAST(${schema.fuelTransactions.gallons} AS DECIMAL))`.as(
+              sql<number>`SUM(CAST(${schema.fuelLogs.gallons} AS DECIMAL))`.as(
                 "total_gallons"
               ),
             totalCost:
-              sql<number>`SUM(CAST(${schema.fuelTransactions.cost} AS DECIMAL))`.as(
+              sql<number>`SUM(CAST(${schema.fuelLogs.cost} AS DECIMAL))`.as(
                 "total_cost"
               ),
-            transactionCount:
-              sql<number>`COUNT(${schema.fuelTransactions.id})`.as(
-                "transaction_count"
-              ),
+            transactionCount: sql<number>`COUNT(${schema.fuelLogs.id})`.as(
+              "transaction_count"
+            ),
             uniqueVehicles:
-              sql<number>`COUNT(DISTINCT ${schema.fuelTransactions.vehicleId})`.as(
+              sql<number>`COUNT(DISTINCT ${schema.fuelLogs.vehicleId})`.as(
                 "unique_vehicles"
               ),
           })
-          .from(schema.fuelTransactions)
-          .groupBy(schema.fuelTransactions.sellerState)
-          .orderBy(schema.fuelTransactions.sellerState),
+          .from(schema.fuelLogs)
+          .groupBy(schema.fuelLogs.sellerState)
+          .orderBy(schema.fuelLogs.sellerState),
 
         // Statistics by vehicle
         db
           .select({
-            vehicleId: schema.fuelTransactions.vehicleId,
+            vehicleId: schema.fuelLogs.vehicleId,
             driverName: schema.drivers.name,
             totalGallons:
-              sql<number>`SUM(CAST(${schema.fuelTransactions.gallons} AS DECIMAL))`.as(
+              sql<number>`SUM(CAST(${schema.fuelLogs.gallons} AS DECIMAL))`.as(
                 "total_gallons"
               ),
             totalCost:
-              sql<number>`SUM(CAST(${schema.fuelTransactions.cost} AS DECIMAL))`.as(
+              sql<number>`SUM(CAST(${schema.fuelLogs.cost} AS DECIMAL))`.as(
                 "total_cost"
               ),
-            transactionCount:
-              sql<number>`COUNT(${schema.fuelTransactions.id})`.as(
-                "transaction_count"
-              ),
+            transactionCount: sql<number>`COUNT(${schema.fuelLogs.id})`.as(
+              "transaction_count"
+            ),
           })
-          .from(schema.fuelTransactions)
+          .from(schema.fuelLogs)
           .leftJoin(
             schema.drivers,
-            eq(schema.fuelTransactions.driverId, schema.drivers.id)
+            eq(schema.fuelLogs.driverId, schema.drivers.id)
           )
-          .groupBy(schema.fuelTransactions.vehicleId, schema.drivers.name)
-          .orderBy(schema.fuelTransactions.vehicleId),
+          .groupBy(schema.fuelLogs.vehicleId, schema.drivers.name)
+          .orderBy(schema.fuelLogs.vehicleId),
       ]);
 
       const summaryData: FuelSummaryData = {
@@ -493,34 +490,32 @@ export const getFuelSummaryTableFromDB = cache(
       console.log("🔍 Fetching fuel summary table data from database...");
 
       // Get all fuel transactions with state and vehicle data
-      const fuelTransactions = await db
+      const fuelLogs = await db
         .select({
-          sellerState: schema.fuelTransactions.sellerState,
-          vehicleId: schema.fuelTransactions.vehicleId,
-          gallons: schema.fuelTransactions.gallons,
+          sellerState: schema.fuelLogs.sellerState,
+          vehicleId: schema.fuelLogs.vehicleId,
+          gallons: schema.fuelLogs.gallons,
         })
-        .from(schema.fuelTransactions)
-        .where(sql`${schema.fuelTransactions.sellerState} IS NOT NULL`)
-        .orderBy(schema.fuelTransactions.sellerState);
+        .from(schema.fuelLogs)
+        .where(sql`${schema.fuelLogs.sellerState} IS NOT NULL`)
+        .orderBy(schema.fuelLogs.sellerState);
 
       // Get unique truck IDs and states
       const uniqueTruckIds = [
-        ...new Set(fuelTransactions.map((t) => t.vehicleId).filter(Boolean)),
+        ...new Set(fuelLogs.map((t) => t.vehicleId).filter(Boolean)),
       ].sort();
 
       const uniqueStates = [
-        ...new Set(fuelTransactions.map((t) => t.sellerState).filter(Boolean)),
+        ...new Set(fuelLogs.map((t) => t.sellerState).filter(Boolean)),
       ].sort();
 
       // Create summary rows for each state
       const summaryRows: FuelSummaryRow[] = uniqueStates.map((state) => {
         // Filter transactions for current state
-        const stateTransactions = fuelTransactions.filter(
-          (t) => t.sellerState === state
-        );
+        const stateFuelLogs = fuelLogs.filter((t) => t.sellerState === state);
 
         // Calculate total gallons for this state
-        const totalGallons = stateTransactions.reduce(
+        const totalGallons = stateFuelLogs.reduce(
           (sum, t) => sum + (parseFloat(t.gallons) || 0),
           0
         );
@@ -534,7 +529,7 @@ export const getFuelSummaryTableFromDB = cache(
         });
 
         // Sum gallons for each truck in this state
-        stateTransactions.forEach((t) => {
+        stateFuelLogs.forEach((t) => {
           if (t.vehicleId && t.gallons) {
             truckGallons[t.vehicleId] =
               (truckGallons[t.vehicleId] || 0) + parseFloat(t.gallons);

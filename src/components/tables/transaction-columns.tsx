@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Plus, X } from "lucide-react";
 import { Button } from "../ui/button";
 
-export const createFuelStatementColumns = (
+export const createTransactionColumns = (
   matchingIds: Set<string>,
   onAddToFuelReport?: (transaction: SelectTransaction) => void,
   onRemoveFromAudit?: (transactionReference: string) => void

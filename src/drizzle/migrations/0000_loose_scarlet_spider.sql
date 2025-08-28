@@ -8,7 +8,7 @@ CREATE TABLE "dev-reports"."drivers" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "dev-reports"."fuel_transactions" (
+CREATE TABLE "dev-reports"."fuel_logs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"vehicle_id" varchar(100) NOT NULL,
 	"driver_id" uuid NOT NULL,
@@ -53,15 +53,15 @@ CREATE TABLE "dev-reports"."transactions" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "dev-reports"."fuel_transactions" ADD CONSTRAINT "fuel_transactions_driver_id_drivers_id_fk" FOREIGN KEY ("driver_id") REFERENCES "dev-reports"."drivers"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "dev-reports"."fuel_logs" ADD CONSTRAINT "fuel_logs_driver_id_drivers_id_fk" FOREIGN KEY ("driver_id") REFERENCES "dev-reports"."drivers"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "drivers_name_idx" ON "dev-reports"."drivers" USING btree ("name");--> statement-breakpoint
 CREATE INDEX "drivers_branch_idx" ON "dev-reports"."drivers" USING btree ("branch");--> statement-breakpoint
 CREATE INDEX "drivers_name_branch_idx" ON "dev-reports"."drivers" USING btree ("name","branch");--> statement-breakpoint
-CREATE INDEX "fuel_transactions_vehicle_id_idx" ON "dev-reports"."fuel_transactions" USING btree ("vehicle_id");--> statement-breakpoint
-CREATE INDEX "fuel_transactions_driver_id_idx" ON "dev-reports"."fuel_transactions" USING btree ("driver_id");--> statement-breakpoint
-CREATE INDEX "fuel_transactions_date_idx" ON "dev-reports"."fuel_transactions" USING btree ("date");--> statement-breakpoint
-CREATE INDEX "fuel_transactions_seller_state_idx" ON "dev-reports"."fuel_transactions" USING btree ("seller_state");--> statement-breakpoint
-CREATE INDEX "fuel_transactions_vehicle_driver_idx" ON "dev-reports"."fuel_transactions" USING btree ("vehicle_id","driver_id");--> statement-breakpoint
+CREATE INDEX "fuel_logs_vehicle_id_idx" ON "dev-reports"."fuel_logs" USING btree ("vehicle_id");--> statement-breakpoint
+CREATE INDEX "fuel_logs_driver_id_idx" ON "dev-reports"."fuel_logs" USING btree ("driver_id");--> statement-breakpoint
+CREATE INDEX "fuel_logs_date_idx" ON "dev-reports"."fuel_logs" USING btree ("date");--> statement-breakpoint
+CREATE INDEX "fuel_logs_seller_state_idx" ON "dev-reports"."fuel_logs" USING btree ("seller_state");--> statement-breakpoint
+CREATE INDEX "fuel_logs_vehicle_driver_idx" ON "dev-reports"."fuel_logs" USING btree ("vehicle_id","driver_id");--> statement-breakpoint
 CREATE INDEX "transactions_cardholder_name_idx" ON "dev-reports"."transactions" USING btree ("cardholder_name");--> statement-breakpoint
 CREATE INDEX "transactions_transaction_date_idx" ON "dev-reports"."transactions" USING btree ("transaction_date");--> statement-breakpoint
 CREATE INDEX "transactions_gl_code_idx" ON "dev-reports"."transactions" USING btree ("gl_code");--> statement-breakpoint

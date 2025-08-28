@@ -5,7 +5,7 @@ import { CSVUploadButton } from "./csv-upload-button";
 import Papa from "papaparse";
 import { FuelCSVRow } from "@/lib/validations/fuel";
 
-interface FuelTransactionsUploadButtonProps {
+interface FuelLogUploadButtonProps {
   onDataParsed: (data: FuelCSVRow[]) => void;
   variant?:
     | "default"
@@ -18,12 +18,12 @@ interface FuelTransactionsUploadButtonProps {
   disabled?: boolean;
 }
 
-export function FuelTransactionsUploadButton({
+export function FuelLogUploadButton({
   onDataParsed,
   variant = "outline",
   size = "default",
   disabled = false,
-}: FuelTransactionsUploadButtonProps) {
+}: FuelLogUploadButtonProps) {
   const handleFileSelect = async (file: File): Promise<void> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -99,7 +99,7 @@ export function FuelTransactionsUploadButton({
             }
 
             console.log(
-              `Parsed ${results.data.length} fuel transaction records`
+              `Parsed ${results.data.length} fuel log records`
             );
             onDataParsed(results.data);
             resolve();
@@ -122,7 +122,7 @@ export function FuelTransactionsUploadButton({
   return (
     <CSVUploadButton
       onFileSelect={handleFileSelect}
-      label="Upload Fuel Logs CSV"
+      label="Upload Fuel Log CSV"
       variant={variant}
       size={size}
       disabled={disabled}

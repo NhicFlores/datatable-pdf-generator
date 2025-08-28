@@ -1,19 +1,17 @@
 import {
-  BaseFuelTransaction,
+  BaseFuelLog,
   SelectDriver,
-  SelectFuelTransaction,
+  SelectFuelLog,
+  SelectTransaction,
 } from "./schema-types";
 
 export type FuelReport = Omit<SelectDriver, "createdAt" | "updatedAt"> & {
   vehicleIds: string[];
-  fuelTransactions: BaseFuelTransaction[];
+  fuelLogs: BaseFuelLog[];
 };
 
 // Define the exact return type for fuel transactions with driver info
-export type FuelTransactionWithDriver = Omit<
-  SelectFuelTransaction,
-  "driverId"
-> & {
+export type FuelLogWithDriver = Omit<SelectFuelLog, "driverId"> & {
   driverId: string;
   driverName: string | null;
   driverBranch: string | null;
@@ -30,9 +28,6 @@ export type DriverTransactions = {
   driverName: string;
   transactions: SelectTransaction[];
 };
-
-// Import SelectTransaction from schema-types
-import type { SelectTransaction } from "./schema-types";
 
 // Fuel summary data for dashboard/summary page
 export type FuelSummaryData = {

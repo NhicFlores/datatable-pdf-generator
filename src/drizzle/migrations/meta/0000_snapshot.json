@@ -1,5 +1,5 @@
 {
-  "id": "eb65b482-ec8b-41be-8a67-3a431dcc913d",
+  "id": "556e14e6-b938-46cd-8f31-d462fbe89f5a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -102,8 +102,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "dev-reports.fuel_transactions": {
-      "name": "fuel_transactions",
+    "dev-reports.fuel_logs": {
+      "name": "fuel_logs",
       "schema": "dev-reports",
       "columns": {
         "id": {
@@ -189,8 +189,8 @@
         }
       },
       "indexes": {
-        "fuel_transactions_vehicle_id_idx": {
-          "name": "fuel_transactions_vehicle_id_idx",
+        "fuel_logs_vehicle_id_idx": {
+          "name": "fuel_logs_vehicle_id_idx",
           "columns": [
             {
               "expression": "vehicle_id",
@@ -204,8 +204,8 @@
           "method": "btree",
           "with": {}
         },
-        "fuel_transactions_driver_id_idx": {
-          "name": "fuel_transactions_driver_id_idx",
+        "fuel_logs_driver_id_idx": {
+          "name": "fuel_logs_driver_id_idx",
           "columns": [
             {
               "expression": "driver_id",
@@ -219,8 +219,8 @@
           "method": "btree",
           "with": {}
         },
-        "fuel_transactions_date_idx": {
-          "name": "fuel_transactions_date_idx",
+        "fuel_logs_date_idx": {
+          "name": "fuel_logs_date_idx",
           "columns": [
             {
               "expression": "date",
@@ -234,8 +234,8 @@
           "method": "btree",
           "with": {}
         },
-        "fuel_transactions_seller_state_idx": {
-          "name": "fuel_transactions_seller_state_idx",
+        "fuel_logs_seller_state_idx": {
+          "name": "fuel_logs_seller_state_idx",
           "columns": [
             {
               "expression": "seller_state",
@@ -249,8 +249,8 @@
           "method": "btree",
           "with": {}
         },
-        "fuel_transactions_vehicle_driver_idx": {
-          "name": "fuel_transactions_vehicle_driver_idx",
+        "fuel_logs_vehicle_driver_idx": {
+          "name": "fuel_logs_vehicle_driver_idx",
           "columns": [
             {
               "expression": "vehicle_id",
@@ -272,9 +272,9 @@
         }
       },
       "foreignKeys": {
-        "fuel_transactions_driver_id_drivers_id_fk": {
-          "name": "fuel_transactions_driver_id_drivers_id_fk",
-          "tableFrom": "fuel_transactions",
+        "fuel_logs_driver_id_drivers_id_fk": {
+          "name": "fuel_logs_driver_id_drivers_id_fk",
+          "tableFrom": "fuel_logs",
           "tableTo": "drivers",
           "schemaTo": "dev-reports",
           "columnsFrom": [

@@ -4,7 +4,7 @@ import { db, schema, eq } from "@/lib/db";
  * Fuel transaction mutation operations
  */
 
-export async function createFuelTransaction(data: {
+export async function createFuelLog(data: {
   vehicleId: string;
   driverId: string;
   date: Date;
@@ -17,7 +17,7 @@ export async function createFuelTransaction(data: {
   receipt?: string;
 }) {
   const result = await db
-    .insert(schema.fuelTransactions)
+    .insert(schema.fuelLogs)
     .values({
       vehicleId: data.vehicleId,
       driverId: data.driverId,
@@ -35,7 +35,7 @@ export async function createFuelTransaction(data: {
   return result[0];
 }
 
-export async function createManyFuelTransactions(
+export async function createManyFuelLogs(
   transactions: Array<{
     vehicleId: string;
     driverId: string;
@@ -63,14 +63,14 @@ export async function createManyFuelTransactions(
   }));
 
   const result = await db
-    .insert(schema.fuelTransactions)
+    .insert(schema.fuelLogs)
     .values(formattedTransactions)
     .returning();
 
   return result;
 }
 
-export async function updateFuelTransaction(
+export async function updateFuelLogs(
   id: string,
   data: {
     vehicleId?: string;
@@ -99,9 +99,9 @@ export async function updateFuelTransaction(
   }
 
   const result = await db
-    .update(schema.fuelTransactions)
+    .update(schema.fuelLogs)
     .set(updateData)
-    .where(eq(schema.fuelTransactions.id, id))
+    .where(eq(schema.fuelLogs.id, id))
     .returning();
 
   return result[0];

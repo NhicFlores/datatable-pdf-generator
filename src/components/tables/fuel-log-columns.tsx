@@ -1,20 +1,20 @@
 "use client";
-import { BaseFuelTransaction } from "@/lib/data-model/schema-types";
+import { BaseFuelLog } from "@/lib/data-model/schema-types";
 import { formatCurrency, formatDateStringToLocal } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "../ui/button";
 import { EditableCell } from "./editable-cell";
 
-export const createFuelTransactionColumns = (
+export const createFuelLogColumns = (
   matchingIds: Set<string>,
   onUpdateField?: (
     transactionId: string,
-    field: keyof BaseFuelTransaction,
+    field: keyof BaseFuelLog,
     value: string | number
   ) => void,
   editable: boolean = false
-): ColumnDef<BaseFuelTransaction>[] => [
+): ColumnDef<BaseFuelLog>[] => [
   {
     id: "vehicleId",
     accessorKey: "vehicleId",
@@ -30,15 +30,15 @@ export const createFuelTransactionColumns = (
       );
     },
     cell: ({ row }) => {
-      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(fuelTransactionId);
+      const fuelLogId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelLogId);
 
       if (editable && onUpdateField) {
         return (
           <EditableCell
             value={row.original.vehicleId}
             onUpdate={(value) =>
-              onUpdateField(fuelTransactionId, "vehicleId", value as string)
+              onUpdateField(fuelLogId, "vehicleId", value as string)
             }
             type="text"
             isMatched={isMatched}
@@ -68,15 +68,15 @@ export const createFuelTransactionColumns = (
       );
     },
     cell: ({ row }) => {
-      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(fuelTransactionId);
+      const fuelLogId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelLogId);
 
       if (editable && onUpdateField) {
         return (
           <EditableCell
             value={formatDateStringToLocal(row.original.date.toDateString())}
             onUpdate={(value) =>
-              onUpdateField(fuelTransactionId, "date", value as string)
+              onUpdateField(fuelLogId, "date", value as string)
             }
             type="date"
             isMatched={isMatched}
@@ -107,8 +107,8 @@ export const createFuelTransactionColumns = (
       );
     },
     cell: ({ row }) => {
-      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(fuelTransactionId);
+      const fuelLogId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelLogId);
       const sellerName = row.original.sellerName
         ? row.original.sellerName
         : "-";
@@ -120,7 +120,7 @@ export const createFuelTransactionColumns = (
             <EditableCell
               value={sellerName}
               onUpdate={(value) =>
-                onUpdateField(fuelTransactionId, "sellerName", value as string)
+                onUpdateField(fuelLogId, "sellerName", value as string)
               }
               type="text"
               placeholder="Seller Name"
@@ -129,7 +129,7 @@ export const createFuelTransactionColumns = (
             <EditableCell
               value={sellerState}
               onUpdate={(value) =>
-                onUpdateField(fuelTransactionId, "sellerState", value as string)
+                onUpdateField(fuelLogId, "sellerState", value as string)
               }
               type="text"
               placeholder="State"
@@ -161,15 +161,15 @@ export const createFuelTransactionColumns = (
       );
     },
     cell: ({ row }) => {
-      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(fuelTransactionId);
+      const fuelLogId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelLogId);
 
       if (editable && onUpdateField) {
         return (
           <EditableCell
             value={row.original.invoiceNumber}
             onUpdate={(value) =>
-              onUpdateField(fuelTransactionId, "invoiceNumber", value as string)
+              onUpdateField(fuelLogId, "invoiceNumber", value as string)
             }
             type="text"
             isMatched={isMatched}
@@ -199,8 +199,8 @@ export const createFuelTransactionColumns = (
       );
     },
     cell: ({ row }) => {
-      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(fuelTransactionId);
+      const fuelLogId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelLogId);
       return (
         <span className={isMatched ? "text-green-600 font-semibold" : ""}>
           {row.original.odometer.toLocaleString()}
@@ -223,8 +223,8 @@ export const createFuelTransactionColumns = (
       );
     },
     cell: ({ row }) => {
-      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(fuelTransactionId);
+      const fuelLogId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelLogId);
       return (
         <span className={isMatched ? "text-green-600 font-semibold" : ""}>
           {row.original.receipt ? "Yes" : "No"}
@@ -247,15 +247,15 @@ export const createFuelTransactionColumns = (
       );
     },
     cell: ({ row }) => {
-      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(fuelTransactionId);
+      const fuelLogId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelLogId);
 
       if (editable && onUpdateField) {
         return (
           <EditableCell
             value={row.original.gallons}
             onUpdate={(value) =>
-              onUpdateField(fuelTransactionId, "gallons", value as number)
+              onUpdateField(fuelLogId, "gallons", value as number)
             }
             type="number"
             step="0.01"
@@ -291,15 +291,15 @@ export const createFuelTransactionColumns = (
       );
     },
     cell: ({ row }) => {
-      const fuelTransactionId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(fuelTransactionId);
+      const fuelLogId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
+      const isMatched = matchingIds.has(fuelLogId);
 
       if (editable && onUpdateField) {
         return (
           <EditableCell
             value={row.original.cost}
             onUpdate={(value) =>
-              onUpdateField(fuelTransactionId, "cost", value as number)
+              onUpdateField(fuelLogId, "cost", value as number)
             }
             type="number"
             step="0.01"
