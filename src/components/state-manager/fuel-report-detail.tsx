@@ -106,17 +106,14 @@ export function FuelReportDetail({
     setRemovedTransactionIds(new Set());
   }, []);
 
-  // Get matching transaction IDs for highlighting
+  // Get matching transaction IDs for highlighting (now from server)
   const matchingFuelLogIds = useMemo(() => {
-    if (!fuelReport || !allTransactions.length) return new Set<string>();
-    // TODO: Implement actual matching logic
-    return new Set<string>(); // Placeholder during refactoring
-  }, [fuelReport, allTransactions]);
+    return driverTransactions?.matchedFuelLogIds || new Set<string>();
+  }, [driverTransactions]);
 
   const matchingTransactionIds = useMemo(() => {
-    if (!fuelReport || !allTransactions.length) return new Set<string>();
-    return new Set<string>();
-  }, [fuelReport, allTransactions]);
+    return driverTransactions?.matchedTransactionIds || new Set<string>();
+  }, [driverTransactions]);
 
   // Filtered transactions for the expense statement view
   const filteredStatementTransactions = useMemo(() => {

@@ -22,11 +22,30 @@ export type FuelReportSummary = SelectDriver & {
   vehicleIds: string[];
 };
 
-// Type for driver-specific transaction queries
+// Type for driver-specific transaction queries with matching data
 export type DriverTransactions = {
   driverId: string;
   driverName: string;
   transactions: SelectTransaction[];
+  matchedTransactionIds: Set<string>;
+  matchedFuelLogIds: Set<string>;
+  matches: MatchSummary[];
+};
+
+// Matching summary for UI display
+export type MatchSummary = {
+  transactionId: string;
+  fuelLogId: string;
+  matchType: string;
+  confidence: number;
+  isActive: boolean;
+};
+
+// Enhanced FuelReport with matching data
+export type FuelReportWithMatches = FuelReport & {
+  matchedTransactionIds: Set<string>;
+  matchedFuelLogIds: Set<string>;
+  matches: MatchSummary[];
 };
 
 // Fuel summary data for dashboard/summary page

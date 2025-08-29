@@ -66,7 +66,7 @@ export function FuelReportsList({ fuelReportSummaries }: FuelReportsListProps) {
     console.log("🔄 Processing fuel data:", data.length, "records");
 
     try {
-      const response = await fetch("/api/fuel-transactions", {
+      const response = await fetch("/api/fuel-logs", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

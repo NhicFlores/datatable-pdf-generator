@@ -1,10 +1,11 @@
-import { db, schema } from "@/lib/db";
-// import { eq } from "drizzle-orm"; // Temporarily disabled for testing
+import { db, schema, eq } from "@/lib/db";
+// import { eq } from "drizzle-orm"; // Now using eq from db/index
 import {
   ExpenseCSVRowSchema,
   type ExpenseCSVRow,
   type ProcessedTransactionResult,
 } from "@/lib/validations/transaction";
+import { processUploadMatching } from "./matching-service";
 
 export async function processTransactionCSVData(
   rows: ExpenseCSVRow[]
@@ -39,7 +40,7 @@ export async function processTransactionCSVData(
 
           const validRow = validation.data;
 
-          // REF_NUMBER-LINE_NUMBER to enforce uniqueness for split transactions 
+          // REF_NUMBER-LINE_NUMBER to enforce uniqueness for split transactions
           const refNumberWithLineNumber = `${validRow.transactionReference}-${
             validRow.lineNumber || "1"
           }`;
@@ -215,6 +216,49 @@ export async function processTransactionCSVData(
       );
       console.log("-------- TRANSACTION PROCESSING COMPLETED --------");
     });
+
+    // After successful transaction processing, trigger matching for affected drivers
+    if (result.transactionsCreated > 0) {
+      try {
+        console.log(
+          "🔄 Starting automatic matching for uploaded transactions..."
+        );
+
+        // Get unique driver names from processed transactions
+        const uniqueDriverNames = new Set<string>();
+        for (const row of rows) {
+          if (row.cardHolderName) {
+            uniqueDriverNames.add(row.cardHolderName);
+          }
+        }
+
+        // Find matching driver IDs and process matches
+        for (const driverName of uniqueDriverNames) {
+          try {
+            // Get driver by name
+            const driver = await db.query.drivers.findFirst({
+              where: eq(schema.drivers.name, driverName),
+            });
+
+            if (driver) {
+              await processUploadMatching("transaction", driver.id);
+              console.log(`✅ Completed matching for driver: ${driverName}`);
+            }
+          } catch (matchError) {
+            console.error(
+              `❌ Matching failed for driver ${driverName}:`,
+              matchError
+            );
+            // Don't fail the entire process if matching fails
+          }
+        }
+
+        console.log("✅ Automatic matching completed");
+      } catch (error) {
+        console.error("❌ Error during automatic matching:", error);
+        // Don't fail the upload if matching fails
+      }
+    }
   } catch (error) {
     console.error("💥 Database transaction failed:", error);
     result.databaseErrors.push(

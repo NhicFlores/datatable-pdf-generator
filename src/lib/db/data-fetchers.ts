@@ -1,7 +1,7 @@
 "use server";
 
 import { db, schema } from "@/lib/db";
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, sql, and } from "drizzle-orm";
 import { cache } from "react";
 import type {
   SelectTransaction,
@@ -323,6 +323,7 @@ export const getFuelReportByIdFromDB = cache(
 /**
  * Get transactions for specific driver by matching cardholder name
  * Used for comparison analysis on detail pages
+ * Now includes server-side matching data
  */
 export const getTransactionsByDriverFromDB = cache(
   async (driverId: string): Promise<DriverTransactions | null> => {
@@ -344,21 +345,60 @@ export const getTransactionsByDriverFromDB = cache(
         return null;
       }
 
-      // Then get transactions matching the driver's name
-      const transactions = await db
-        .select()
-        .from(schema.transactions)
-        .where(eq(schema.transactions.cardholderName, driver[0].name))
-        .orderBy(desc(schema.transactions.transactionDate));
+      // Get transactions matching the driver's name and active matches in parallel
+      const [transactions, matches] = await Promise.all([
+        db
+          .select()
+          .from(schema.transactions)
+          .where(eq(schema.transactions.cardholderName, driver[0].name))
+          .orderBy(desc(schema.transactions.transactionDate)),
+
+        // Get active matches for this driver
+        db
+          .select({
+            transactionId: schema.transactionFuelMatches.transactionId,
+            fuelLogId: schema.transactionFuelMatches.fuelLogId,
+            matchType: schema.transactionFuelMatches.matchType,
+            confidence: schema.transactionFuelMatches.confidence,
+            isActive: schema.transactionFuelMatches.isActive,
+          })
+          .from(schema.transactionFuelMatches)
+          .innerJoin(
+            schema.fuelLogs,
+            eq(schema.transactionFuelMatches.fuelLogId, schema.fuelLogs.id)
+          )
+          .where(
+            and(
+              eq(schema.fuelLogs.driverId, driverId),
+              eq(schema.transactionFuelMatches.isActive, true)
+            )
+          ),
+      ]);
+
+      // Build matching data sets
+      const matchedTransactionIds = new Set(
+        matches.map((m) => m.transactionId)
+      );
+      const matchedFuelLogIds = new Set(matches.map((m) => m.fuelLogId));
+      const matchSummaries = matches.map((m) => ({
+        transactionId: m.transactionId,
+        fuelLogId: m.fuelLogId,
+        matchType: m.matchType,
+        confidence: parseFloat(m.confidence),
+        isActive: m.isActive,
+      }));
 
       const result: DriverTransactions = {
         driverId: driver[0].id,
         driverName: driver[0].name,
         transactions,
+        matchedTransactionIds,
+        matchedFuelLogIds,
+        matches: matchSummaries,
       };
 
       console.log(
-        `✅ Fetched ${transactions.length} transactions for driver ${driver[0].name}`
+        `✅ Fetched ${transactions.length} transactions and ${matches.length} matches for driver ${driver[0].name}`
       );
       return result;
     } catch (error) {

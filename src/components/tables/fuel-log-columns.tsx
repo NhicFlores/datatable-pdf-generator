@@ -30,14 +30,6 @@ export const createFuelLogColumns = (
       );
     },
     cell: ({ row }) => {
-      // Debug: Let's see what's actually in the row data
-      console.log("🔍 Row data:", {
-        id: row.original.id,
-        vehicleId: row.original.vehicleId,
-        hasId: "id" in row.original,
-        allKeys: Object.keys(row.original),
-      });
-
       const fuelLogId = row.original.id; // Use actual database UUID
       const compositeId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
       const isMatched = matchingIds.has(compositeId); // Still use composite for matching logic
@@ -46,14 +38,9 @@ export const createFuelLogColumns = (
         return (
           <EditableCell
             value={row.original.vehicleId}
-            onUpdate={(value) => {
-              console.log("🔄 About to call onUpdateField with:", {
-                fuelLogId,
-                field: "vehicleId",
-                value,
-              });
-              onUpdateField(fuelLogId, "vehicleId", value as string);
-            }}
+            onUpdate={(value) =>
+              onUpdateField(fuelLogId, "vehicleId", value as string)
+            }
             type="text"
             isMatched={isMatched}
           />

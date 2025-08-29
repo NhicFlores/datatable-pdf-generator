@@ -6,6 +6,8 @@ import {
   timestamp,
   index,
   numeric,
+  unique,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -150,3 +152,63 @@ export const fuelLogsRelations = relations(fuelLogs, ({ one }) => ({
     references: [drivers.id],
   }),
 }));
+
+// Transaction-Fuel Log Matches junction table for server-side matching
+export const transactionFuelMatches = dbSchema.table(
+  "transaction_fuel_matches",
+  {
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    transactionId: uuid("transaction_id")
+      .notNull()
+      .references(() => transactions.id),
+    fuelLogId: uuid("fuel_log_id")
+      .notNull()
+      .references(() => fuelLogs.id),
+
+    // Matching metadata
+    matchType: varchar("match_type", { length: 50 }).notNull(), // "date_cost", "date_quantity", "date_supplier_state"
+    confidence: numeric("confidence", { precision: 3, scale: 2 }).notNull(), // 0.00-1.00
+    isActive: boolean("is_active").default(true).notNull(),
+
+    // Audit fields
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    createdBy: varchar("created_by", { length: 50 })
+      .default("system")
+      .notNull(), // "system" or "manual"
+  },
+  (table) => [
+    // Performance indexes
+    index("matches_transaction_idx").on(table.transactionId),
+    index("matches_fuel_log_idx").on(table.fuelLogId),
+    index("matches_active_idx").on(table.isActive),
+    index("matches_confidence_idx").on(table.confidence),
+
+    // Composite indexes for common queries
+    index("matches_transaction_active_idx").on(
+      table.transactionId,
+      table.isActive
+    ),
+    index("matches_fuel_log_active_idx").on(table.fuelLogId, table.isActive),
+
+    // Prevent duplicate matches for same transaction-fuel log pair
+    unique("unique_transaction_fuel_pair").on(
+      table.transactionId,
+      table.fuelLogId
+    ),
+  ]
+);
+
+// Relations for junction table
+export const transactionFuelMatchesRelations = relations(
+  transactionFuelMatches,
+  ({ one }) => ({
+    transaction: one(transactions, {
+      fields: [transactionFuelMatches.transactionId],
+      references: [transactions.id],
+    }),
+    fuelLog: one(fuelLogs, {
+      fields: [transactionFuelMatches.fuelLogId],
+      references: [fuelLogs.id],
+    }),
+  })
+);
