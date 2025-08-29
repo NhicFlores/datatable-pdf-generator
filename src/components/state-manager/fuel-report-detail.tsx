@@ -125,12 +125,12 @@ export function FuelReportDetail({
 
     switch (statementFilter) {
       case "matched":
-        return activeTransactions.filter((t) =>
-          matchingTransactionIds.has(t.transactionReference)
+        return activeTransactions.filter(
+          (t) => matchingTransactionIds.has(t.id) // Use database ID instead of reference
         );
       case "unmatched":
         return activeTransactions.filter(
-          (t) => !matchingTransactionIds.has(t.transactionReference)
+          (t) => !matchingTransactionIds.has(t.id) // Use database ID instead of reference
         );
       case "all":
       default:
@@ -151,15 +151,13 @@ export function FuelReportDetail({
 
     switch (transactionFilter) {
       case "matched":
-        return allTransactions.filter((t) => {
-          const fuelLogId = `${t.vehicleId}-${t.date}-${t.invoiceNumber}`;
-          return matchingFuelLogIds.has(fuelLogId);
-        });
+        return allTransactions.filter(
+          (t) => matchingFuelLogIds.has(t.id) // Use database ID instead of composite key
+        );
       case "unmatched":
-        return allTransactions.filter((t) => {
-          const fuelLogId = `${t.vehicleId}-${t.date}-${t.invoiceNumber}`;
-          return !matchingFuelLogIds.has(fuelLogId);
-        });
+        return allTransactions.filter(
+          (t) => !matchingFuelLogIds.has(t.id) // Use database ID instead of composite key
+        );
       case "all":
       default:
         return allTransactions;
@@ -225,14 +223,14 @@ export function FuelReportDetail({
                 matchedCount={
                   allTransactions.filter(
                     (t) =>
-                      matchingTransactionIds.has(t.transactionReference) &&
+                      matchingTransactionIds.has(t.id) && // Use database ID
                       !removedTransactionIds.has(t.transactionReference)
                   ).length
                 }
                 unmatchedCount={
                   allTransactions.filter(
                     (t) =>
-                      !matchingTransactionIds.has(t.transactionReference) &&
+                      !matchingTransactionIds.has(t.id) && // Use database ID
                       !removedTransactionIds.has(t.transactionReference)
                   ).length
                 }
@@ -278,16 +276,14 @@ export function FuelReportDetail({
               onFilterChange={setTransactionFilter}
               totalCount={fuelReport.fuelLogs.length}
               matchedCount={
-                fuelReport.fuelLogs.filter((t) => {
-                  const fuelLogId = `${t.vehicleId}-${t.date}-${t.invoiceNumber}`;
-                  return matchingFuelLogIds.has(fuelLogId);
-                }).length
+                fuelReport.fuelLogs.filter(
+                  (t) => matchingFuelLogIds.has(t.id) // Use database ID
+                ).length
               }
               unmatchedCount={
-                fuelReport.fuelLogs.filter((t) => {
-                  const fuelLogId = `${t.vehicleId}-${t.date}-${t.invoiceNumber}`;
-                  return !matchingFuelLogIds.has(fuelLogId);
-                }).length
+                fuelReport.fuelLogs.filter(
+                  (t) => !matchingFuelLogIds.has(t.id) // Use database ID
+                ).length
               }
             />
             <DataTable columns={fuelLogColumns} data={filteredFuelLogs} />

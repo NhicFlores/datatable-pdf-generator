@@ -24,7 +24,7 @@ export const createTransactionColumns = (
       );
     },
     cell: ({ row }) => {
-      const isMatched = matchingIds.has(row.original.transactionReference);
+      const isMatched = matchingIds.has(row.original.id); // Use database ID
       return (
         <span className={isMatched ? "text-green-600 font-semibold" : ""}>
           {row.original.workflowStatus}
@@ -52,7 +52,7 @@ export const createTransactionColumns = (
     cell: ({ row }) => {
       const transactionDate = row.original.transactionDate;
       const postingDate = row.original.postingDate;
-      const isMatched = matchingIds.has(row.original.transactionReference);
+      const isMatched = matchingIds.has(row.original.id); // Use database ID
 
       return (
         <div className={isMatched ? "text-green-600 font-semibold" : ""}>
@@ -77,7 +77,7 @@ export const createTransactionColumns = (
       );
     },
     cell: ({ row }) => {
-      const isMatched = matchingIds.has(row.original.transactionReference);
+      const isMatched = matchingIds.has(row.original.id); // Use database ID
       return (
         <div className={isMatched ? "text-green-600 font-semibold" : ""}>
           <div className="font-bold">{row.original.supplierName}</div>
@@ -107,7 +107,7 @@ export const createTransactionColumns = (
       );
     },
     cell: ({ row }) => {
-      const isMatched = matchingIds.has(row.original.transactionReference);
+      const isMatched = matchingIds.has(row.original.id); // Use database ID
       return (
         <div className={isMatched ? "text-green-600 font-semibold" : ""}>
           <div className="font-bold">{row.original.glCode}</div>
@@ -133,7 +133,7 @@ export const createTransactionColumns = (
       );
     },
     cell: ({ row }) => {
-      const isMatched = matchingIds.has(row.original.transactionReference);
+      const isMatched = matchingIds.has(row.original.id); // Use database ID
       return (
         <span className={isMatched ? "text-green-600 font-semibold" : ""}>
           {row.original.reasonForExpense}
@@ -159,7 +159,7 @@ export const createTransactionColumns = (
       );
     },
     cell: ({ row }) => {
-      const isMatched = matchingIds.has(row.original.transactionReference);
+      const isMatched = matchingIds.has(row.original.id); // Use database ID
       const fuelQuantity = row.original.fuelQuantity;
       const fuelType = row.original.fuelType;
 
@@ -191,7 +191,7 @@ export const createTransactionColumns = (
       );
     },
     cell: ({ row }) => {
-      const isMatched = matchingIds.has(row.original.transactionReference);
+      const isMatched = matchingIds.has(row.original.id); // Use database ID
       return (
         <div className={isMatched ? "text-green-600 font-semibold" : ""}>
           <div className="font-bold">
@@ -207,7 +207,7 @@ export const createTransactionColumns = (
     id: "actions",
     header: "Actions",
     cell: ({ row }) => {
-      const isMatched = matchingIds.has(row.original.transactionReference);
+      const isMatched = matchingIds.has(row.original.id); // Use database ID
 
       return (
         <div className="flex items-center gap-2">

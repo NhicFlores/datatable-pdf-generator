@@ -1,6 +1,6 @@
 CREATE SCHEMA IF NOT EXISTS "dev-reports";
 --> statement-breakpoint
-CREATE TABLE "dev-reports"."drivers" (
+CREATE TABLE IF NOT EXISTS "dev-reports"."drivers" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"branch" varchar(100) NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE "dev-reports"."drivers" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "dev-reports"."fuel_logs" (
+CREATE TABLE IF NOT EXISTS "dev-reports"."fuel_logs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"vehicle_id" varchar(100) NOT NULL,
 	"driver_id" uuid NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE "dev-reports"."fuel_logs" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "dev-reports"."transaction_fuel_matches" (
+CREATE TABLE IF NOT EXISTS "dev-reports"."transaction_fuel_matches" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"transaction_id" uuid NOT NULL,
 	"fuel_log_id" uuid NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE "dev-reports"."transaction_fuel_matches" (
 	CONSTRAINT "unique_transaction_fuel_pair" UNIQUE("transaction_id","fuel_log_id")
 );
 --> statement-breakpoint
-CREATE TABLE "dev-reports"."transactions" (
+CREATE TABLE IF NOT EXISTS "dev-reports"."transactions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"transaction_reference" varchar(255) NOT NULL,
 	"cardholder_name" varchar(255) NOT NULL,

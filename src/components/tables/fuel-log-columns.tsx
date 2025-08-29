@@ -31,8 +31,7 @@ export const createFuelLogColumns = (
     },
     cell: ({ row }) => {
       const fuelLogId = row.original.id; // Use actual database UUID
-      const compositeId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(compositeId); // Still use composite for matching logic
+      const isMatched = matchingIds.has(fuelLogId); // Use database ID for matching
 
       if (editable && onUpdateField) {
         return (
@@ -70,8 +69,8 @@ export const createFuelLogColumns = (
     },
     cell: ({ row }) => {
       const fuelLogId = row.original.id; // Use actual database UUID
-      const compositeId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(compositeId); // Still use composite for matching logic
+
+      const isMatched = matchingIds.has(fuelLogId); // Still use composite for matching logic
 
       if (editable && onUpdateField) {
         return (
@@ -110,8 +109,8 @@ export const createFuelLogColumns = (
     },
     cell: ({ row }) => {
       const fuelLogId = row.original.id; // Use actual database UUID
-      const compositeId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(compositeId); // Still use composite for matching logic
+
+      const isMatched = matchingIds.has(fuelLogId); // Still use composite for matching logic
       const sellerName = row.original.sellerName
         ? row.original.sellerName
         : "-";
@@ -164,9 +163,9 @@ export const createFuelLogColumns = (
       );
     },
     cell: ({ row }) => {
-      const fuelLogId = row.original.id; // Use actual database UUID
-      const compositeId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(compositeId); // Still use composite for matching logic
+      const fuelLogId = row.original.id;
+
+      const isMatched = matchingIds.has(fuelLogId); // Still use composite for matching logic
 
       if (editable && onUpdateField) {
         return (
@@ -203,8 +202,8 @@ export const createFuelLogColumns = (
       );
     },
     cell: ({ row }) => {
-      const compositeId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(compositeId); // Still use composite for matching logic
+      const fuelLogId = row.original.id;
+      const isMatched = matchingIds.has(fuelLogId); // Still use composite for matching logic
       return (
         <span className={isMatched ? "text-green-600 font-semibold" : ""}>
           {row.original.odometer.toLocaleString()}
@@ -227,8 +226,8 @@ export const createFuelLogColumns = (
       );
     },
     cell: ({ row }) => {
-      const compositeId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(compositeId); // Still use composite for matching logic
+      const fuelLogId = row.original.id;
+      const isMatched = matchingIds.has(fuelLogId); // Still use composite for matching logic
       return (
         <span className={isMatched ? "text-green-600 font-semibold" : ""}>
           {row.original.receipt ? "Yes" : "No"}
@@ -252,8 +251,8 @@ export const createFuelLogColumns = (
     },
     cell: ({ row }) => {
       const fuelLogId = row.original.id; // Use actual database UUID
-      const compositeId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(compositeId); // Still use composite for matching logic
+
+      const isMatched = matchingIds.has(fuelLogId); // Still use composite for matching logic
 
       if (editable && onUpdateField) {
         return (
@@ -297,8 +296,8 @@ export const createFuelLogColumns = (
     },
     cell: ({ row }) => {
       const fuelLogId = row.original.id; // Use actual database UUID
-      const compositeId = `${row.original.vehicleId}-${row.original.date}-${row.original.invoiceNumber}`;
-      const isMatched = matchingIds.has(compositeId); // Still use composite for matching logic
+
+      const isMatched = matchingIds.has(fuelLogId); // Still use composite for matching logic
 
       if (editable && onUpdateField) {
         return (
