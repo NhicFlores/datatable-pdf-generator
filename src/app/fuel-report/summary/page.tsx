@@ -1,3 +1,4 @@
+export const revalidate = 60;
 import { getFuelSummaryTableFromDB } from "@/lib/db/data-fetchers";
 import { FuelSummaryTable } from "@/components/tables/fuel-summary-table";
 import { FuelSummaryExportButton } from "@/components/csv/fuel-summary-export-button";
