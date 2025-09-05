@@ -43,6 +43,7 @@ export const TransactionUploadRequestSchema = z.object({
 // Response schema
 export const ProcessedTransactionResultSchema = z.object({
   transactionsCreated: z.number(),
+  driversCreated: z.number(),
   duplicatesSkipped: z.number(),
   nonDriversSkipped: z.number(),
   validationErrors: z.array(z.string()),

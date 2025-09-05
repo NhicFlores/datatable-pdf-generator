@@ -10,12 +10,8 @@ import type {
 } from "@/lib/data-model/schema-types";
 import type {
   FuelReport,
-  FuelLogWithDriver,
   FuelReportSummary,
   DriverTransactions,
-  FuelSummaryData,
-  FuelSummaryByState,
-  FuelSummaryByVehicle,
   FuelSummaryTableData,
   FuelSummaryRow,
 } from "../data-model/query-types";
@@ -26,172 +22,13 @@ export type { SelectTransaction, SelectDriver, SelectFuelLog };
 // Export new query types for convenience
 export type {
   FuelReport,
-  FuelLogWithDriver,
   FuelReportSummary,
   DriverTransactions,
-  FuelSummaryData,
-  FuelSummaryByState,
-  FuelSummaryByVehicle,
   FuelSummaryTableData,
   FuelSummaryRow,
 } from "../data-model/query-types";
 
 // Server-side data fetchers with caching
-
-export const getTransactionsFromDB = cache(
-  async (): Promise<SelectTransaction[]> => {
-    try {
-      console.log("🔍 Fetching transactions from database...");
-
-      const transactions = await db
-        .select()
-        .from(schema.transactions)
-        .orderBy(desc(schema.transactions.transactionDate));
-
-      console.log(
-        `✅ Fetched ${transactions.length} transactions from database`
-      );
-      return transactions;
-    } catch (error) {
-      console.error("❌ Failed to fetch transactions from database:", error);
-      return [];
-    }
-  }
-);
-
-export const getFuelLogsFromDB = cache(
-  async (): Promise<FuelLogWithDriver[]> => {
-    try {
-      console.log("🔍 Fetching fuel transactions from database...");
-
-      const fuelLogs = await db
-        .select({
-          id: schema.fuelLogs.id,
-          vehicleId: schema.fuelLogs.vehicleId,
-          driverId: schema.fuelLogs.driverId,
-          date: schema.fuelLogs.date,
-          invoiceNumber: schema.fuelLogs.invoiceNumber,
-          gallons: schema.fuelLogs.gallons,
-          cost: schema.fuelLogs.cost,
-          sellerState: schema.fuelLogs.sellerState,
-          sellerName: schema.fuelLogs.sellerName,
-          odometer: schema.fuelLogs.odometer,
-          receipt: schema.fuelLogs.receipt,
-          createdAt: schema.fuelLogs.createdAt,
-          updatedAt: schema.fuelLogs.updatedAt,
-          // Include driver information
-          driverName: schema.drivers.name,
-          driverBranch: schema.drivers.branch,
-        })
-        .from(schema.fuelLogs)
-        .leftJoin(
-          schema.drivers,
-          eq(schema.fuelLogs.driverId, schema.drivers.id)
-        );
-
-      console.log(
-        `✅ Fetched ${fuelLogs.length} fuel transactions from database`
-      );
-      return fuelLogs;
-    } catch (error) {
-      console.error(
-        "❌ Failed to fetch fuel transactions from database:",
-        error
-      );
-      return [];
-    }
-  }
-);
-
-export const getDriversFromDB = cache(async (): Promise<SelectDriver[]> => {
-  try {
-    console.log("🔍 Fetching drivers from database...");
-
-    const drivers = await db
-      .select()
-      .from(schema.drivers)
-      .orderBy(schema.drivers.name);
-
-    console.log(`✅ Fetched ${drivers.length} drivers from database`);
-    return drivers;
-  } catch (error) {
-    console.error("❌ Failed to fetch drivers from database:", error);
-    return [];
-  }
-});
-
-export const getFuelReportsFromDB = cache(async (): Promise<FuelReport[]> => {
-  try {
-    console.log("🔍 Fetching fuel reports from database...");
-
-    // Fetch drivers and fuel transactions in parallel for better performance
-    const [drivers, fuelLogs] = await Promise.all([
-      db
-        .select({
-          id: schema.drivers.id,
-          name: schema.drivers.name,
-          branch: schema.drivers.branch,
-        })
-        .from(schema.drivers)
-        .orderBy(schema.drivers.name),
-
-      db
-        .select({
-          id: schema.fuelLogs.id,
-          vehicleId: schema.fuelLogs.vehicleId,
-          driverId: schema.fuelLogs.driverId,
-          date: schema.fuelLogs.date,
-          invoiceNumber: schema.fuelLogs.invoiceNumber,
-          gallons: schema.fuelLogs.gallons,
-          cost: schema.fuelLogs.cost,
-          sellerState: schema.fuelLogs.sellerState,
-          sellerName: schema.fuelLogs.sellerName,
-          odometer: schema.fuelLogs.odometer,
-          receipt: schema.fuelLogs.receipt,
-        })
-        .from(schema.fuelLogs)
-        .orderBy(schema.fuelLogs.date),
-    ]);
-
-    // Use Maps and Sets for efficient grouping and deduplication
-    const fuelLogsByDriver = new Map<string, typeof fuelLogs>();
-    const vehicleSetsByDriver = new Map<string, Set<string>>();
-
-    // Single pass through fuel transactions for grouping and vehicle collection
-    fuelLogs.forEach((fuelLog) => {
-      const { driverId, vehicleId } = fuelLog;
-
-      // Group fuel transactions by driver
-      if (!fuelLogsByDriver.has(driverId)) {
-        fuelLogsByDriver.set(driverId, []);
-      }
-      fuelLogsByDriver.get(driverId)!.push(fuelLog);
-
-      // Collect unique vehicle IDs per driver using Set for O(1) lookups
-      if (vehicleId) {
-        if (!vehicleSetsByDriver.has(driverId)) {
-          vehicleSetsByDriver.set(driverId, new Set());
-        }
-        vehicleSetsByDriver.get(driverId)!.add(vehicleId);
-      }
-    });
-
-    // Combine drivers with their fuel transactions and vehicle IDs
-    const fuelReports: FuelReport[] = drivers.map((driver) => ({
-      id: driver.id,
-      name: driver.name,
-      branch: driver.branch,
-      vehicleIds: Array.from(vehicleSetsByDriver.get(driver.id) || []),
-      fuelLogs: fuelLogsByDriver.get(driver.id) || [],
-    }));
-
-    console.log(`✅ Fetched ${fuelReports.length} fuel reports from database`);
-    return fuelReports;
-  } catch (error) {
-    console.error("❌ Failed to fetch fuel reports from database:", error);
-    return [];
-  }
-});
 
 // =============================================================================
 // NEW OPTIMIZED DATA FETCHERS FOR SERVER COMPONENT ARCHITECTURE
@@ -252,8 +89,245 @@ export const getFuelReportSummariesFromDB = cache(
 );
 
 /**
- * Get single fuel report by driver ID for detail page
- * Returns complete fuel report with all transactions for specific driver
+ * CONSOLIDATED: Get complete fuel report detail data for a driver
+ * Replaces getFuelReportByIdFromDB + getTransactionsByDriverFromDB
+ * Uses single query with joins for optimal performance
+ */
+export const getFuelReportDetailFromDB = cache(
+  async (
+    driverId: string
+  ): Promise<{
+    fuelReport: FuelReport | null;
+    driverTransactions: DriverTransactions | null;
+  }> => {
+    try {
+      console.log(
+        `🔍 Fetching complete fuel report detail for driver ID: ${driverId}`
+      );
+
+      // Single comprehensive query using Drizzle's relational query API
+      const result = await db.query.drivers.findFirst({
+        where: eq(schema.drivers.id, driverId),
+        with: {
+          fuelLogs: {
+            orderBy: [desc(schema.fuelLogs.date)],
+          },
+        },
+      });
+
+      if (!result) {
+        console.log(`❌ Driver not found with ID: ${driverId}`);
+        return { fuelReport: null, driverTransactions: null };
+      }
+
+      // Get transactions using the FK relationship (much faster than string matching)
+      const [transactions, matches] = await Promise.all([
+        db
+          .select()
+          .from(schema.transactions)
+          .where(eq(schema.transactions.driverId, driverId))
+          .orderBy(desc(schema.transactions.transactionDate)),
+
+        // Get active matches for this driver
+        db
+          .select({
+            transactionId: schema.transactionFuelMatches.transactionId,
+            fuelLogId: schema.transactionFuelMatches.fuelLogId,
+            matchType: schema.transactionFuelMatches.matchType,
+            confidence: schema.transactionFuelMatches.confidence,
+            isActive: schema.transactionFuelMatches.isActive,
+          })
+          .from(schema.transactionFuelMatches)
+          .innerJoin(
+            schema.fuelLogs,
+            eq(schema.transactionFuelMatches.fuelLogId, schema.fuelLogs.id)
+          )
+          .where(
+            and(
+              eq(schema.fuelLogs.driverId, driverId),
+              eq(schema.transactionFuelMatches.isActive, true)
+            )
+          ),
+      ]);
+
+      // Collect unique vehicle IDs from fuel logs
+      const vehicleIds = [
+        ...new Set(result.fuelLogs.map((log) => log.vehicleId)),
+      ];
+
+      // Build fuel report
+      const fuelReport: FuelReport = {
+        id: result.id,
+        name: result.name,
+        branch: result.branch,
+        vehicleIds,
+        fuelLogs: result.fuelLogs,
+      };
+
+      // Build matching data sets
+      const matchedTransactionIds = new Set(
+        matches.map((m) => m.transactionId)
+      );
+      const matchedFuelLogIds = new Set(matches.map((m) => m.fuelLogId));
+      const matchSummaries = matches.map((m) => ({
+        transactionId: m.transactionId,
+        fuelLogId: m.fuelLogId,
+        matchType: m.matchType,
+        confidence: parseFloat(m.confidence),
+        isActive: m.isActive,
+      }));
+
+      // Build driver transactions
+      const driverTransactions: DriverTransactions = {
+        driverId: result.id,
+        driverName: result.name,
+        transactions,
+        matchedTransactionIds,
+        matchedFuelLogIds,
+        matches: matchSummaries,
+      };
+
+      console.log(
+        `✅ Fetched complete data: ${result.fuelLogs.length} fuel logs, ${transactions.length} transactions, ${matches.length} matches`
+      );
+
+      return { fuelReport, driverTransactions };
+    } catch (error) {
+      console.error(
+        `❌ Failed to fetch fuel report detail for driver ${driverId}:`,
+        error
+      );
+      return { fuelReport: null, driverTransactions: null };
+    }
+  }
+);
+
+/**
+ * OPTIMIZED: Get filtered fuel report data with server-side filtering
+ * Reduces client-side computation and network transfer
+ */
+export const getFilteredFuelReportDetailFromDB = cache(
+  async (
+    driverId: string,
+    filters?: {
+      statementFilter?: "all" | "matched" | "unmatched";
+      transactionFilter?: "all" | "matched" | "unmatched";
+    }
+  ): Promise<{
+    fuelReport: FuelReport | null;
+    driverTransactions: DriverTransactions | null;
+    stats: {
+      totalFuelLogs: number;
+      matchedFuelLogs: number;
+      totalTransactions: number;
+      matchedTransactions: number;
+    };
+  }> => {
+    try {
+      console.log(`🔍 Fetching filtered data for driver ${driverId}:`, filters);
+
+      // Get base data first
+      const { fuelReport, driverTransactions } =
+        await getFuelReportDetailFromDB(driverId);
+
+      if (!fuelReport || !driverTransactions) {
+        return {
+          fuelReport: null,
+          driverTransactions: null,
+          stats: {
+            totalFuelLogs: 0,
+            matchedFuelLogs: 0,
+            totalTransactions: 0,
+            matchedTransactions: 0,
+          },
+        };
+      }
+
+      // Calculate stats before filtering
+      const stats = {
+        totalFuelLogs: fuelReport.fuelLogs.length,
+        matchedFuelLogs: driverTransactions.matchedFuelLogIds.size,
+        totalTransactions: driverTransactions.transactions.length,
+        matchedTransactions: driverTransactions.matchedTransactionIds.size,
+      };
+
+      // If no filters specified, return full data with stats
+      if (
+        !filters ||
+        (filters.statementFilter === "all" &&
+          filters.transactionFilter === "all")
+      ) {
+        return { fuelReport, driverTransactions, stats };
+      }
+
+      // Apply server-side filtering
+      let filteredTransactions = driverTransactions.transactions;
+      let filteredFuelLogs = fuelReport.fuelLogs;
+
+      // Filter transactions based on match status
+      if (filters.statementFilter === "matched") {
+        filteredTransactions = driverTransactions.transactions.filter((t) =>
+          driverTransactions.matchedTransactionIds.has(t.id)
+        );
+      } else if (filters.statementFilter === "unmatched") {
+        filteredTransactions = driverTransactions.transactions.filter(
+          (t) => !driverTransactions.matchedTransactionIds.has(t.id)
+        );
+      }
+
+      // Filter fuel logs based on match status
+      if (filters.transactionFilter === "matched") {
+        filteredFuelLogs = fuelReport.fuelLogs.filter((f) =>
+          driverTransactions.matchedFuelLogIds.has(f.id)
+        );
+      } else if (filters.transactionFilter === "unmatched") {
+        filteredFuelLogs = fuelReport.fuelLogs.filter(
+          (f) => !driverTransactions.matchedFuelLogIds.has(f.id)
+        );
+      }
+
+      // Create filtered versions
+      const filteredFuelReport: FuelReport = {
+        ...fuelReport,
+        fuelLogs: filteredFuelLogs,
+      };
+
+      const filteredDriverTransactions: DriverTransactions = {
+        ...driverTransactions,
+        transactions: filteredTransactions,
+      };
+
+      console.log(
+        `✅ Applied filters - Transactions: ${filteredTransactions.length}/${driverTransactions.transactions.length}, Fuel Logs: ${filteredFuelLogs.length}/${fuelReport.fuelLogs.length}`
+      );
+
+      return {
+        fuelReport: filteredFuelReport,
+        driverTransactions: filteredDriverTransactions,
+        stats,
+      };
+    } catch (error) {
+      console.error(
+        `❌ Failed to fetch filtered data for driver ${driverId}:`,
+        error
+      );
+      return {
+        fuelReport: null,
+        driverTransactions: null,
+        stats: {
+          totalFuelLogs: 0,
+          matchedFuelLogs: 0,
+          totalTransactions: 0,
+          matchedTransactions: 0,
+        },
+      };
+    }
+  }
+);
+
+/**
+ * DEPRECATED: Use getFuelReportDetailFromDB instead
+ * Keeping for backward compatibility during transition
  */
 export const getFuelReportByIdFromDB = cache(
   async (driverId: string): Promise<FuelReport | null> => {
@@ -321,9 +395,9 @@ export const getFuelReportByIdFromDB = cache(
 );
 
 /**
- * Get transactions for specific driver by matching cardholder name
- * Used for comparison analysis on detail pages
- * Now includes server-side matching data
+ * DEPRECATED: Use getFuelReportDetailFromDB instead
+ * Keeping for backward compatibility during transition
+ * Get transactions for specific driver by FK relationship
  */
 export const getTransactionsByDriverFromDB = cache(
   async (driverId: string): Promise<DriverTransactions | null> => {
@@ -345,12 +419,12 @@ export const getTransactionsByDriverFromDB = cache(
         return null;
       }
 
-      // Get transactions matching the driver's name and active matches in parallel
+      // Get transactions using driverId foreign key and active matches in parallel
       const [transactions, matches] = await Promise.all([
         db
           .select()
           .from(schema.transactions)
-          .where(eq(schema.transactions.cardholderName, driver[0].name))
+          .where(eq(schema.transactions.driverId, driverId))
           .orderBy(desc(schema.transactions.transactionDate)),
 
         // Get active matches for this driver
@@ -407,115 +481,6 @@ export const getTransactionsByDriverFromDB = cache(
         error
       );
       return null;
-    }
-  }
-);
-
-/**
- * Get aggregated fuel summary data for dashboard/summary page
- * Returns high-level statistics across all drivers and states
- */
-export const getFuelSummaryFromDB = cache(
-  async (): Promise<FuelSummaryData> => {
-    try {
-      console.log("🔍 Fetching fuel summary data from database...");
-
-      const [overallStats, stateStats, vehicleStats] = await Promise.all([
-        // Overall statistics
-        db
-          .select({
-            totalDrivers: sql<number>`COUNT(DISTINCT ${schema.drivers.id})`.as(
-              "total_drivers"
-            ),
-            totalTransactions: sql<number>`COUNT(${schema.fuelLogs.id})`.as(
-              "total_transactions"
-            ),
-            totalGallons:
-              sql<number>`COALESCE(SUM(CAST(${schema.fuelLogs.gallons} AS DECIMAL)), 0)`.as(
-                "total_gallons"
-              ),
-            totalCost:
-              sql<number>`COALESCE(SUM(CAST(${schema.fuelLogs.cost} AS DECIMAL)), 0)`.as(
-                "total_cost"
-              ),
-          })
-          .from(schema.drivers)
-          .leftJoin(
-            schema.fuelLogs,
-            eq(schema.drivers.id, schema.fuelLogs.driverId)
-          ),
-
-        // Statistics by state
-        db
-          .select({
-            state: schema.fuelLogs.sellerState,
-            totalGallons:
-              sql<number>`SUM(CAST(${schema.fuelLogs.gallons} AS DECIMAL))`.as(
-                "total_gallons"
-              ),
-            totalCost:
-              sql<number>`SUM(CAST(${schema.fuelLogs.cost} AS DECIMAL))`.as(
-                "total_cost"
-              ),
-            transactionCount: sql<number>`COUNT(${schema.fuelLogs.id})`.as(
-              "transaction_count"
-            ),
-            uniqueVehicles:
-              sql<number>`COUNT(DISTINCT ${schema.fuelLogs.vehicleId})`.as(
-                "unique_vehicles"
-              ),
-          })
-          .from(schema.fuelLogs)
-          .groupBy(schema.fuelLogs.sellerState)
-          .orderBy(schema.fuelLogs.sellerState),
-
-        // Statistics by vehicle
-        db
-          .select({
-            vehicleId: schema.fuelLogs.vehicleId,
-            driverName: schema.drivers.name,
-            totalGallons:
-              sql<number>`SUM(CAST(${schema.fuelLogs.gallons} AS DECIMAL))`.as(
-                "total_gallons"
-              ),
-            totalCost:
-              sql<number>`SUM(CAST(${schema.fuelLogs.cost} AS DECIMAL))`.as(
-                "total_cost"
-              ),
-            transactionCount: sql<number>`COUNT(${schema.fuelLogs.id})`.as(
-              "transaction_count"
-            ),
-          })
-          .from(schema.fuelLogs)
-          .leftJoin(
-            schema.drivers,
-            eq(schema.fuelLogs.driverId, schema.drivers.id)
-          )
-          .groupBy(schema.fuelLogs.vehicleId, schema.drivers.name)
-          .orderBy(schema.fuelLogs.vehicleId),
-      ]);
-
-      const summaryData: FuelSummaryData = {
-        totalDrivers: overallStats[0]?.totalDrivers || 0,
-        totalTransactions: overallStats[0]?.totalTransactions || 0,
-        totalGallons: overallStats[0]?.totalGallons || 0,
-        totalCost: overallStats[0]?.totalCost || 0,
-        summaryByState: stateStats as FuelSummaryByState[],
-        summaryByVehicle: vehicleStats as FuelSummaryByVehicle[],
-      };
-
-      console.log("✅ Fetched fuel summary data successfully");
-      return summaryData;
-    } catch (error) {
-      console.error("❌ Failed to fetch fuel summary data:", error);
-      return {
-        totalDrivers: 0,
-        totalTransactions: 0,
-        totalGallons: 0,
-        totalCost: 0,
-        summaryByState: [],
-        summaryByVehicle: [],
-      };
     }
   }
 );

@@ -1,10 +1,6 @@
 // DEPRECATED OR REFACTOR
-import {
-  FuelReport_DEPRECATED,
-  FuelTransaction,
-  Transaction,
-} from "./data-model/DEPRECATED-TYPES";
-import { FuelSummaryTableData } from "./data-model/query-types";
+import { FuelReport, FuelSummaryTableData } from "./data-model/query-types";
+import { BaseFuelLog } from "./data-model/schema-types";
 
 // Generic CSV download function
 export function downloadCSV(
@@ -58,99 +54,11 @@ export function downloadCSV(
   URL.revokeObjectURL(url);
 }
 
-// Specific function for fuel transactions
-export function downloadFuelTransactionsCSV(
-  fuelTransactions: FuelTransaction[],
-  driverName?: string,
-  filename?: string
-) {
-  const headers = [
-    "driver",
-    "vehicleId",
-    "date",
-    "invoiceNumber",
-    "gallons",
-    "cost",
-    "sellerState",
-    "sellerName",
-    "odometer",
-    "receipt",
-  ];
-
-  const formattedData = fuelTransactions.map((tx) => ({
-    driver: driverName || "Unknown",
-    vehicleId: tx.vehicleId,
-    date: tx.date,
-    invoiceNumber: tx.invoiceNumber,
-    gallons: tx.gallons,
-    cost: tx.cost,
-    sellerState: tx.sellerState,
-    sellerName: tx.sellerName,
-    odometer: tx.odometer,
-    receipt: tx.receipt,
-  }));
-
-  const defaultFilename = `fuel_transactions_${
-    new Date().toISOString().split("T")[0]
-  }.csv`;
-  downloadCSV(formattedData, filename || defaultFilename, headers);
-}
-
-// Specific function for expense transactions (missing fuel transactions)
-export function downloadExpenseTransactionsCSV(
-  transactions: Transaction[],
-  filename?: string
-) {
-  const headers = [
-    "transactionReference",
-    "cardholderName",
-    "lastFourDigits",
-    "transactionDate",
-    "postingDate",
-    "billingAmount",
-    "lineAmount",
-    "lineNumber",
-    "glCode",
-    "glCodeDescription",
-    "reasonForExpense",
-    "receiptImageName",
-    "receiptImageReferenceId",
-    "supplierName",
-    "supplierCity",
-    "supplierState",
-    "workflowStatus",
-  ];
-
-  const formattedData = transactions.map((tx) => ({
-    transactionReference: tx.transactionReference,
-    cardholderName: tx.cardholderName,
-    lastFourDigits: tx.lastFourDigits,
-    transactionDate: tx.transactionDate,
-    postingDate: tx.postingDate,
-    billingAmount: tx.billingAmount,
-    lineAmount: tx.lineAmount,
-    lineNumber: tx.lineNumber,
-    glCode: tx.glCode,
-    glCodeDescription: tx.glCodeDescription,
-    reasonForExpense: tx.reasonForExpense,
-    receiptImageName: tx.receiptImageName,
-    receiptImageReferenceId: tx.receiptImageReferenceId,
-    supplierName: tx.supplierName,
-    supplierCity: tx.supplierCity,
-    supplierState: tx.supplierState,
-    workflowStatus: tx.workflowStatus,
-  }));
-
-  const defaultFilename = `missing_fuel_transactions_${
-    new Date().toISOString().split("T")[0]
-  }.csv`;
-  downloadCSV(formattedData, filename || defaultFilename, headers);
-}
-
 // Function to export fuel summary data
 // Function to download all fuel transactions in original fuel-report.csv format
+// TODO: IMPLEMENT FOR BACKING UP FUEL LOGS 
 export function downloadAllFuelTransactionsCSV(
-  fuelReports: FuelReport_DEPRECATED[],
+  fuelReports: FuelReport[],
   filename?: string
 ) {
   // Headers matching the original fuel-report.csv format
@@ -169,9 +77,9 @@ export function downloadAllFuelTransactionsCSV(
 
   // Flatten all fuel transactions from all reports
   const allTransactions = fuelReports.flatMap((report) =>
-    report.fuelTransactions.map((tx: FuelTransaction) => ({
+    report.fuelLogs.map((tx: BaseFuelLog) => ({
       vehicle: tx.vehicleId,
-      driver: report.driver,
+      driver: report.name,
       startTime: tx.date,
       invoiceNumber: tx.invoiceNumber,
       gallons: tx.gallons,

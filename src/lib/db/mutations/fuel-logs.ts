@@ -35,41 +35,6 @@ export async function createFuelLog(data: {
   return result[0];
 }
 
-export async function createManyFuelLogs(
-  transactions: Array<{
-    vehicleId: string;
-    driverId: string;
-    date: Date;
-    invoiceNumber: string;
-    gallons: number;
-    cost: number;
-    sellerState: string;
-    sellerName: string;
-    odometer: number;
-    receipt?: string;
-  }>
-) {
-  const formattedTransactions = transactions.map((tx) => ({
-    vehicleId: tx.vehicleId,
-    driverId: tx.driverId,
-    date: tx.date,
-    invoiceNumber: tx.invoiceNumber,
-    gallons: tx.gallons.toString(),
-    cost: tx.cost.toString(),
-    sellerState: tx.sellerState,
-    sellerName: tx.sellerName,
-    odometer: tx.odometer.toString(),
-    receipt: tx.receipt || "",
-  }));
-
-  const result = await db
-    .insert(schema.fuelLogs)
-    .values(formattedTransactions)
-    .returning();
-
-  return result;
-}
-
 export async function updateFuelLogs(
   id: string,
   data: {

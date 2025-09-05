@@ -39,6 +39,7 @@ export const transactions = dbSchema.table(
   "transactions",
   {
     id: uuid().defaultRandom().primaryKey().notNull(),
+    driverId: uuid("driver_id").notNull().references(() => drivers.id),
     // Core transaction fields
     transactionReference: varchar("transaction_reference", {
       length: 255,

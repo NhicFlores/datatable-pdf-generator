@@ -1,5 +1,5 @@
 {
-  "id": "51f5794e-b339-4f96-b9bb-38fabfd642ce",
+  "id": "248cd66d-006a-418f-8bfe-2d9546e7146e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -510,6 +510,12 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
+        "driver_id": {
+          "name": "driver_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
         "transaction_reference": {
           "name": "transaction_reference",
           "type": "varchar(255)",
@@ -740,7 +746,22 @@
           "with": {}
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "transactions_driver_id_drivers_id_fk": {
+          "name": "transactions_driver_id_drivers_id_fk",
+          "tableFrom": "transactions",
+          "tableTo": "drivers",
+          "schemaTo": "dev-reports",
+          "columnsFrom": [
+            "driver_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},

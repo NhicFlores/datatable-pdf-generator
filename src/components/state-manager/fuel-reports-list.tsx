@@ -45,6 +45,7 @@ export function FuelReportsList({ fuelReportSummaries }: FuelReportsListProps) {
 
         alert(`✅ Processing Complete!
         • ${result.data.transactionsCreated} transactions saved
+        • ${result.data.driversCreated} drivers created/found
         • ${result.data.duplicatesSkipped} duplicates skipped  
         • ${result.data.nonDriversSkipped} non-driver transactions skipped${errorSummary}`);
 
@@ -96,8 +97,8 @@ export function FuelReportsList({ fuelReportSummaries }: FuelReportsListProps) {
 
         console.log("✅ Fuel processing complete:", result);
 
-        // Refresh the page to show updated data
-        window.location.reload();
+        // The page will automatically revalidate due to server-side revalidatePath
+        // No need for manual reload
       } else {
         throw new Error(result.error || "Failed to process data");
       }
@@ -136,20 +137,22 @@ export function FuelReportsList({ fuelReportSummaries }: FuelReportsListProps) {
       {/* Upload Section */}
       <div className="bg-gray-50 p-6 rounded-lg border">
         <h2 className="text-xl font-semibold mb-4">Upload CSV Files</h2>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <h3 className="text-lg font-medium mb-2">Fuel Log Data</h3>
             <p className="text-sm text-gray-600 mb-3">
-              Upload fuel log CSV files to import fuel usage data into the
-              system.
+              Upload fuel log CSV files to import fuel usage data and
+              create/update driver records.
             </p>
             <FuelLogUploadButton onDataParsed={handleFuelData} size="default" />
           </div>
+
           <div>
             <h3 className="text-lg font-medium mb-2">Transaction Data</h3>
             <p className="text-sm text-gray-600 mb-3">
-              Upload expense transaction CSV files to import transaction data
-              into the system.
+              Upload expense transaction CSV files. Drivers will be created
+              automatically from cardholder names.
             </p>
             <TransactionsUploadButton
               onDataParsed={handleTransactionsData}

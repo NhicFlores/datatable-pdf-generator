@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { processTransactionCSVData } from "@/lib/db/services/transaction-service";
 import { TransactionUploadRequestSchema } from "@/lib/validations/transaction";
 
@@ -34,6 +35,9 @@ export async function POST(request: NextRequest) {
       validation.data.transactions
     );
 
+    // Revalidate the fuel reports page to update driver count
+    revalidatePath("/fuel-report");
+
     // Determine response status based on results
     const hasErrors =
       result.validationErrors.length > 0 || result.databaseErrors.length > 0;
@@ -54,6 +58,7 @@ export async function POST(request: NextRequest) {
             : "No transactions were processed",
         data: {
           transactionsCreated: result.transactionsCreated,
+          driversCreated: result.driversCreated,
           duplicatesSkipped: result.duplicatesSkipped,
           nonDriversSkipped: result.nonDriversSkipped,
           totalErrors:

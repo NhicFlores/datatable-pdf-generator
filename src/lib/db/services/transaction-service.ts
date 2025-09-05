@@ -12,6 +12,7 @@ export async function processTransactionCSVData(
 ): Promise<ProcessedTransactionResult> {
   const result: ProcessedTransactionResult = {
     transactionsCreated: 0,
+    driversCreated: 0,
     duplicatesSkipped: 0,
     nonDriversSkipped: 0,
     validationErrors: [],
@@ -22,6 +23,62 @@ export async function processTransactionCSVData(
     await db.transaction(async (trx) => {
       console.log("-------- TRANSACTION PROCESSING STARTED --------");
       console.log(`💾 Processing ${rows.length} transactions...`);
+
+      // Pre-fetch all existing drivers to avoid duplicate lookups
+      const existingDrivers = await trx
+        .select({
+          id: schema.drivers.id,
+          name: schema.drivers.name,
+        })
+        .from(schema.drivers);
+
+      // Create a map for fast driver lookups by name (case-insensitive)
+      const driverMap = new Map<string, string>();
+      existingDrivers.forEach((driver) => {
+        driverMap.set(driver.name.toLowerCase().trim(), driver.id);
+      });
+
+      console.log(
+        `✅ Found ${existingDrivers.length} existing drivers in database`
+      );
+
+      // Track newly created drivers to avoid duplicates within this batch
+      const newDriversCreated = new Map<string, string>();
+
+      // Helper function to get or create driver
+      const getOrCreateDriver = async (
+        cardholderName: string
+      ): Promise<string> => {
+        const normalizedName = cardholderName.toLowerCase().trim();
+
+        // Check existing drivers first
+        if (driverMap.has(normalizedName)) {
+          return driverMap.get(normalizedName)!;
+        }
+
+        // Check if we already created this driver in this batch
+        if (newDriversCreated.has(normalizedName)) {
+          return newDriversCreated.get(normalizedName)!;
+        }
+
+        // Create new driver
+        console.log(`🔄 Creating new driver: ${cardholderName}`);
+        const [newDriver] = await trx
+          .insert(schema.drivers)
+          .values({
+            name: cardholderName.trim(),
+            branch: "AUTO_CREATED", // Default branch for transaction-created drivers
+          })
+          .returning({ id: schema.drivers.id });
+
+        newDriversCreated.set(normalizedName, newDriver.id);
+        driverMap.set(normalizedName, newDriver.id); // Add to main map too
+
+        console.log(
+          `✅ Created driver ${cardholderName} with ID: ${newDriver.id}`
+        );
+        return newDriver.id;
+      };
 
       // Track processed references to detect duplicates within batch
       // const processedReferences = new Set<string>();
@@ -137,12 +194,15 @@ export async function processTransactionCSVData(
           }
           */
 
-          // Step 7: Insert transaction using Drizzle ORM
+          // Step 7: Get or create driver for this transaction
+          const driverId = await getOrCreateDriver(validRow.cardHolderName);
+
+          // Step 8: Insert transaction using Drizzle ORM
           console.log(
             `🔄 Attempting to insert transaction: ${validRow.transactionReference}`
           );
           console.log(
-            `   Data validation: cardHolderName="${validRow.cardHolderName}", lastFourDigits="${validRow.lastFourDigits}" (length: ${validRow.lastFourDigits.length}), lineNumber="${validRow.lineNumber}"`
+            `   Data validation: cardHolderName="${validRow.cardHolderName}", driverId="${driverId}", lastFourDigits="${validRow.lastFourDigits}" (length: ${validRow.lastFourDigits.length}), lineNumber="${validRow.lineNumber}"`
           );
           console.log("");
           console.log("XXXXXXXXX");
@@ -153,6 +213,7 @@ export async function processTransactionCSVData(
           console.log("");
 
           await trx.insert(schema.transactions).values({
+            driverId: driverId,
             transactionReference: refNumberWithLineNumber,
             cardholderName: validRow.cardHolderName,
             lastFourDigits: validRow.lastFourDigits,
@@ -160,7 +221,7 @@ export async function processTransactionCSVData(
             postingDate: postingDate,
             billingAmount: validRow.billingAmount.toString(),
             lineAmount: validRow.lineAmount.toString(),
-            lineNumber: validRow.lineNumber || "1", // Ensure we have a line number
+            lineNumber: validRow.lineNumber || "1",
             glCode: validRow.glCode,
             glCodeDescription: validRow.glCodeDescription || null,
             reasonForExpense: validRow.reasonForExpense || null,
@@ -214,6 +275,24 @@ export async function processTransactionCSVData(
       console.log(
         `✅ Transaction processing complete: ${result.transactionsCreated} transactions created`
       );
+
+      // Update result with driver creation count
+      result.driversCreated = newDriversCreated.size;
+
+      // Add summary of newly created drivers to result
+      console.log(`📊 Transaction processing summary:`);
+      console.log(`   • Transactions created: ${result.transactionsCreated}`);
+      console.log(`   • New drivers created: ${result.driversCreated}`);
+      console.log(`   • Existing drivers used: ${existingDrivers.length}`);
+
+      if (newDriversCreated.size > 0) {
+        console.log(
+          `   • New driver names: ${Array.from(newDriversCreated.keys()).join(
+            ", "
+          )}`
+        );
+      }
+
       console.log("-------- TRANSACTION PROCESSING COMPLETED --------");
     });
 

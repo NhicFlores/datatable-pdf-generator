@@ -375,9 +375,8 @@ const getTransactionsByDriver = async (
     throw new Error(`Driver not found: ${driverId}`);
   }
 
-  // Get transactions by driver name (since transactions table doesn't have driverId foreign key)
   return await db.query.transactions.findMany({
-    where: eq(schema.transactions.cardholderName, driver.name),
+    where: eq(schema.transactions.driverId, driver.id),
   });
 };
 

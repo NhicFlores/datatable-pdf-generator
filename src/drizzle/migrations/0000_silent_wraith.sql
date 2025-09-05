@@ -1,6 +1,6 @@
 CREATE SCHEMA IF NOT EXISTS "dev-reports";
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "dev-reports"."drivers" (
+CREATE TABLE "dev-reports"."drivers" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"branch" varchar(100) NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS "dev-reports"."drivers" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "dev-reports"."fuel_logs" (
+CREATE TABLE "dev-reports"."fuel_logs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"vehicle_id" varchar(100) NOT NULL,
 	"driver_id" uuid NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS "dev-reports"."fuel_logs" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "dev-reports"."transaction_fuel_matches" (
+CREATE TABLE "dev-reports"."transaction_fuel_matches" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"transaction_id" uuid NOT NULL,
 	"fuel_log_id" uuid NOT NULL,
@@ -36,8 +36,9 @@ CREATE TABLE IF NOT EXISTS "dev-reports"."transaction_fuel_matches" (
 	CONSTRAINT "unique_transaction_fuel_pair" UNIQUE("transaction_id","fuel_log_id")
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "dev-reports"."transactions" (
+CREATE TABLE "dev-reports"."transactions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"driver_id" uuid NOT NULL,
 	"transaction_reference" varchar(255) NOT NULL,
 	"cardholder_name" varchar(255) NOT NULL,
 	"last_four_digits" varchar(4) NOT NULL,
@@ -68,6 +69,7 @@ CREATE TABLE IF NOT EXISTS "dev-reports"."transactions" (
 ALTER TABLE "dev-reports"."fuel_logs" ADD CONSTRAINT "fuel_logs_driver_id_drivers_id_fk" FOREIGN KEY ("driver_id") REFERENCES "dev-reports"."drivers"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "dev-reports"."transaction_fuel_matches" ADD CONSTRAINT "transaction_fuel_matches_transaction_id_transactions_id_fk" FOREIGN KEY ("transaction_id") REFERENCES "dev-reports"."transactions"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "dev-reports"."transaction_fuel_matches" ADD CONSTRAINT "transaction_fuel_matches_fuel_log_id_fuel_logs_id_fk" FOREIGN KEY ("fuel_log_id") REFERENCES "dev-reports"."fuel_logs"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "dev-reports"."transactions" ADD CONSTRAINT "transactions_driver_id_drivers_id_fk" FOREIGN KEY ("driver_id") REFERENCES "dev-reports"."drivers"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "drivers_name_idx" ON "dev-reports"."drivers" USING btree ("name");--> statement-breakpoint
 CREATE INDEX "drivers_branch_idx" ON "dev-reports"."drivers" USING btree ("branch");--> statement-breakpoint
 CREATE INDEX "drivers_name_branch_idx" ON "dev-reports"."drivers" USING btree ("name","branch");--> statement-breakpoint
