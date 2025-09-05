@@ -1,7 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { FuelCSVRow } from "@/lib/validations/fuel";
-import { processUploadMatching } from "./matching-service";
 
 export interface ProcessedFuelData {
   driversCreated: number;
@@ -177,58 +176,6 @@ export async function processFuelCSVData(
       );
       console.log("-------- FUEL TRANSACTION COMPLETED --------");
     });
-
-    // After successful fuel log processing, trigger matching for affected drivers
-    if (result.transactionsCreated > 0) {
-      try {
-        console.log("🔄 Starting automatic matching for uploaded fuel logs...");
-
-        // Get unique driver IDs from processed fuel logs
-        const uniqueDriverIds = new Set<string>();
-        for (const row of rows) {
-          if (row.driver && row.vehicleId) {
-            // Extract branch from vehicleId and create driver key
-            const branch = row.vehicleId.split("-")[0] || "UNKNOWN";
-            const driverKey = `${row.driver}-${branch}`;
-
-            try {
-              // Find driver by name and branch
-              const driver = await db.query.drivers.findFirst({
-                where: and(
-                  eq(schema.drivers.name, row.driver),
-                  eq(schema.drivers.branch, branch)
-                ),
-              });
-
-              if (driver) {
-                uniqueDriverIds.add(driver.id);
-              }
-            } catch (error) {
-              console.error(`❌ Error finding driver for ${driverKey}:`, error);
-            }
-          }
-        }
-
-        // Process matches for each affected driver
-        for (const driverId of uniqueDriverIds) {
-          try {
-            await processUploadMatching("fuel_log", driverId);
-            console.log(`✅ Completed matching for driver ID: ${driverId}`);
-          } catch (matchError) {
-            console.error(
-              `❌ Matching failed for driver ${driverId}:`,
-              matchError
-            );
-            // Don't fail the entire process if matching fails
-          }
-        }
-
-        console.log("✅ Automatic matching completed");
-      } catch (error) {
-        console.error("❌ Error during automatic matching:", error);
-        // Don't fail the upload if matching fails
-      }
-    }
   } catch (error) {
     console.error("💥 Database transaction failed:", error);
     result.errors.push(
