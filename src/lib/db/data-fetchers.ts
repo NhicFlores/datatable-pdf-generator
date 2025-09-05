@@ -16,6 +16,7 @@ import type {
   FuelSummaryRow,
   DriverLogs,
 } from "../data-model/query-types";
+import { findMatchesForTransactions } from "./services/matching-service";
 
 // Re-export types for convenience
 export type { SelectTransaction, SelectDriver, SelectFuelLog };
@@ -122,34 +123,24 @@ export const getFuelReportDetailFromDB = cache(
       }
 
       // Get transactions using the FK relationship (much faster than string matching)
-      const [transactions, matches] = await Promise.all([
-        db
-          .select()
-          .from(schema.transactions)
-          .where(eq(schema.transactions.driverId, driverId))
-          .orderBy(desc(schema.transactions.transactionDate)),
+      const transactions = await db
+        .select()
+        .from(schema.transactions)
+        .where(eq(schema.transactions.driverId, driverId))
+        .orderBy(desc(schema.transactions.transactionDate));
 
-        // Get active matches for this driver
-        db
-          .select({
-            transactionId: schema.transactionFuelMatches.transactionId,
-            fuelLogId: schema.transactionFuelMatches.fuelLogId,
-            matchType: schema.transactionFuelMatches.matchType,
-            confidence: schema.transactionFuelMatches.confidence,
-            isActive: schema.transactionFuelMatches.isActive,
-          })
-          .from(schema.transactionFuelMatches)
-          .innerJoin(
-            schema.fuelLogs,
-            eq(schema.transactionFuelMatches.fuelLogId, schema.fuelLogs.id)
-          )
-          .where(
-            and(
-              eq(schema.fuelLogs.driverId, driverId),
-              eq(schema.transactionFuelMatches.isActive, true)
-            )
-          ),
-      ]);
+      console.log(
+        `📋 Fetched ${result.fuelLogs.length} fuel logs and ${transactions.length} transactions`
+      );
+
+      // Perform on-demand matching using fresh data
+      console.log("🔍 Running on-demand matching...");
+      const freshMatches = findMatchesForTransactions(
+        transactions,
+        result.fuelLogs
+      );
+
+      console.log(`✅ Found ${freshMatches.length} fresh matches`);
 
       // Build fuel report
       const driverLogs: DriverLogs = {
@@ -158,17 +149,17 @@ export const getFuelReportDetailFromDB = cache(
         fuelLogs: result.fuelLogs,
       };
 
-      // Build matching data sets
+      // Build matching data sets from fresh matches
       const matchedTransactionIds = new Set(
-        matches.map((m) => m.transactionId)
+        freshMatches.map((m) => m.transactionId)
       );
-      const matchedFuelLogIds = new Set(matches.map((m) => m.fuelLogId));
-      const matchSummaries = matches.map((m) => ({
+      const matchedFuelLogIds = new Set(freshMatches.map((m) => m.fuelLogId));
+      const matchSummaries = freshMatches.map((m) => ({
         transactionId: m.transactionId,
         fuelLogId: m.fuelLogId,
         matchType: m.matchType,
-        confidence: parseFloat(m.confidence),
-        isActive: m.isActive,
+        confidence: m.confidence,
+        isActive: true, // Fresh matches are always active
       }));
 
       // Build driver transactions
@@ -182,7 +173,7 @@ export const getFuelReportDetailFromDB = cache(
       };
 
       console.log(
-        `✅ Fetched complete data: ${result.fuelLogs.length} fuel logs, ${transactions.length} transactions, ${matches.length} matches`
+        `✅ Fetched complete data: ${result.fuelLogs.length} fuel logs, ${transactions.length} transactions, ${freshMatches.length} fresh matches`
       );
 
       return { driverLogs, driverTransactions };
