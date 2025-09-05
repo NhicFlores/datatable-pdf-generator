@@ -5,7 +5,7 @@ import { createFuelLogColumns } from "@/components/tables/fuel-log-columns";
 import { FilterTabs } from "@/components/filter-tabs";
 import {
   updateFuelLogFieldAction,
-  addTransactionToFuelReportAction,
+  addTransactionToDriverLogsAction,
 } from "@/lib/actions/fuel-actions";
 import React, { useMemo, useState, useCallback, useTransition } from "react";
 import type {
@@ -13,17 +13,17 @@ import type {
   SelectFuelLog,
 } from "@/lib/data-model/schema-types";
 import type {
-  FuelReport,
   DriverTransactions,
+  DriverLogs,
 } from "@/lib/data-model/query-types";
 
 interface FuelReportDetailProps {
-  fuelReport: FuelReport;
+  driverLogs: DriverLogs;
   driverTransactions: DriverTransactions | null;
 }
 
 export function FuelReportDetail({
-  fuelReport,
+  driverLogs,
   driverTransactions,
 }: FuelReportDetailProps) {
   const [, startTransition] = useTransition();
@@ -51,26 +51,26 @@ export function FuelReportDetail({
   );
 
   // Server Action wrapper for adding transactions to fuel report
-  const handleAddTransactionToFuelReport = useCallback(
+  const handleAddTransactionToDriverLogs = useCallback(
     (transaction: SelectTransaction) => {
-      if (!fuelReport) return;
+      if (!driverLogs) return;
 
       startTransition(async () => {
         // Directly pass the modern SelectTransaction to the Server Action
-        const result = await addTransactionToFuelReportAction(
-          fuelReport.id,
+        const result = await addTransactionToDriverLogsAction(
+          driverLogs.driverId,
           transaction
         );
         if (!result.success) {
           console.error(
-            "Failed to add transaction to fuel report:",
+            "Failed to add transaction to fuel logs:",
             result.error
           );
           // TODO: Add proper error handling/toast notification
         }
       });
     },
-    [fuelReport]
+    [driverLogs]
   );
 
   // Filter states for each table
@@ -145,35 +145,35 @@ export function FuelReportDetail({
 
   // Filtered data for fuel transactions
   const filteredFuelLogs = useMemo(() => {
-    if (!fuelReport) return [];
+    if (!driverLogs) return [];
 
-    const allTransactions = fuelReport.fuelLogs;
+    const allFuelLogs = driverLogs.fuelLogs;
 
     switch (transactionFilter) {
       case "matched":
-        return allTransactions.filter(
+        return allFuelLogs.filter(
           (t) => matchingFuelLogIds.has(t.id) // Use database ID instead of composite key
         );
       case "unmatched":
-        return allTransactions.filter(
+        return allFuelLogs.filter(
           (t) => !matchingFuelLogIds.has(t.id) // Use database ID instead of composite key
         );
       case "all":
       default:
-        return allTransactions;
+        return allFuelLogs;
     }
-  }, [fuelReport, matchingFuelLogIds, transactionFilter]);
+  }, [driverLogs, matchingFuelLogIds, transactionFilter]);
 
-  const fuelStatementColumns = useMemo(
+  const transactionColumns = useMemo(
     () =>
       createTransactionColumns(
         matchingTransactionIds,
-        handleAddTransactionToFuelReport,
+        handleAddTransactionToDriverLogs,
         handleRemoveTransaction
       ),
     [
       matchingTransactionIds,
-      handleAddTransactionToFuelReport,
+      handleAddTransactionToDriverLogs,
       handleRemoveTransaction,
     ]
   );
@@ -188,7 +188,7 @@ export function FuelReportDetail({
     <main className="container mx-auto py-10 space-y-8">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {fuelReport.name} Fuel Report Analysis
+          {driverLogs.driverName} Fuel Report Analysis
         </h1>
         <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
           <div className="flex items-center space-x-2">
@@ -250,7 +250,7 @@ export function FuelReportDetail({
               )}
             </div>
             <DataTable
-              columns={fuelStatementColumns}
+              columns={transactionColumns}
               data={filteredStatementTransactions}
             />
           </div>
@@ -269,19 +269,19 @@ export function FuelReportDetail({
             All Fuel Transactions (Fuel Report)
           </h2>
         </div>
-        {fuelReport ? (
+        {driverLogs ? (
           <div className="space-y-4">
             <FilterTabs
               activeFilter={transactionFilter}
               onFilterChange={setTransactionFilter}
-              totalCount={fuelReport.fuelLogs.length}
+              totalCount={driverLogs.fuelLogs.length}
               matchedCount={
-                fuelReport.fuelLogs.filter(
+                driverLogs.fuelLogs.filter(
                   (t) => matchingFuelLogIds.has(t.id) // Use database ID
                 ).length
               }
               unmatchedCount={
-                fuelReport.fuelLogs.filter(
+                driverLogs.fuelLogs.filter(
                   (t) => !matchingFuelLogIds.has(t.id) // Use database ID
                 ).length
               }

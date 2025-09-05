@@ -11,17 +11,16 @@ export default async function FuelReportDetailPage({ params }: PageProps) {
   const { id } = await params;
 
   // Single consolidated data fetch instead of parallel separate queries
-  const { fuelReport, driverTransactions } = await getFuelReportDetailFromDB(
-    id
-  );
+  const { driverLogs, driverTransactions } =
+    await getFuelReportDetailFromDB(id);
 
-  if (!fuelReport) {
+  if (!driverLogs) {
     notFound();
   }
 
   return (
     <FuelReportDetail
-      fuelReport={fuelReport}
+      driverLogs={driverLogs}
       driverTransactions={driverTransactions}
     />
   );

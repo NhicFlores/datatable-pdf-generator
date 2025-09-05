@@ -1,19 +1,25 @@
 import {
-  BaseFuelLog,
   SelectDriver,
+  SelectFuelLog,
   SelectTransaction,
 } from "./schema-types";
 
 // TODO: REMOVE USAGE OF BaseFuelLog 
 export type FuelReport = Omit<SelectDriver, "createdAt" | "updatedAt"> & {
   vehicleIds: string[];
-  fuelLogs: BaseFuelLog[];
+  fuelLogs: SelectFuelLog[];
 };
 
 // Summary type for list page performance optimization
 export type FuelReportSummary = SelectDriver & {
   vehicleIds: string[];
 };
+
+export type DriverLogs = {
+  driverId: string;
+  driverName: string;
+  fuelLogs: SelectFuelLog[];
+}
 
 // Type for driver-specific transaction queries with matching data
 export type DriverTransactions = {

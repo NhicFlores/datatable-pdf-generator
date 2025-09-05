@@ -64,10 +64,7 @@ export async function updateFuelLogFieldAction(
 
     return { success: true, transaction: updatedFuelLog };
   } catch (error) {
-    console.error(
-      `❌ Failed to update fuel transaction ${fuelLogId}:`,
-      error
-    );
+    console.error(`❌ Failed to update fuel transaction ${fuelLogId}:`, error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred",
@@ -80,7 +77,7 @@ export async function updateFuelLogFieldAction(
  * Replaces the addTransactionToFuelReport function from context
  * Updated to use modern SelectTransaction type instead of deprecated Transaction
  */
-export async function addTransactionToFuelReportAction(
+export async function addTransactionToDriverLogsAction(
   driverId: string,
   expenseTransaction: SelectTransaction
 ) {

@@ -14,6 +14,7 @@ import type {
   DriverTransactions,
   FuelSummaryTableData,
   FuelSummaryRow,
+  DriverLogs,
 } from "../data-model/query-types";
 
 // Re-export types for convenience
@@ -97,7 +98,7 @@ export const getFuelReportDetailFromDB = cache(
   async (
     driverId: string
   ): Promise<{
-    fuelReport: FuelReport | null;
+    driverLogs: DriverLogs | null;
     driverTransactions: DriverTransactions | null;
   }> => {
     try {
@@ -117,7 +118,7 @@ export const getFuelReportDetailFromDB = cache(
 
       if (!result) {
         console.log(`❌ Driver not found with ID: ${driverId}`);
-        return { fuelReport: null, driverTransactions: null };
+        return { driverLogs: null, driverTransactions: null };
       }
 
       // Get transactions using the FK relationship (much faster than string matching)
@@ -150,17 +151,10 @@ export const getFuelReportDetailFromDB = cache(
           ),
       ]);
 
-      // Collect unique vehicle IDs from fuel logs
-      const vehicleIds = [
-        ...new Set(result.fuelLogs.map((log) => log.vehicleId)),
-      ];
-
       // Build fuel report
-      const fuelReport: FuelReport = {
-        id: result.id,
-        name: result.name,
-        branch: result.branch,
-        vehicleIds,
+      const driverLogs: DriverLogs = {
+        driverId: result.id,
+        driverName: result.name,
         fuelLogs: result.fuelLogs,
       };
 
@@ -191,13 +185,13 @@ export const getFuelReportDetailFromDB = cache(
         `✅ Fetched complete data: ${result.fuelLogs.length} fuel logs, ${transactions.length} transactions, ${matches.length} matches`
       );
 
-      return { fuelReport, driverTransactions };
+      return { driverLogs, driverTransactions };
     } catch (error) {
       console.error(
         `❌ Failed to fetch fuel report detail for driver ${driverId}:`,
         error
       );
-      return { fuelReport: null, driverTransactions: null };
+      return { driverLogs: null, driverTransactions: null };
     }
   }
 );
@@ -214,7 +208,7 @@ export const getFilteredFuelReportDetailFromDB = cache(
       transactionFilter?: "all" | "matched" | "unmatched";
     }
   ): Promise<{
-    fuelReport: FuelReport | null;
+    driverLogs: DriverLogs | null;
     driverTransactions: DriverTransactions | null;
     stats: {
       totalFuelLogs: number;
@@ -227,12 +221,12 @@ export const getFilteredFuelReportDetailFromDB = cache(
       console.log(`🔍 Fetching filtered data for driver ${driverId}:`, filters);
 
       // Get base data first
-      const { fuelReport, driverTransactions } =
+      const { driverLogs, driverTransactions } =
         await getFuelReportDetailFromDB(driverId);
 
-      if (!fuelReport || !driverTransactions) {
+      if (!driverLogs || !driverTransactions) {
         return {
-          fuelReport: null,
+          driverLogs: null,
           driverTransactions: null,
           stats: {
             totalFuelLogs: 0,
@@ -245,7 +239,7 @@ export const getFilteredFuelReportDetailFromDB = cache(
 
       // Calculate stats before filtering
       const stats = {
-        totalFuelLogs: fuelReport.fuelLogs.length,
+        totalFuelLogs: driverLogs.fuelLogs.length,
         matchedFuelLogs: driverTransactions.matchedFuelLogIds.size,
         totalTransactions: driverTransactions.transactions.length,
         matchedTransactions: driverTransactions.matchedTransactionIds.size,
@@ -257,12 +251,12 @@ export const getFilteredFuelReportDetailFromDB = cache(
         (filters.statementFilter === "all" &&
           filters.transactionFilter === "all")
       ) {
-        return { fuelReport, driverTransactions, stats };
+        return { driverLogs, driverTransactions, stats };
       }
 
       // Apply server-side filtering
       let filteredTransactions = driverTransactions.transactions;
-      let filteredFuelLogs = fuelReport.fuelLogs;
+      let filteredFuelLogs = driverLogs.fuelLogs;
 
       // Filter transactions based on match status
       if (filters.statementFilter === "matched") {
@@ -277,18 +271,18 @@ export const getFilteredFuelReportDetailFromDB = cache(
 
       // Filter fuel logs based on match status
       if (filters.transactionFilter === "matched") {
-        filteredFuelLogs = fuelReport.fuelLogs.filter((f) =>
+        filteredFuelLogs = driverLogs.fuelLogs.filter((f) =>
           driverTransactions.matchedFuelLogIds.has(f.id)
         );
       } else if (filters.transactionFilter === "unmatched") {
-        filteredFuelLogs = fuelReport.fuelLogs.filter(
+        filteredFuelLogs = driverLogs.fuelLogs.filter(
           (f) => !driverTransactions.matchedFuelLogIds.has(f.id)
         );
       }
 
       // Create filtered versions
-      const filteredFuelReport: FuelReport = {
-        ...fuelReport,
+      const filteredDriverLogs: DriverLogs = {
+        ...driverLogs,
         fuelLogs: filteredFuelLogs,
       };
 
@@ -298,11 +292,11 @@ export const getFilteredFuelReportDetailFromDB = cache(
       };
 
       console.log(
-        `✅ Applied filters - Transactions: ${filteredTransactions.length}/${driverTransactions.transactions.length}, Fuel Logs: ${filteredFuelLogs.length}/${fuelReport.fuelLogs.length}`
+        `✅ Applied filters - Transactions: ${filteredTransactions.length}/${driverTransactions.transactions.length}, Fuel Logs: ${filteredFuelLogs.length}/${driverLogs.fuelLogs.length}`
       );
 
       return {
-        fuelReport: filteredFuelReport,
+        driverLogs: filteredDriverLogs,
         driverTransactions: filteredDriverTransactions,
         stats,
       };
@@ -312,7 +306,7 @@ export const getFilteredFuelReportDetailFromDB = cache(
         error
       );
       return {
-        fuelReport: null,
+        driverLogs: null,
         driverTransactions: null,
         stats: {
           totalFuelLogs: 0,
@@ -346,19 +340,7 @@ export const getFuelReportByIdFromDB = cache(
           .limit(1),
 
         db
-          .select({
-            id: schema.fuelLogs.id,
-            vehicleId: schema.fuelLogs.vehicleId,
-            driverId: schema.fuelLogs.driverId,
-            date: schema.fuelLogs.date,
-            invoiceNumber: schema.fuelLogs.invoiceNumber,
-            gallons: schema.fuelLogs.gallons,
-            cost: schema.fuelLogs.cost,
-            sellerState: schema.fuelLogs.sellerState,
-            sellerName: schema.fuelLogs.sellerName,
-            odometer: schema.fuelLogs.odometer,
-            receipt: schema.fuelLogs.receipt,
-          })
+          .select()
           .from(schema.fuelLogs)
           .where(eq(schema.fuelLogs.driverId, driverId))
           .orderBy(desc(schema.fuelLogs.date)),

@@ -1,5 +1,5 @@
 "use client";
-import { BaseFuelLog } from "@/lib/data-model/schema-types";
+import { SelectFuelLog } from "@/lib/data-model/schema-types";
 import { formatCurrency, formatDateStringToLocal } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
@@ -10,11 +10,11 @@ export const createFuelLogColumns = (
   matchingIds: Set<string>,
   onUpdateField?: (
     fuelLogId: string, // Updated to reflect actual database UUID
-    field: keyof BaseFuelLog,
+    field: keyof SelectFuelLog,
     value: string | number
   ) => void,
   editable: boolean = false
-): ColumnDef<BaseFuelLog>[] => [
+): ColumnDef<SelectFuelLog>[] => [
   {
     id: "vehicleId",
     accessorKey: "vehicleId",
