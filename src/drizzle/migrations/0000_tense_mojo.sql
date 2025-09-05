@@ -24,6 +24,29 @@ CREATE TABLE "dev-reports"."fuel_logs" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "dev-reports"."quarter_settings" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"year" integer NOT NULL,
+	"quarter_number" integer NOT NULL,
+	"quarter_name" varchar(100) NOT NULL,
+	"start_date" timestamp NOT NULL,
+	"end_date" timestamp NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"created_by" uuid NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "quarter_settings_year_quarter_number_unique" UNIQUE("year","quarter_number")
+);
+--> statement-breakpoint
+CREATE TABLE "dev-reports"."sessions" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
+	"session_token" varchar(255) NOT NULL,
+	"expires" timestamp NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "sessions_session_token_unique" UNIQUE("session_token")
+);
+--> statement-breakpoint
 CREATE TABLE "dev-reports"."transaction_fuel_matches" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"transaction_id" uuid NOT NULL,
@@ -66,7 +89,25 @@ CREATE TABLE "dev-reports"."transactions" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "dev-reports"."users" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"email" varchar(255) NOT NULL,
+	"name" varchar(255) NOT NULL,
+	"role" varchar(50) DEFAULT 'user' NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"hashed_password" varchar(255) NOT NULL,
+	"timezone" varchar(50) DEFAULT 'America/New_York',
+	"reset_token" varchar(255),
+	"reset_token_expiry" timestamp,
+	"last_login_at" timestamp,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "users_email_unique" UNIQUE("email")
+);
+--> statement-breakpoint
 ALTER TABLE "dev-reports"."fuel_logs" ADD CONSTRAINT "fuel_logs_driver_id_drivers_id_fk" FOREIGN KEY ("driver_id") REFERENCES "dev-reports"."drivers"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "dev-reports"."quarter_settings" ADD CONSTRAINT "quarter_settings_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "dev-reports"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "dev-reports"."sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "dev-reports"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "dev-reports"."transaction_fuel_matches" ADD CONSTRAINT "transaction_fuel_matches_transaction_id_transactions_id_fk" FOREIGN KEY ("transaction_id") REFERENCES "dev-reports"."transactions"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "dev-reports"."transaction_fuel_matches" ADD CONSTRAINT "transaction_fuel_matches_fuel_log_id_fuel_logs_id_fk" FOREIGN KEY ("fuel_log_id") REFERENCES "dev-reports"."fuel_logs"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "dev-reports"."transactions" ADD CONSTRAINT "transactions_driver_id_drivers_id_fk" FOREIGN KEY ("driver_id") REFERENCES "dev-reports"."drivers"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -78,6 +119,10 @@ CREATE INDEX "fuel_logs_driver_id_idx" ON "dev-reports"."fuel_logs" USING btree 
 CREATE INDEX "fuel_logs_date_idx" ON "dev-reports"."fuel_logs" USING btree ("date");--> statement-breakpoint
 CREATE INDEX "fuel_logs_seller_state_idx" ON "dev-reports"."fuel_logs" USING btree ("seller_state");--> statement-breakpoint
 CREATE INDEX "fuel_logs_vehicle_driver_idx" ON "dev-reports"."fuel_logs" USING btree ("vehicle_id","driver_id");--> statement-breakpoint
+CREATE INDEX "quarter_settings_year_idx" ON "dev-reports"."quarter_settings" USING btree ("year");--> statement-breakpoint
+CREATE INDEX "quarter_settings_active_idx" ON "dev-reports"."quarter_settings" USING btree ("is_active");--> statement-breakpoint
+CREATE INDEX "sessions_user_id_idx" ON "dev-reports"."sessions" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "sessions_token_idx" ON "dev-reports"."sessions" USING btree ("session_token");--> statement-breakpoint
 CREATE INDEX "matches_transaction_idx" ON "dev-reports"."transaction_fuel_matches" USING btree ("transaction_id");--> statement-breakpoint
 CREATE INDEX "matches_fuel_log_idx" ON "dev-reports"."transaction_fuel_matches" USING btree ("fuel_log_id");--> statement-breakpoint
 CREATE INDEX "matches_active_idx" ON "dev-reports"."transaction_fuel_matches" USING btree ("is_active");--> statement-breakpoint
@@ -88,4 +133,7 @@ CREATE INDEX "transactions_cardholder_name_idx" ON "dev-reports"."transactions" 
 CREATE INDEX "transactions_transaction_date_idx" ON "dev-reports"."transactions" USING btree ("transaction_date");--> statement-breakpoint
 CREATE INDEX "transactions_gl_code_idx" ON "dev-reports"."transactions" USING btree ("gl_code");--> statement-breakpoint
 CREATE INDEX "transactions_supplier_state_idx" ON "dev-reports"."transactions" USING btree ("supplier_state");--> statement-breakpoint
-CREATE INDEX "transactions_workflow_status_idx" ON "dev-reports"."transactions" USING btree ("workflow_status");
+CREATE INDEX "transactions_workflow_status_idx" ON "dev-reports"."transactions" USING btree ("workflow_status");--> statement-breakpoint
+CREATE INDEX "users_email_idx" ON "dev-reports"."users" USING btree ("email");--> statement-breakpoint
+CREATE INDEX "users_role_idx" ON "dev-reports"."users" USING btree ("role");--> statement-breakpoint
+CREATE INDEX "users_active_idx" ON "dev-reports"."users" USING btree ("is_active");
