@@ -1,30 +1,46 @@
-"use client";
-import { FuelReportRoute } from "@/lib/routes";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
-export default function Home() {
+export default async function Home() {
+  // Check if user is already authenticated
+  const session = await auth();
+
+  if (session?.user) {
+    // Redirect authenticated users to fuel reports
+    redirect("/fuel-report");
+  }
+
   return (
-    <main className="container mx-auto py-10">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">IFTA Reporting</h1>
-        </div>
-
-        {/* Navigation Cards */}
-        <div className="flex justify-center">
-          <Link
-            href={FuelReportRoute.summaryPage}
-            className="block p-6 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-lg transition-all"
-          >
-            <h2 className="text-xl font-semibold mb-2">Fuel Reports</h2>
-            <p className="text-gray-600">
-              View, manage, and analyze fuel transaction data. Upload CSV files
-              and generate reports.
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <main className="container mx-auto px-4 py-16">
+        <div className="max-w-2xl mx-auto text-center space-y-8">
+          {/* Header */}
+          <div>
+            <h1 className="text-5xl font-bold text-gray-900 mb-4">
+              Fuel Report Management
+            </h1>
+            <p className="text-xl text-gray-600">
+              Streamline your IFTA reporting with automated fuel transaction
+              matching
             </p>
-          </Link>
+          </div>
+
+          {/* Temporary User Creation Form */}
+          {/* <CreateUserForm /> */}
+
+          {/* Call to Action */}
+          <div className="pt-8">
+            <Button asChild size="lg">
+              <Link href="/auth/signin">Sign In to Get Started</Link>
+            </Button>
+            <p className="text-sm text-gray-500 mt-4">
+              Contact your administrator for account access
+            </p>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

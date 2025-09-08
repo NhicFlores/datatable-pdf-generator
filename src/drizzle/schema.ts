@@ -8,6 +8,7 @@ import {
   numeric,
   unique,
   boolean,
+  integer,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -39,7 +40,9 @@ export const transactions = dbSchema.table(
   "transactions",
   {
     id: uuid().defaultRandom().primaryKey().notNull(),
-    driverId: uuid("driver_id").notNull().references(() => drivers.id),
+    driverId: uuid("driver_id")
+      .notNull()
+      .references(() => drivers.id),
     // Core transaction fields
     transactionReference: varchar("transaction_reference", {
       length: 255,
@@ -210,6 +213,118 @@ export const transactionFuelMatchesRelations = relations(
     fuelLog: one(fuelLogs, {
       fields: [transactionFuelMatches.fuelLogId],
       references: [fuelLogs.id],
+    }),
+  })
+);
+
+// =============================================================================
+// AUTHENTICATION TABLES (Auth.js Integration)
+// =============================================================================
+
+// Users table - for authentication and authorization
+export const users = dbSchema.table(
+  "users",
+  {
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    email: varchar("email", { length: 255 }).notNull().unique(),
+    name: varchar("name", { length: 255 }).notNull(),
+    role: varchar("role", { length: 50 }).notNull().default("user"), // 'admin' or 'user'
+    isActive: boolean("is_active").notNull().default(true),
+
+    // Required password for credentials-only login
+    hashedPassword: varchar("hashed_password", { length: 255 }).notNull(),
+
+    // User preferences
+    timezone: varchar("timezone", { length: 50 }).default("America/New_York"),
+
+    // Password reset functionality
+    resetToken: varchar("reset_token", { length: 255 }),
+    resetTokenExpiry: timestamp("reset_token_expiry"),
+
+    // Last login tracking
+    lastLoginAt: timestamp("last_login_at"),
+
+    // Timestamps
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("users_email_idx").on(table.email),
+    index("users_role_idx").on(table.role),
+    index("users_active_idx").on(table.isActive),
+  ]
+);
+
+// Sessions table - for persistent login sessions (simplified for credentials-only)
+export const sessions = dbSchema.table(
+  "sessions",
+  {
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    sessionToken: varchar("session_token", { length: 255 }).notNull().unique(),
+    expires: timestamp("expires").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("sessions_user_id_idx").on(table.userId),
+    index("sessions_token_idx").on(table.sessionToken),
+  ]
+);
+
+// Quarter settings table - for admin-managed quarters (future feature)
+export const quarterSettings = dbSchema.table(
+  "quarter_settings",
+  {
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    year: integer("year").notNull(),
+    quarterNumber: integer("quarter_number").notNull(), // 1, 2, 3, 4
+    quarterName: varchar("quarter_name", { length: 100 }).notNull(), // "Q1 2024" or custom name
+    startDate: timestamp("start_date").notNull(),
+    endDate: timestamp("end_date").notNull(),
+    isActive: boolean("is_active").notNull().default(true),
+
+    // Audit trail
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    // Ensure unique quarters per year
+    unique().on(table.year, table.quarterNumber),
+    index("quarter_settings_year_idx").on(table.year),
+    index("quarter_settings_active_idx").on(table.isActive),
+  ]
+);
+
+// =============================================================================
+// AUTH TABLE RELATIONS
+// =============================================================================
+
+// User relations
+export const usersRelations = relations(users, ({ many }) => ({
+  sessions: many(sessions),
+  quarterSettings: many(quarterSettings),
+}));
+
+// Session relations
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  user: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));
+
+// Quarter settings relations
+export const quarterSettingsRelations = relations(
+  quarterSettings,
+  ({ one }) => ({
+    createdBy: one(users, {
+      fields: [quarterSettings.createdBy],
+      references: [users.id],
     }),
   })
 );
