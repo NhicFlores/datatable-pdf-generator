@@ -228,7 +228,8 @@ export const users = dbSchema.table(
     id: uuid().defaultRandom().primaryKey().notNull(),
     email: varchar("email", { length: 255 }).notNull().unique(),
     name: varchar("name", { length: 255 }).notNull(),
-    role: varchar("role", { length: 50 }).notNull().default("user"), // 'admin' or 'user'
+    role: varchar("role", { length: 50 }).notNull().default("USER"), // 'admin' or 'user'
+    branch: varchar("branch", { length: 100 }).notNull().default("MANHATTAN"),
     isActive: boolean("is_active").notNull().default(true),
 
     // Required password for credentials-only login

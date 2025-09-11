@@ -2,15 +2,22 @@ import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import type { Session } from "next-auth";
+import { UserRoles } from "@/lib/data-model/enum-types";
+import {
+  AdminRoute,
+  AuthRoute,
+  FuelReportRoute,
+  HomeRoute,
+} from "@/lib/routes";
 
 // Define protected routes
 const protectedRoutes = [
-  "/fuel-report",
+  FuelReportRoute.page,
   "/api/fuel-transactions",
   "/api/transactions",
 ];
 
-const adminOnlyRoutes = ["/admin"];
+const adminOnlyRoutes = [AdminRoute.page];
 
 export default auth((req: NextRequest & { auth: Session | null }) => {
   const { pathname } = req.nextUrl;
@@ -27,14 +34,14 @@ export default auth((req: NextRequest & { auth: Session | null }) => {
   if (isProtectedRoute || isAdminRoute) {
     // Redirect to signin if not authenticated
     if (!req.auth?.user) {
-      const signInUrl = new URL("/auth/signin", req.url);
+      const signInUrl = new URL(AuthRoute.signIn, req.url);
       signInUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(signInUrl);
     }
 
     // Check admin access for admin routes
-    if (isAdminRoute && req.auth.user.role !== "admin") {
-      return NextResponse.redirect(new URL("/", req.url)); // Redirect to main page
+    if (isAdminRoute && req.auth.user.role !== UserRoles.ADMIN) {
+      return NextResponse.redirect(new URL(HomeRoute.page, req.url)); // Redirect to main page
     }
   }
 

@@ -94,6 +94,7 @@ CREATE TABLE "dev-reports"."users" (
 	"email" varchar(255) NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"role" varchar(50) DEFAULT 'user' NOT NULL,
+	"branch" varchar(100) DEFAULT 'manhattan' NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"hashed_password" varchar(255) NOT NULL,
 	"timezone" varchar(50) DEFAULT 'America/New_York',

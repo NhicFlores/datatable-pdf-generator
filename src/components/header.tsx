@@ -3,6 +3,8 @@
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { UserRoles } from "@/lib/data-model/enum-types";
+import { AdminRoute, AuthRoute, FuelReportRoute, FuelReportSummaryRoute } from "@/lib/routes";
 
 export default function Header() {
   const { data: session, status } = useSession();
@@ -27,7 +29,7 @@ export default function Header() {
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold">Fuel Report Management</h1>
             <Button asChild>
-              <Link href="/auth/signin">Sign In</Link>
+              <Link href={AuthRoute.signIn}>Sign In</Link>
             </Button>
           </div>
         </div>
@@ -41,21 +43,27 @@ export default function Header() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <h1 className="text-xl font-bold">
-              <Link href="/fuel-report" className="hover:text-blue-600">
+              <Link href={FuelReportRoute.page} className="hover:text-blue-600">
                 Fuel Report Management
               </Link>
             </h1>
 
             <nav className="flex items-center space-x-4">
               <Link
-                href="/fuel-report"
+                href={FuelReportRoute.page}
                 className="text-sm text-gray-600 hover:text-gray-900"
               >
                 Reports
               </Link>
-              {session.user.role === "admin" && (
+              <Link
+                href={FuelReportSummaryRoute.page}
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Quarterly Summary
+              </Link>
+              {session.user.role === UserRoles.ADMIN && (
                 <Link
-                  href="/admin"
+                  href={AdminRoute.page}
                   className="text-sm text-gray-600 hover:text-gray-900"
                 >
                   Admin
@@ -67,7 +75,7 @@ export default function Header() {
           <div className="flex items-center space-x-4">
             <div className="text-sm text-gray-600">
               <span className="font-medium">{session.user.name}</span>
-              {session.user.role === "admin" && (
+              {session.user.role === UserRoles.ADMIN && (
                 <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
                   Admin
                 </span>
@@ -77,7 +85,7 @@ export default function Header() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+              onClick={() => signOut({ callbackUrl: AuthRoute.signIn })}
             >
               Sign Out
             </Button>

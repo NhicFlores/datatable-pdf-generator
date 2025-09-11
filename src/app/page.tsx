@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { AuthRoute, FuelReportRoute } from "@/lib/routes";
 
 export default async function Home() {
   // Check if user is already authenticated
@@ -9,7 +10,7 @@ export default async function Home() {
 
   if (session?.user) {
     // Redirect authenticated users to fuel reports
-    redirect("/fuel-report");
+    redirect(FuelReportRoute.page);
   }
 
   return (
@@ -33,7 +34,7 @@ export default async function Home() {
           {/* Call to Action */}
           <div className="pt-8">
             <Button asChild size="lg">
-              <Link href="/auth/signin">Sign In to Get Started</Link>
+              <Link href={AuthRoute.signIn}>Sign In to Get Started</Link>
             </Button>
             <p className="text-sm text-gray-500 mt-4">
               Contact your administrator for account access

@@ -23,47 +23,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  createUserSchema,
-  type CreateUserFormData,
-} from "@/lib/validations/user";
+import { editUserSchema, type EditUserFormData } from "@/lib/validations/user";
 import {
   getUserRoleOptions,
   getUserBranchOptions,
-  UserRoles,
-  UserBranches,
 } from "@/lib/data-model/enum-types";
-import { createUserAction } from "@/lib/actions/create-user-action";
+import { editUserAction } from "@/lib/actions/edit-user-action";
+import { type UserListItem } from "@/lib/data-model/schema-types";
 
-interface CreateUserFormProps {
+interface EditUserFormProps {
+  existingUser: UserListItem;
   onSuccess?: () => void;
 }
 
-export function CreateUserForm({ onSuccess }: CreateUserFormProps) {
+export function EditUserForm({ existingUser, onSuccess }: EditUserFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const form = useForm<CreateUserFormData>({
-    resolver: zodResolver(createUserSchema),
+  const form = useForm<EditUserFormData>({
+    resolver: zodResolver(editUserSchema),
     defaultValues: {
-      email: "",
-      name: "",
+      email: existingUser.email,
+      name: existingUser.name,
       password: "",
-      role: UserRoles.USER,
-      branch: UserBranches.MANHATTAN,
+      role: existingUser.role as "USER" | "ADMIN",
+      branch: existingUser.branch as "MANHATTAN" | "DENVER" | "DES_MOINES",
     },
   });
 
-  const onSubmit = async (data: CreateUserFormData) => {
+  const onSubmit = async (data: EditUserFormData) => {
     setIsLoading(true);
     setMessage("");
 
     try {
-      const result = await createUserAction(data);
+      const result = await editUserAction(existingUser.id, data);
 
       if (result.success) {
-        setMessage(`✅ User created successfully: ${result.user?.email}`);
-        form.reset(); // Reset form on success
+        setMessage(`✅ User updated successfully: ${result.user?.email}`);
 
         // Call onSuccess callback if provided
         if (onSuccess) {
@@ -83,9 +79,9 @@ export function CreateUserForm({ onSuccess }: CreateUserFormProps) {
 
   return (
     <div className="bg-white m-6 p-6 rounded-lg shadow-sm border max-w-md mx-auto">
-      <h3 className="font-semibold text-lg mb-4">Create New User</h3>
+      <h3 className="font-semibold text-lg mb-4">Edit User</h3>
       <p className="text-sm text-muted-foreground mb-6">
-        Add a new user to the system with their basic information and role.
+        Update the user&apos;s information and role.
       </p>
 
       <Form {...form}>
@@ -135,17 +131,19 @@ export function CreateUserForm({ onSuccess }: CreateUserFormProps) {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel>
+                  Password
+                </FormLabel>
                 <FormControl>
                   <Input
                     type="password"
-                    placeholder="Enter password"
+                    placeholder="Enter new password"
                     disabled={isLoading}
                     {...field}
                   />
                 </FormControl>
                 <FormDescription>
-                  Password must be at least 6 characters long
+                  Only enter a password if you want to change it
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -221,7 +219,7 @@ export function CreateUserForm({ onSuccess }: CreateUserFormProps) {
           {/* Submit Button */}
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isLoading ? "Creating User..." : "Create User"}
+            {isLoading ? "Updating User..." : "Update User"}
           </Button>
         </form>
       </Form>

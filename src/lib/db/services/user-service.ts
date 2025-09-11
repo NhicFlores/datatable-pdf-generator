@@ -2,18 +2,26 @@ import bcrypt from "bcryptjs";
 import { db } from "@/drizzle";
 import { users } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
+import {
+  type UserRole,
+  type UserBranch,
+  UserRoles,
+} from "@/lib/data-model/enum-types";
+import { type GetAllUsersResult } from "@/lib/data-model/query-types";
 
 export interface CreateUserData {
   email: string;
   name: string;
   password: string;
-  role?: "user" | "admin";
+  role?: UserRole;
+  branch?: UserBranch;
   timezone?: string;
 }
 
 export interface UpdateUserData {
   name?: string;
-  role?: "user" | "admin";
+  role?: UserRole;
+  branch?: UserBranch;
   isActive?: boolean;
   timezone?: string;
 }
@@ -32,7 +40,7 @@ export async function createUser(userData: CreateUserData) {
         email: userData.email.toLowerCase(),
         name: userData.name,
         hashedPassword,
-        role: userData.role || "user",
+        role: userData.role || UserRoles.USER,
         timezone: userData.timezone || "America/New_York",
       })
       .returning({
@@ -145,7 +153,7 @@ export async function changeUserPassword(userId: string, newPassword: string) {
 }
 
 // Get all users (admin function)
-export async function getAllUsers() {
+export async function getAllUsers(): Promise<GetAllUsersResult> {
   try {
     const allUsers = await db
       .select({
@@ -153,6 +161,7 @@ export async function getAllUsers() {
         email: users.email,
         name: users.name,
         role: users.role,
+        branch: users.branch,
         isActive: users.isActive,
         timezone: users.timezone,
         lastLoginAt: users.lastLoginAt,

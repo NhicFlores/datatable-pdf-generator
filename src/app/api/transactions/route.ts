@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { processTransactionCSVData } from "@/lib/db/services/transaction-service";
 import { TransactionUploadRequestSchema } from "@/lib/validations/transaction";
+import { FuelReportRoute } from "@/lib/routes";
 
 /**
  * Modern API route with Zod validation and better error handling
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Revalidate the fuel reports page to update driver count
-    revalidatePath("/fuel-report");
+    revalidatePath(FuelReportRoute.page);
 
     // Determine response status based on results
     const hasErrors =

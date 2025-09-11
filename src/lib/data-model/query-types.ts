@@ -2,9 +2,12 @@ import {
   SelectDriver,
   SelectFuelLog,
   SelectTransaction,
+  UserListItem,
+  UserSummary,
+  CreatedUser,
 } from "./schema-types";
 
-// TODO: REMOVE USAGE OF BaseFuelLog 
+// TODO: REMOVE USAGE OF BaseFuelLog
 export type FuelReport = Omit<SelectDriver, "createdAt" | "updatedAt"> & {
   vehicleIds: string[];
   fuelLogs: SelectFuelLog[];
@@ -19,7 +22,7 @@ export type DriverLogs = {
   driverId: string;
   driverName: string;
   fuelLogs: SelectFuelLog[];
-}
+};
 
 // Type for driver-specific transaction queries with matching data
 export type DriverTransactions = {
@@ -51,3 +54,20 @@ export type FuelSummaryTableData = {
   summaryRows: FuelSummaryRow[];
   uniqueTruckIds: string[];
 };
+
+// Admin dashboard related types
+export type GetAllUsersResult =
+  | { success: true; users: UserListItem[] }
+  | { success: false; error: string };
+
+export type CreateUserResult =
+  | { success: true; user: CreatedUser }
+  | { success: false; error: string };
+
+export type GetUserResult =
+  | { success: true; user: UserSummary }
+  | { success: false; error: string };
+
+export type UpdateUserResult =
+  | { success: true; user: Partial<UserSummary> }
+  | { success: false; error: string };

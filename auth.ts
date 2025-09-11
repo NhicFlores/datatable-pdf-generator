@@ -5,11 +5,14 @@ import { redirect } from "next/navigation";
 import { db } from "@/drizzle";
 import { users } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
+import { UserRoles } from "@/lib/data-model/enum-types";
+import { AuthRoute, HomeRoute } from "@/lib/routes";
 
 // Extend the built-in session types
 declare module "next-auth" {
   interface User {
     role: string;
+    branch: string;
   }
 
   interface Session {
@@ -18,6 +21,7 @@ declare module "next-auth" {
       email: string;
       name: string;
       role: string;
+      branch: string;
     };
   }
 }
@@ -28,8 +32,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
-    signIn: "/auth/signin",
-    error: "/auth/error",
+    signIn: AuthRoute.signIn,
+    // error: AuthRoute.error,
   },
   providers: [
     Credentials({
@@ -82,6 +86,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: user[0].email,
             name: user[0].name,
             role: user[0].role,
+            branch: user[0].branch,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -92,18 +97,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
-      // Add role to JWT token
+      // Add role and branch to JWT token
       if (user) {
         token.role = user.role;
+        token.branch = user.branch;
         token.id = user.id;
       }
       return token;
     },
     async session({ session, token }) {
-      // Add role and id to session from token
+      // Add role, branch and id to session from token
       if (token) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.branch = token.branch as string;
       }
       return session;
     },
@@ -125,7 +132,7 @@ export async function getCurrentUser() {
 export async function requireAuth() {
   const user = await getCurrentUser();
   if (!user) {
-    redirect("/auth/signin");
+    redirect(AuthRoute.signIn);
   }
   return user;
 }
@@ -134,10 +141,10 @@ export async function requireAuth() {
 export async function requireAdmin() {
   const user = await getCurrentUser();
   if (!user) {
-    redirect("/auth/signin");
+    redirect(AuthRoute.signIn);
   }
-  if (user.role !== "admin") {
-    redirect("/"); // Redirect to main page for non-admin users
+  if (user.role !== UserRoles.ADMIN) {
+    redirect(HomeRoute.page); // Redirect to main page for non-admin users
   }
   return user;
 }

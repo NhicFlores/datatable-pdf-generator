@@ -1,5 +1,5 @@
 {
-  "id": "fc19d31a-80a5-45ad-af2a-6e0ccaf0b030",
+  "id": "87ec540c-15c8-493f-9c33-08d0e3139494",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1028,6 +1028,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'user'"
+        },
+        "branch": {
+          "name": "branch",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'manhattan'"
         },
         "is_active": {
           "name": "is_active",

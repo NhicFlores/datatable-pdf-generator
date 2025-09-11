@@ -5,6 +5,7 @@ import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FuelReportRoute } from "@/lib/routes";
 
 function SignInForm() {
   const [email, setEmail] = useState("");
@@ -13,7 +14,7 @@ function SignInForm() {
   const [error, setError] = useState("");
 
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/fuel-report";
+  const callbackUrl = searchParams.get("callbackUrl") || FuelReportRoute.page;
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
