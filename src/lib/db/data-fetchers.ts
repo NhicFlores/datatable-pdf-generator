@@ -1,7 +1,7 @@
 "use server";
 
 import { db, schema } from "@/lib/db";
-import { desc, eq, sql, and } from "drizzle-orm";
+import { desc, eq, sql, and, between } from "drizzle-orm";
 import { cache } from "react";
 import type {
   SelectTransaction,
@@ -17,6 +17,7 @@ import type {
   DriverLogs,
 } from "../data-model/query-types";
 import { findMatchesForTransactions } from "./services/matching-service";
+import { getQuarterDateRange } from "@/lib/utils/quarter-utils";
 
 // Re-export types for convenience
 export type { SelectTransaction, SelectDriver, SelectFuelLog };
@@ -41,11 +42,22 @@ export type {
  * Returns basic driver info + aggregated stats without full transaction data
  */
 export const getFuelReportSummariesFromDB = cache(
-  async (): Promise<FuelReportSummary[]> => {
+  async (quarter?: string): Promise<FuelReportSummary[]> => {
     try {
       console.log("🔍 Fetching fuel report summaries from database...");
 
-      const summaries = await db
+      // Get date range for quarter filtering if provided
+      let dateRange = null;
+      if (quarter) {
+        dateRange = await getQuarterDateRange(quarter);
+        if (dateRange) {
+          console.log(
+            `📅 Filtering by quarter ${quarter}: ${dateRange.startDate.toISOString()} - ${dateRange.endDate.toISOString()}`
+          );
+        }
+      }
+
+      const query = db
         .select({
           id: schema.drivers.id,
           name: schema.drivers.name,
@@ -60,7 +72,16 @@ export const getFuelReportSummariesFromDB = cache(
         .from(schema.drivers)
         .leftJoin(
           schema.fuelLogs,
-          eq(schema.drivers.id, schema.fuelLogs.driverId)
+          dateRange
+            ? and(
+                eq(schema.drivers.id, schema.fuelLogs.driverId),
+                between(
+                  schema.fuelLogs.date,
+                  dateRange.startDate,
+                  dateRange.endDate
+                )
+              )
+            : eq(schema.drivers.id, schema.fuelLogs.driverId)
         )
         .groupBy(
           schema.drivers.id,
@@ -71,6 +92,8 @@ export const getFuelReportSummariesFromDB = cache(
         )
         .orderBy(schema.drivers.name);
 
+      const summaries = await query;
+
       // Transform the comma-delimited string into an array
       const transformedSummaries = summaries.map((summary) => ({
         ...summary,
@@ -80,7 +103,9 @@ export const getFuelReportSummariesFromDB = cache(
       }));
 
       console.log(
-        `✅ Fetched ${transformedSummaries.length} fuel report summaries`
+        `✅ Fetched ${transformedSummaries.length} fuel report summaries${
+          quarter ? ` for ${quarter}` : ""
+        }`
       );
       return transformedSummaries;
     } catch (error) {
