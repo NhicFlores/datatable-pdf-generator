@@ -1,10 +1,11 @@
 "use client";
 import { SelectFuelLog } from "@/lib/data-model/schema-types";
 import { formatCurrency, formatDateStringToLocal } from "@/lib/utils";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "../ui/button";
 import { EditableCell } from "./editable-cell";
+import { DeleteFuelLogButton } from "../delete-fuel-log-button";
 
 export const createFuelLogColumns = (
   matchingIds: Set<string>,
@@ -13,7 +14,8 @@ export const createFuelLogColumns = (
     field: keyof SelectFuelLog,
     value: string | number
   ) => void,
-  editable: boolean = false
+  editable: boolean = false,
+  driverId?: string // Add driverId parameter for delete functionality
 ): ColumnDef<SelectFuelLog>[] => [
   {
     id: "vehicleId",
@@ -321,4 +323,23 @@ export const createFuelLogColumns = (
       );
     },
   },
+  // Actions column - only show if editable and driverId is provided
+  ...(editable && driverId
+    ? [
+        {
+          id: "actions",
+          header: "Actions",
+          cell: ({ row }: { row: Row<SelectFuelLog> }) => {
+            return (
+              <DeleteFuelLogButton
+                fuelLogId={row.original.id}
+                driverId={driverId}
+                vehicleId={row.original.vehicleId}
+                date={row.original.date}
+              />
+            );
+          },
+        },
+      ]
+    : []),
 ];

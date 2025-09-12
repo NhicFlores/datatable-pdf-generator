@@ -181,8 +181,13 @@ export function FuelReportDetail({
 
   const fuelLogColumns = useMemo(
     () =>
-      createFuelLogColumns(matchingFuelLogIds, handleUpdateFuelLogField, true),
-    [matchingFuelLogIds, handleUpdateFuelLogField]
+      createFuelLogColumns(
+        matchingFuelLogIds,
+        handleUpdateFuelLogField,
+        true,
+        driverLogs.driverId
+      ),
+    [matchingFuelLogIds, handleUpdateFuelLogField, driverLogs.driverId]
   );
 
   return (
@@ -273,24 +278,23 @@ export function FuelReportDetail({
         {driverLogs ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-            <FilterTabs
-              activeFilter={transactionFilter}
-              onFilterChange={setTransactionFilter}
-              totalCount={driverLogs.fuelLogs.length}
-              matchedCount={
-                driverLogs.fuelLogs.filter(
-                  (t) => matchingFuelLogIds.has(t.id) // Use database ID
-                ).length
-              }
-              unmatchedCount={
-                driverLogs.fuelLogs.filter(
-                  (t) => !matchingFuelLogIds.has(t.id) // Use database ID
-                ).length
-              }
-            />
+              <FilterTabs
+                activeFilter={transactionFilter}
+                onFilterChange={setTransactionFilter}
+                totalCount={driverLogs.fuelLogs.length}
+                matchedCount={
+                  driverLogs.fuelLogs.filter(
+                    (t) => matchingFuelLogIds.has(t.id) // Use database ID
+                  ).length
+                }
+                unmatchedCount={
+                  driverLogs.fuelLogs.filter(
+                    (t) => !matchingFuelLogIds.has(t.id) // Use database ID
+                  ).length
+                }
+              />
               <CreateFuelLogButton driverId={driverLogs.driverId} />
-
-              </div>
+            </div>
             <DataTable columns={fuelLogColumns} data={filteredFuelLogs} />
           </div>
         ) : (
