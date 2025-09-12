@@ -49,14 +49,14 @@ export default async function FuelReportDetailPage({
     <div className="min-h-screen bg-gray-50">
       <Header />
       <main className="container mx-auto px-4 py-6">
-        {/* Quarter indicator */}
+        {/* Quarter indicator
         {selectedQuarter && (
           <div className="mb-4">
             <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
               Viewing data for {selectedQuarter}
             </div>
           </div>
-        )}
+        )} */}
 
         <FuelReportDetail
           driverLogs={driverLogs}

@@ -3,6 +3,7 @@ import { DataTable } from "@/components/tables/data-table";
 import { createTransactionColumns } from "@/components/tables/transaction-columns";
 import { createFuelLogColumns } from "@/components/tables/fuel-log-columns";
 import { FilterTabs } from "@/components/filter-tabs";
+import { CreateFuelLogButton } from "@/components/create-fuel-log-button";
 import {
   updateFuelLogFieldAction,
   addTransactionToDriverLogsAction,
@@ -188,7 +189,7 @@ export function FuelReportDetail({
     <main className="container mx-auto py-10 space-y-8">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {driverLogs.driverName} Fuel Report Analysis
+          {driverLogs.driverName} Fuel Report
         </h1>
         <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
           <div className="flex items-center space-x-2">
@@ -271,6 +272,7 @@ export function FuelReportDetail({
         </div>
         {driverLogs ? (
           <div className="space-y-4">
+            <div className="flex items-center justify-between">
             <FilterTabs
               activeFilter={transactionFilter}
               onFilterChange={setTransactionFilter}
@@ -286,6 +288,9 @@ export function FuelReportDetail({
                 ).length
               }
             />
+              <CreateFuelLogButton driverId={driverLogs.driverId} />
+
+              </div>
             <DataTable columns={fuelLogColumns} data={filteredFuelLogs} />
           </div>
         ) : (
