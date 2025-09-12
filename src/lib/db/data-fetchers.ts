@@ -17,7 +17,7 @@ import type {
   DriverLogs,
 } from "../data-model/query-types";
 import { findMatchesForTransactions } from "./services/matching-service";
-import { getQuarterDateRange } from "@/lib/utils/quarter-utils";
+import type { QuarterDateRange } from "@/lib/actions/quarter-data-actions";
 
 // Re-export types for convenience
 export type { SelectTransaction, SelectDriver, SelectFuelLog };
@@ -42,19 +42,14 @@ export type {
  * Returns basic driver info + aggregated stats without full transaction data
  */
 export const getFuelReportSummariesFromDB = cache(
-  async (quarter?: string): Promise<FuelReportSummary[]> => {
+  async (dateRange?: QuarterDateRange | null): Promise<FuelReportSummary[]> => {
     try {
       console.log("🔍 Fetching fuel report summaries from database...");
 
-      // Get date range for quarter filtering if provided
-      let dateRange = null;
-      if (quarter) {
-        dateRange = await getQuarterDateRange(quarter);
-        if (dateRange) {
-          console.log(
-            `📅 Filtering by quarter ${quarter}: ${dateRange.startDate.toISOString()} - ${dateRange.endDate.toISOString()}`
-          );
-        }
+      if (dateRange) {
+        console.log(
+          `📅 Filtering by date range: ${dateRange.startDate.toISOString()} - ${dateRange.endDate.toISOString()}`
+        );
       }
 
       const query = db
@@ -104,7 +99,7 @@ export const getFuelReportSummariesFromDB = cache(
 
       console.log(
         `✅ Fetched ${transformedSummaries.length} fuel report summaries${
-          quarter ? ` for ${quarter}` : ""
+          dateRange ? ` for date range` : ""
         }`
       );
       return transformedSummaries;
@@ -122,21 +117,37 @@ export const getFuelReportSummariesFromDB = cache(
  */
 export const getFuelReportDetailFromDB = cache(
   async (
-    driverId: string
+    driverId: string,
+    dateRange?: QuarterDateRange | null
   ): Promise<{
     driverLogs: DriverLogs | null;
     driverTransactions: DriverTransactions | null;
   }> => {
     try {
       console.log(
-        `🔍 Fetching complete fuel report detail for driver ID: ${driverId}`
+        `🔍 Fetching complete fuel report detail for driver ID: ${driverId}${
+          dateRange ? ` for date range` : ""
+        }`
       );
 
+      if (dateRange) {
+        console.log(
+          `📅 Filtering by date range: ${dateRange.startDate.toISOString()} - ${dateRange.endDate.toISOString()}`
+        );
+      }
+      // NOTE TODO: simplify query by removing driver query and just using transactions FK 
       // Single comprehensive query using Drizzle's relational query API
       const result = await db.query.drivers.findFirst({
         where: eq(schema.drivers.id, driverId),
         with: {
           fuelLogs: {
+            where: dateRange
+              ? between(
+                  schema.fuelLogs.date,
+                  dateRange.startDate,
+                  dateRange.endDate
+                )
+              : undefined,
             orderBy: [desc(schema.fuelLogs.date)],
           },
         },
@@ -151,7 +162,18 @@ export const getFuelReportDetailFromDB = cache(
       const transactions = await db
         .select()
         .from(schema.transactions)
-        .where(eq(schema.transactions.driverId, driverId))
+        .where(
+          dateRange
+            ? and(
+                eq(schema.transactions.driverId, driverId),
+                between(
+                  schema.transactions.transactionDate,
+                  dateRange.startDate,
+                  dateRange.endDate
+                )
+              )
+            : eq(schema.transactions.driverId, driverId)
+        )
         .orderBy(desc(schema.transactions.transactionDate));
 
       console.log(

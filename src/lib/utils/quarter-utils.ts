@@ -1,4 +1,5 @@
 import { getQuarterSettings } from "@/lib/actions/quarter-settings-actions";
+import type { QuarterOption } from "@/lib/actions/quarter-data-actions";
 
 export interface QuarterDateRange {
   startDate: Date;
@@ -59,4 +60,18 @@ export function getCurrentQuarterString(): string {
   const month = now.getMonth(); // 0-based
   const quarter = Math.floor(month / 3) + 1;
   return `${year}-Q${quarter}`;
+}
+
+/**
+ * Get date range for a quarter from the quarters array (avoids re-fetching quarter settings)
+ * This is a pure utility function that doesn't need to be a server action
+ */
+export function getQuarterDateRangeFromQuarters(
+  quarterString: string,
+  quarters: QuarterOption[]
+): QuarterDateRange | null {
+  const quarter = quarters.find((q) => q.value === quarterString);
+  return quarter
+    ? { startDate: quarter.startDate, endDate: quarter.endDate }
+    : null;
 }

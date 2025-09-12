@@ -10,8 +10,14 @@ export interface QuarterOption {
   endDate: Date;
 }
 
+export interface QuarterDateRange {
+  startDate: Date;
+  endDate: Date;
+}
+
 export async function getCurrentYearQuarters(): Promise<{
   currentQuarter: string;
+  currentQuarterDateRange: QuarterDateRange | null;
   quarters: QuarterOption[];
 }> {
   try {
@@ -41,8 +47,23 @@ export async function getCurrentYearQuarters(): Promise<{
       ? `${currentYear}-Q${currentQuarterData.quarter}`
       : `${currentYear}-Q1`; // Default to Q1 if no match
 
+    // Get the date range for the current quarter
+    const currentQuarterDateRange = currentQuarterData
+      ? {
+          startDate: currentQuarterData.startDate,
+          endDate: currentQuarterData.endDate,
+        }
+      : quarters.find((q) => q.value === currentQuarter)
+      ? {
+          startDate: quarters.find((q) => q.value === currentQuarter)!
+            .startDate,
+          endDate: quarters.find((q) => q.value === currentQuarter)!.endDate,
+        }
+      : null;
+
     return {
       currentQuarter,
+      currentQuarterDateRange,
       quarters,
     };
   } catch (error) {
@@ -72,8 +93,20 @@ export async function getCurrentYearQuarters(): Promise<{
       }
     );
 
+    // Get the date range for the current quarter from fallback data
+    const currentQuarterFallback = fallbackQuarters.find(
+      (q) => q.quarter === currentQuarterNum
+    );
+    const currentQuarterDateRange = currentQuarterFallback
+      ? {
+          startDate: currentQuarterFallback.startDate,
+          endDate: currentQuarterFallback.endDate,
+        }
+      : null;
+
     return {
       currentQuarter: `${currentYear}-Q${currentQuarterNum}`,
+      currentQuarterDateRange,
       quarters: fallbackQuarters,
     };
   }

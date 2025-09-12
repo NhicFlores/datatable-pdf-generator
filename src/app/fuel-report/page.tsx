@@ -4,6 +4,7 @@ import { FuelReportsList } from "@/components/state-manager/fuel-reports-list";
 import { requireAuth } from "@/auth";
 import Header from "@/components/header";
 import { getCurrentYearQuarters } from "@/lib/actions/quarter-data-actions";
+import { getQuarterDateRangeFromQuarters } from "@/lib/utils/quarter-utils";
 import { QuarterSelector } from "@/components/quarter-selector";
 import { redirect } from "next/navigation";
 
@@ -19,14 +20,20 @@ export default async function FuelReportsPage({ searchParams }: PageProps) {
   const params = await searchParams;
 
   // Get quarter data for selector
-  const { currentQuarter, quarters } = await getCurrentYearQuarters();
+  const { currentQuarter, currentQuarterDateRange, quarters } =
+    await getCurrentYearQuarters();
 
   // Use selected quarter from URL or default to current quarter
   const selectedQuarter = params.quarter || currentQuarter;
 
+  // Get date range for selected quarter
+  const selectedDateRange = params.quarter
+    ? getQuarterDateRangeFromQuarters(params.quarter, quarters)
+    : currentQuarterDateRange;
+
   // Fetch data for selected quarter
   const fuelReportSummaries = await getFuelReportSummariesFromDB(
-    selectedQuarter
+    selectedDateRange
   );
 
   const handleQuarterChange = async (quarter: string) => {
@@ -58,7 +65,10 @@ export default async function FuelReportsPage({ searchParams }: PageProps) {
           </div>
 
           {/* Data Table */}
-          <FuelReportsList fuelReportSummaries={fuelReportSummaries} />
+          <FuelReportsList
+            fuelReportSummaries={fuelReportSummaries}
+            selectedQuarter={selectedQuarter}
+          />
         </div>
       </main>
     </div>

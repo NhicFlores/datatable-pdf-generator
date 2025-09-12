@@ -1,7 +1,7 @@
 export const FuelReportRoute = {
   label: "Fuel Report",
   page: "/fuel-report",
-  detailPage: (id: string, quarter?: string) => 
+  detailPage: (id: string, quarter?: string) =>
     quarter ? `/fuel-report/${id}?quarter=${quarter}` : `/fuel-report/${id}`,
 };
 
