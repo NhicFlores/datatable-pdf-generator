@@ -1,12 +1,13 @@
 export const FuelReportRoute = {
   label: "Fuel Report",
   page: "/fuel-report",
-  detailPage: (id: string) => `/fuel-report/${id}`,
+  detailPage: (id: string, quarter?: string) => 
+    quarter ? `/fuel-report/${id}?quarter=${quarter}` : `/fuel-report/${id}`,
 };
 
 export const FuelReportSummaryRoute = {
   label: "Fuel Report Summary",
-  page: "/fuel-report/summary",
+  page: "/quarter-summary",
 };
 
 export const AdminRoute = {
@@ -21,7 +22,7 @@ export const HomeRoute = {
 
 export const AuthRoute = {
   signIn: "/auth/signin",
-//   error: "/auth/error",
+  //   error: "/auth/error",
   // signUp: "/auth/signup",
   // forgotPassword: "/auth/forgot-password",
 };
