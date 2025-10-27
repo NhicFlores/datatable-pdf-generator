@@ -608,3 +608,68 @@ export const getFuelSummaryTableFromDB = cache(
     }
   }
 );
+
+/**
+ * Get all fuel logs for a specific quarter (for CSV export)
+ * Returns raw fuel log data for export purposes
+ */
+export const getAllFuelLogsForQuarter = cache(
+  async (dateRange: QuarterDateRange): Promise<Array<{
+    id: string;
+    vehicleId: string;
+    driverId: string;
+    driver: string | null;
+    date: Date;
+    invoiceNumber: string;
+    gallons: string;
+    cost: string;
+    sellerState: string;
+    sellerName: string;
+    odometer: string;
+    receipt: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }>> => {
+    try {
+      console.log("🔍 Fetching all fuel logs for quarter export...");
+      console.log(
+        `📅 Date range: ${dateRange.startDate.toLocaleDateString()} - ${dateRange.endDate.toLocaleDateString()}`
+      );
+
+      // Fetch all fuel logs within the date range with driver names
+      const fuelLogs = await db
+        .select({
+          id: schema.fuelLogs.id,
+          vehicleId: schema.fuelLogs.vehicleId,
+          driverId: schema.fuelLogs.driverId,
+          driver: schema.drivers.name, // Get driver name from joined table
+          date: schema.fuelLogs.date,
+          invoiceNumber: schema.fuelLogs.invoiceNumber,
+          gallons: schema.fuelLogs.gallons,
+          cost: schema.fuelLogs.cost,
+          sellerState: schema.fuelLogs.sellerState,
+          sellerName: schema.fuelLogs.sellerName,
+          odometer: schema.fuelLogs.odometer,
+          receipt: schema.fuelLogs.receipt,
+          createdAt: schema.fuelLogs.createdAt,
+          updatedAt: schema.fuelLogs.updatedAt,
+        })
+        .from(schema.fuelLogs)
+        .leftJoin(schema.drivers, eq(schema.fuelLogs.driverId, schema.drivers.id))
+        .where(
+          between(
+            schema.fuelLogs.date,
+            dateRange.startDate,
+            dateRange.endDate
+          )
+        )
+        .orderBy(desc(schema.fuelLogs.date), schema.fuelLogs.vehicleId);
+
+      console.log(`✅ Retrieved ${fuelLogs.length} fuel log records for export`);
+      return fuelLogs;
+    } catch (error) {
+      console.error("❌ Failed to fetch fuel logs for quarter export:", error);
+      return [];
+    }
+  }
+);

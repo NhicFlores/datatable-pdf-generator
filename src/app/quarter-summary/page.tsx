@@ -2,6 +2,7 @@ export const revalidate = 60;
 import { getFuelSummaryTableFromDB } from "@/lib/db/data-fetchers";
 import { FuelSummaryTable } from "@/components/tables/fuel-summary-table";
 import { FuelSummaryExportButton } from "@/components/csv/fuel-summary-export-button";
+import { AllFuelTransactionsExportButton } from "@/components/csv/all-fuel-transactions-export-button";
 import { requireAuth } from "@/auth";
 import Header from "@/components/header";
 import { getCurrentYearQuarters } from "@/lib/actions/quarter-data-actions";
@@ -106,7 +107,7 @@ export default async function FuelSummaryPage({ searchParams }: PageProps) {
                   Export Options
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Download summary data for {selectedQuarter}
+                  Download summary data or complete fuel logs for {selectedQuarter}
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -119,12 +120,15 @@ export default async function FuelSummaryPage({ searchParams }: PageProps) {
                   variant="outline"
                   size="sm"
                 />
-                {/* <AllFuelTransactionsExportButton
-                filename="updated-fuel-report.csv"
-                label="Download Updated Report"
-                variant="default"
-                size="sm"
-              /> */}
+                <AllFuelTransactionsExportButton
+                  selectedQuarter={selectedQuarter}
+                  filename={`all_fuel_logs_${selectedQuarter}_${
+                    new Date().toISOString().split("T")[0]
+                  }.csv`}
+                  label="Export All Fuel Logs"
+                  variant="default"
+                  size="sm"
+                />
               </div>
             </div>
           </div>
