@@ -510,9 +510,31 @@ export const getTransactionsByDriverFromDB = cache(
  * Returns data structured to match the deprecated FuelSummaryData format
  */
 export const getFuelSummaryTableFromDB = cache(
-  async (): Promise<FuelSummaryTableData> => {
+  async (dateRange?: QuarterDateRange | null): Promise<FuelSummaryTableData> => {
     try {
       console.log("🔍 Fetching fuel summary table data from database...");
+
+      if (dateRange) {
+        console.log(
+          `📅 Filtering fuel summary data by date range: ${dateRange.startDate.toLocaleDateString()} - ${dateRange.endDate.toLocaleDateString()}`
+        );
+      }
+
+      // Build where conditions
+      const whereConditions = [
+        sql`${schema.fuelLogs.sellerState} IS NOT NULL`
+      ];
+
+      // Add date range filter if provided
+      if (dateRange) {
+        whereConditions.push(
+          between(
+            schema.fuelLogs.date,
+            dateRange.startDate,
+            dateRange.endDate
+          )
+        );
+      }
 
       // Get all fuel transactions with state and vehicle data
       const fuelLogs = await db
@@ -522,7 +544,7 @@ export const getFuelSummaryTableFromDB = cache(
           gallons: schema.fuelLogs.gallons,
         })
         .from(schema.fuelLogs)
-        .where(sql`${schema.fuelLogs.sellerState} IS NOT NULL`)
+        .where(and(...whereConditions))
         .orderBy(schema.fuelLogs.sellerState);
 
       // Get unique truck IDs and states

@@ -42,3 +42,4 @@ next-env.d.ts
 
 # local csv files 
 /data/*.csv
+/test-data

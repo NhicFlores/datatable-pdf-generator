@@ -4,14 +4,42 @@ import { FuelSummaryTable } from "@/components/tables/fuel-summary-table";
 import { FuelSummaryExportButton } from "@/components/csv/fuel-summary-export-button";
 import { requireAuth } from "@/auth";
 import Header from "@/components/header";
-// import { AllFuelTransactionsExportButton } from "@/components/all-fuel-transactions-export-button";
+import { getCurrentYearQuarters } from "@/lib/actions/quarter-data-actions";
+import { getQuarterDateRangeFromQuarters } from "@/lib/utils/quarter-utils";
+import { QuarterSelector } from "@/components/quarter-selector";
+import { redirect } from "next/navigation";
+
+interface PageProps {
+  searchParams: Promise<{ quarter?: string }>;
+}
 
 // Server Component - pre-fetches fuel summary data
-export default async function FuelSummaryPage() {
+export default async function FuelSummaryPage({ searchParams }: PageProps) {
   // Ensure user is authenticated
   await requireAuth();
 
-  const summaryData = await getFuelSummaryTableFromDB();
+  const params = await searchParams;
+
+  // Get quarter data for selector
+  const { currentQuarter, currentQuarterDateRange, quarters } =
+    await getCurrentYearQuarters();
+
+  // Use selected quarter from URL or default to current quarter
+  const selectedQuarter = params.quarter || currentQuarter;
+
+  // Get date range for selected quarter
+  const selectedDateRange = params.quarter
+    ? getQuarterDateRangeFromQuarters(params.quarter, quarters)
+    : currentQuarterDateRange;
+
+  // Fetch data for selected quarter
+  const summaryData = await getFuelSummaryTableFromDB(selectedDateRange);
+
+  const handleQuarterChange = async (quarter: string) => {
+    "use server";
+    // Redirect to update URL with selected quarter
+    redirect(`/quarter-summary?quarter=${quarter}`);
+  };
 
   // Check if there's any data to display
   const hasData = summaryData.summaryRows.length > 0;
@@ -21,8 +49,27 @@ export default async function FuelSummaryPage() {
       <div className="min-h-screen bg-gray-50">
         <Header />
         <main className="container mx-auto px-4 py-6">
-          <div className="text-center">
-            <p>No fuel data available.</p>
+          <div className="space-y-6">
+            {/* Quarter Selector */}
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">
+                  Fuel Report Summary
+                </h1>
+                <p className="text-muted-foreground">
+                  Fuel consumption summary by state and truck ID for {selectedQuarter}
+                </p>
+              </div>
+              <QuarterSelector
+                currentQuarter={selectedQuarter}
+                quarters={quarters}
+                onQuarterChange={handleQuarterChange}
+              />
+            </div>
+            
+            <div className="text-center">
+              <p className="text-muted-foreground">No fuel data available for {selectedQuarter}.</p>
+            </div>
           </div>
         </main>
       </div>
@@ -34,13 +81,21 @@ export default async function FuelSummaryPage() {
       <Header />
       <main className="container mx-auto px-4 py-6">
         <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Fuel Report Summary
-            </h1>
-            <p className="text-muted-foreground">
-              Fuel consumption summary by state and truck ID
-            </p>
+          {/* Quarter Selector */}
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Fuel Report Summary
+              </h1>
+              <p className="text-muted-foreground">
+                Fuel consumption summary by state and truck ID for {selectedQuarter}
+              </p>
+            </div>
+            <QuarterSelector
+              currentQuarter={selectedQuarter}
+              quarters={quarters}
+              onQuarterChange={handleQuarterChange}
+            />
           </div>
 
           {/* Export Controls Section */}
@@ -51,13 +106,13 @@ export default async function FuelSummaryPage() {
                   Export Options
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Download summary data or the complete updated fuel report
+                  Download summary data for {selectedQuarter}
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <FuelSummaryExportButton
                   summaryData={summaryData}
-                  filename={`fuel_summary_${
+                  filename={`fuel_summary_${selectedQuarter}_${
                     new Date().toISOString().split("T")[0]
                   }.csv`}
                   label="Export Summary"
@@ -80,7 +135,7 @@ export default async function FuelSummaryPage() {
                 Summary by State and Truck
               </h2>
               <p className="text-sm text-muted-foreground">
-                Total gallons consumed per state with breakdown by truck ID
+                Total gallons consumed per state with breakdown by truck ID for {selectedQuarter}
               </p>
             </div>
 
