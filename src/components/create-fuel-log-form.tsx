@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { StateAutocomplete } from "@/components/ui/state-autocomplete";
 import {
   Form,
   FormControl,
@@ -201,12 +202,16 @@ export function CreateFuelLogForm({
                 <FormItem>
                   <FormLabel>Seller State</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="e.g., Colorado"
+                    <StateAutocomplete
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Type to search states..."
                       disabled={isLoading}
-                      {...field}
                     />
                   </FormControl>
+                  <FormDescription>
+                    Type to search and select a US state (excludes Hawaii & Alaska)
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
