@@ -16,14 +16,17 @@ export function CreateFuelLogButton({
   className,
 }: CreateFuelLogButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [hasFormData, setHasFormData] = useState(false);
 
   const handleSuccess = () => {
     setIsModalOpen(false);
+    setHasFormData(false);
     // Page will automatically refresh due to revalidatePath in server action
   };
 
   const handleCancel = () => {
     setIsModalOpen(false);
+    setHasFormData(false);
   };
 
   return (
@@ -37,7 +40,12 @@ export function CreateFuelLogButton({
         Add Fuel Log
       </Button>
 
-      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
+      <Modal 
+        open={isModalOpen} 
+        onClose={() => setIsModalOpen(false)}
+        preventAccidentalClose={hasFormData}
+        confirmMessage="Are you sure you want to close? Any entered fuel log data will be lost."
+      >
         <div className="space-y-4">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-gray-900">
@@ -52,6 +60,7 @@ export function CreateFuelLogButton({
             driverId={driverId}
             onSuccess={handleSuccess}
             onCancel={handleCancel}
+            onFormDataChange={setHasFormData}
           />
         </div>
       </Modal>

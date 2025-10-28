@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
@@ -27,12 +27,14 @@ interface CreateFuelLogFormProps {
   driverId: string;
   onSuccess?: () => void;
   onCancel?: () => void;
+  onFormDataChange?: (hasData: boolean) => void;
 }
 
 export function CreateFuelLogForm({
   driverId,
   onSuccess,
   onCancel,
+  onFormDataChange,
 }: CreateFuelLogFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -51,6 +53,14 @@ export function CreateFuelLogForm({
       receipt: "",
     },
   });
+
+  // Watch for form changes to detect if user has entered data
+  const watchedValues = form.watch();
+  
+  useEffect(() => {
+    const hasData = Object.values(watchedValues).some(value => value !== "");
+    onFormDataChange?.(hasData);
+  }, [watchedValues, onFormDataChange]);
 
   const onSubmit = async (data: CreateFuelLogFormData) => {
     setIsLoading(true);
