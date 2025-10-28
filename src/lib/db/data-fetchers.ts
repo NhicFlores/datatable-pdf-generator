@@ -610,6 +610,87 @@ export const getFuelSummaryTableFromDB = cache(
 );
 
 /**
+ * Get filtered fuel logs by state and/or truck
+ * Returns fuel log data for the fuel-logs page
+ */
+export const getFilteredFuelLogs = cache(
+  async (filters: {
+    state?: string;
+    truckId?: string;
+    dateRange?: QuarterDateRange;
+  }): Promise<Array<{
+    id: string;
+    vehicleId: string;
+    driverId: string;
+    driver: string | null;
+    date: Date;
+    invoiceNumber: string;
+    gallons: string;
+    cost: string;
+    sellerState: string;
+    sellerName: string;
+    odometer: string;
+    receipt: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }>> => {
+    try {
+      console.log("🔍 Fetching filtered fuel logs...", filters);
+
+      // Build where conditions
+      const conditions = [];
+      
+      if (filters.state) {
+        conditions.push(eq(schema.fuelLogs.sellerState, filters.state));
+      }
+      
+      if (filters.truckId) {
+        conditions.push(eq(schema.fuelLogs.vehicleId, filters.truckId));
+      }
+      
+      if (filters.dateRange) {
+        conditions.push(
+          between(
+            schema.fuelLogs.date,
+            filters.dateRange.startDate,
+            filters.dateRange.endDate
+          )
+        );
+      }
+
+      // Fetch fuel logs with applied filters
+      const fuelLogs = await db
+        .select({
+          id: schema.fuelLogs.id,
+          vehicleId: schema.fuelLogs.vehicleId,
+          driverId: schema.fuelLogs.driverId,
+          driver: schema.drivers.name, // Get driver name from joined table
+          date: schema.fuelLogs.date,
+          invoiceNumber: schema.fuelLogs.invoiceNumber,
+          gallons: schema.fuelLogs.gallons,
+          cost: schema.fuelLogs.cost,
+          sellerState: schema.fuelLogs.sellerState,
+          sellerName: schema.fuelLogs.sellerName,
+          odometer: schema.fuelLogs.odometer,
+          receipt: schema.fuelLogs.receipt,
+          createdAt: schema.fuelLogs.createdAt,
+          updatedAt: schema.fuelLogs.updatedAt,
+        })
+        .from(schema.fuelLogs)
+        .leftJoin(schema.drivers, eq(schema.fuelLogs.driverId, schema.drivers.id))
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(desc(schema.fuelLogs.date), schema.fuelLogs.vehicleId);
+
+      console.log(`✅ Retrieved ${fuelLogs.length} filtered fuel log records`);
+      return fuelLogs;
+    } catch (error) {
+      console.error("❌ Failed to fetch filtered fuel logs:", error);
+      return [];
+    }
+  }
+);
+
+/**
  * Get all fuel logs for a specific quarter (for CSV export)
  * Returns raw fuel log data for export purposes
  */

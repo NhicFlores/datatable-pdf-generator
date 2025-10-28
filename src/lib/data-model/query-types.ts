@@ -24,6 +24,24 @@ export type DriverLogs = {
   fuelLogs: SelectFuelLog[];
 };
 
+// Type for filtered fuel logs on fuel-logs page
+export type FilteredFuelLog = {
+  id: string;
+  vehicleId: string;
+  driverId: string;
+  driver: string | null;
+  date: Date;
+  invoiceNumber: string;
+  gallons: string;
+  cost: string;
+  sellerState: string;
+  sellerName: string;
+  odometer: string;
+  receipt: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 // Type for driver-specific transaction queries with matching data
 export type DriverTransactions = {
   driverId: string;

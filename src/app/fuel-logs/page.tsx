@@ -1,0 +1,160 @@
+"use client";
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useMemo } from 'react';
+import { DataTable } from "@/components/tables/data-table";
+import { createFilteredFuelLogColumns } from "@/components/tables/filtered-fuel-log-columns";
+import { getFilteredFuelLogs } from "@/lib/db/data-fetchers";
+import { FilteredFuelLog } from "@/lib/data-model/query-types";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+function FuelLogsContent() {
+  const searchParams = useSearchParams();
+  const state = searchParams.get('state');
+  const truckId = searchParams.get('truckId');
+  
+  const [fuelLogs, setFuelLogs] = useState<FilteredFuelLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch fuel logs based on filters
+  useEffect(() => {
+    const fetchFuelLogs = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const filters: {
+          state?: string;
+          truckId?: string;
+        } = {};
+        
+        if (state) filters.state = state;
+        if (truckId) filters.truckId = truckId;
+        
+        const logs = await getFilteredFuelLogs(filters);
+        setFuelLogs(logs);
+      } catch (err) {
+        console.error('Failed to fetch fuel logs:', err);
+        setError('Failed to load fuel logs. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFuelLogs();
+  }, [state, truckId]);
+
+  const getPageTitle = () => {
+    if (state && truckId) return `Fuel Logs - ${state} - Truck ${truckId}`;
+    if (state) return `Fuel Logs - ${state}`;
+    if (truckId) return `Fuel Logs - Truck ${truckId}`;
+    return 'All Fuel Logs';
+  };
+
+  const getBreadcrumbText = () => {
+    if (state && truckId) return `${state} & Truck ${truckId}`;
+    if (state) return state;
+    if (truckId) return `Truck ${truckId}`;
+    return 'All';
+  };
+
+  const columns = useMemo(() => createFilteredFuelLogColumns(), []);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading fuel logs...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-red-600">{error}</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto py-6">
+      <div className="mb-6 flex items-center gap-4">
+        <Link href="/quarter-summary">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Summary
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold">{getPageTitle()}</h1>
+          <p className="text-muted-foreground">
+            Showing {fuelLogs.length} fuel log{fuelLogs.length !== 1 ? 's' : ''} for {getBreadcrumbText()}
+          </p>
+        </div>
+      </div>
+
+      {/* Summary statistics */}
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="text-sm font-medium text-muted-foreground">
+            Total Records
+          </div>
+          <div className="text-2xl font-bold">{fuelLogs.length}</div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="text-sm font-medium text-muted-foreground">
+            Total Gallons
+          </div>
+          <div className="text-2xl font-bold">
+            {fuelLogs.reduce((sum, log) => sum + parseFloat(log.gallons || '0'), 0).toFixed(2)}
+          </div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="text-sm font-medium text-muted-foreground">
+            Total Cost
+          </div>
+          <div className="text-2xl font-bold">
+            ${fuelLogs.reduce((sum, log) => sum + parseFloat(log.cost || '0'), 0).toFixed(2)}
+          </div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="text-sm font-medium text-muted-foreground">
+            Unique Trucks
+          </div>
+          <div className="text-2xl font-bold">
+            {new Set(fuelLogs.map(log => log.vehicleId)).size}
+          </div>
+        </div>
+      </div>
+
+      {/* Data table */}
+      <div className="rounded-md border">
+        <DataTable 
+          columns={columns} 
+          data={fuelLogs}
+        />
+      </div>
+    </div>
+  );
+}
+
+export default function FuelLogsPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading...</div>
+        </div>
+      </div>
+    }>
+      <FuelLogsContent />
+    </Suspense>
+  );
+}

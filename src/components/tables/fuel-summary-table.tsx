@@ -1,5 +1,6 @@
 "use client";
 import * as React from "react";
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -49,7 +50,12 @@ export function FuelSummaryTable({ summaryData }: FuelSummaryTableProps) {
               </TableHead>
               {uniqueTruckIds.map((truckId, index) => (
                 <TableHead key={index} className="font-medium text-center">
-                  {truckId}
+                  <Link 
+                    href={`/fuel-logs?truckId=${encodeURIComponent(truckId)}`}
+                    className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                  >
+                    {truckId}
+                  </Link>
                 </TableHead>
               ))}
             </TableRow>
@@ -59,15 +65,29 @@ export function FuelSummaryTable({ summaryData }: FuelSummaryTableProps) {
               <>
                 {summaryRows.map((row) => (
                   <TableRow key={row.state}>
-                    <TableCell className="font-medium">{row.state}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link 
+                        href={`/fuel-logs?state=${encodeURIComponent(row.state)}`}
+                        className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                      >
+                        {row.state}
+                      </Link>
+                    </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatGallons(row.totalGallons)}
                     </TableCell>
                     {uniqueTruckIds.map((truckId) => (
                       <TableCell key={truckId} className="text-center">
-                        {row.truckGallons[truckId] > 0
-                          ? formatGallons(row.truckGallons[truckId])
-                          : "-"}
+                        {row.truckGallons[truckId] > 0 ? (
+                          <Link 
+                            href={`/fuel-logs?state=${encodeURIComponent(row.state)}&truckId=${encodeURIComponent(truckId)}`}
+                            className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                          >
+                            {formatGallons(row.truckGallons[truckId])}
+                          </Link>
+                        ) : (
+                          "-"
+                        )}
                       </TableCell>
                     ))}
                   </TableRow>
