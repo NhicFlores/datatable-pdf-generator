@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { US_STATES } from "@/lib/constants/states";
+import { US_STATES, isUSState } from "@/lib/constants/states";
 import { ChevronDown, ChevronUp, Check } from "lucide-react";
 
 interface StateAutocompleteProps {
@@ -19,7 +19,7 @@ export function StateAutocomplete({
   disabled = false,
 }: StateAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [filteredStates, setFilteredStates] = useState<string[]>([...US_STATES]);
+  const [filteredStates, setFilteredStates] = useState<readonly string[]>(US_STATES);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -27,7 +27,7 @@ export function StateAutocomplete({
   // Filter states based on input value
   useEffect(() => {
     if (!value) {
-      setFilteredStates([...US_STATES]);
+      setFilteredStates(US_STATES);
     } else {
       const filtered = US_STATES.filter(state =>
         state.toLowerCase().includes(value.toLowerCase())
@@ -140,7 +140,7 @@ export function StateAutocomplete({
   };
 
   // Check if current value is a valid state
-  const isValidState = US_STATES.includes(value as any);
+  const isValidState = isUSState(value);
 
   return (
     <div className="relative">
@@ -195,7 +195,7 @@ export function StateAutocomplete({
             ))
           ) : (
             <div className="px-3 py-2 text-muted-foreground text-sm">
-              No states found matching "{value}"
+              No states found matching &quot;{value}&quot;
             </div>
           )}
         </div>
