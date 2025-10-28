@@ -59,8 +59,9 @@ export async function updateFuelLogFieldAction(
 
     console.log(`✅ Successfully updated fuel transaction ${fuelLogId}`);
 
-    // Revalidate the detail page to show updated data
+    // Revalidate pages to show updated data
     revalidatePath("/fuel-report/[id]", "page");
+    revalidatePath("/fuel-logs", "page");
 
     return { success: true, transaction: updatedFuelLog };
   } catch (error) {

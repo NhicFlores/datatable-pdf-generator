@@ -1,10 +1,12 @@
 "use client";
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useMemo } from 'react';
+import { Suspense, useMemo, useCallback, useTransition } from 'react';
 import { DataTable } from "@/components/tables/data-table";
 import { createFilteredFuelLogColumns } from "@/components/tables/filtered-fuel-log-columns";
 import { getFilteredFuelLogs } from "@/lib/db/data-fetchers";
 import { FilteredFuelLog } from "@/lib/data-model/query-types";
+import { SelectFuelLog } from "@/lib/data-model/schema-types";
+import { updateFuelLogFieldAction } from "@/lib/actions/fuel-actions";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -18,34 +20,60 @@ function FuelLogsContent() {
   const [fuelLogs, setFuelLogs] = useState<FilteredFuelLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
 
   // Fetch fuel logs based on filters
-  useEffect(() => {
-    const fetchFuelLogs = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const filters: {
-          state?: string;
-          truckId?: string;
-        } = {};
-        
-        if (state) filters.state = state;
-        if (truckId) filters.truckId = truckId;
-        
-        const logs = await getFilteredFuelLogs(filters);
-        setFuelLogs(logs);
-      } catch (err) {
-        console.error('Failed to fetch fuel logs:', err);
-        setError('Failed to load fuel logs. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFuelLogs();
+  const fetchFuelLogs = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const filters: {
+        state?: string;
+        truckId?: string;
+      } = {};
+      
+      if (state) filters.state = state;
+      if (truckId) filters.truckId = truckId;
+      
+      const logs = await getFilteredFuelLogs(filters);
+      setFuelLogs(logs);
+    } catch (err) {
+      console.error('Failed to fetch fuel logs:', err);
+      setError('Failed to load fuel logs. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }, [state, truckId]);
+
+  // Server Action wrapper for updating fuel log fields
+  const handleUpdateFuelLogField = useCallback(
+    (
+      fuelLogId: string,
+      field: keyof SelectFuelLog,
+      value: string | number
+    ) => {
+      startTransition(async () => {
+        const result = await updateFuelLogFieldAction(
+          fuelLogId,
+          field,
+          value
+        );
+        if (!result.success) {
+          console.error("Failed to update fuel log:", result.error);
+          // TODO: Add proper error handling/toast notification
+        } else {
+          // Refresh the data after successful update
+          await fetchFuelLogs();
+        }
+      });
+    },
+    [fetchFuelLogs]
+  );
+
+  useEffect(() => {
+    fetchFuelLogs();
+  }, [fetchFuelLogs]);
 
   const getPageTitle = () => {
     if (state && truckId) return `Fuel Logs - ${state} - Truck ${truckId}`;
@@ -61,7 +89,11 @@ function FuelLogsContent() {
     return 'All';
   };
 
-  const columns = useMemo(() => createFilteredFuelLogColumns(), []);
+  const columns = useMemo(() => createFilteredFuelLogColumns(
+    new Set<string>(), // No matching logic needed for filtered view
+    handleUpdateFuelLogField,
+    true // Enable editing
+  ), [handleUpdateFuelLogField]);
 
   if (loading) {
     return (
@@ -96,6 +128,9 @@ function FuelLogsContent() {
           <h1 className="text-3xl font-bold">{getPageTitle()}</h1>
           <p className="text-muted-foreground">
             Showing {fuelLogs.length} fuel log{fuelLogs.length !== 1 ? 's' : ''} for {getBreadcrumbText()}
+          </p>
+          <p className="text-sm text-blue-600 mt-1">
+            💡 Click on any cell to edit fuel log details
           </p>
         </div>
       </div>
