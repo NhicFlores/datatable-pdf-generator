@@ -1,6 +1,6 @@
 "use client";
 import { SelectFuelLog } from "@/lib/data-model/schema-types";
-import { formatCurrency, formatDateStringToLocal } from "@/lib/utils";
+import { formatCurrency, formatDateToLocal } from "@/lib/utils";
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "../ui/button";
@@ -77,7 +77,7 @@ export const createFuelLogColumns = (
       if (editable && onUpdateField) {
         return (
           <EditableCell
-            value={formatDateStringToLocal(row.original.date.toDateString())}
+            value={formatDateToLocal(row.original.date)}
             onUpdate={(value) =>
               onUpdateField(fuelLogId, "date", value as string)
             }
@@ -86,8 +86,8 @@ export const createFuelLogColumns = (
           />
         );
       }
-      // NOTE TODO:REMOVE REDUNDANT DATE STRING CONVERSIONS
-      const date = formatDateStringToLocal(row.original.date.toDateString());
+      // Use direct date formatting without string conversion
+      const date = formatDateToLocal(row.original.date);
       return (
         <span className={isMatched ? "text-green-600 font-semibold" : ""}>
           {date}

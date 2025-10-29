@@ -26,6 +26,28 @@ export const formatDateStringToLocal = (dateStr: string, locale: string = "en-US
   return formatter.format(date);
 }
 
+export const formatDateToLocal = (date: Date, locale: string = "en-US") => {
+  const options: Intl.DateTimeFormatOptions = {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC", // Force UTC to avoid timezone shifts
+  }
+
+  const formatter = new Intl.DateTimeFormat(locale, options);
+
+  return formatter.format(date);
+}
+
+export const isSameDay = (date1: Date, date2: Date): boolean => {
+  // Compare dates by their year, month, and day values to avoid timezone issues
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate()
+  );
+}
+
 export function cleanName(name: string): string {
   // Remove special characters, spaces, and convert to lowercase
   return name ? name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() : "";

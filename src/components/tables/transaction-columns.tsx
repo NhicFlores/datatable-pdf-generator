@@ -1,5 +1,5 @@
 import { SelectTransaction } from "@/lib/data-model/schema-types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDateToLocal } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Plus, X } from "lucide-react";
 import { Button } from "../ui/button";
@@ -56,8 +56,8 @@ export const createTransactionColumns = (
 
       return (
         <div className={isMatched ? "text-green-600 font-semibold" : ""}>
-          <div className="font-bold">{transactionDate.toDateString()}</div>
-          <div>{postingDate.toDateString()}</div>
+          <div className="font-bold">{formatDateToLocal(transactionDate)}</div>
+          <div>{formatDateToLocal(postingDate)}</div>
         </div>
       );
     },

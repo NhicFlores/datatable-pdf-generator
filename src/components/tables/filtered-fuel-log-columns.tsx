@@ -1,7 +1,7 @@
 "use client";
 import { FilteredFuelLog } from "@/lib/data-model/query-types";
 import { SelectFuelLog } from "@/lib/data-model/schema-types";
-import { formatCurrency, formatDateStringToLocal } from "@/lib/utils";
+import { formatCurrency, formatDateToLocal } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "../ui/button";
@@ -94,7 +94,7 @@ export const createFilteredFuelLogColumns = (
       if (editable && onUpdateField) {
         return (
           <EditableCell
-            value={formatDateStringToLocal(row.original.date.toISOString())}
+            value={formatDateToLocal(row.original.date)}
             onUpdate={(value) =>
               onUpdateField(fuelLogId, "date", value as string)
             }
@@ -106,7 +106,7 @@ export const createFilteredFuelLogColumns = (
 
       return (
         <div className={isMatched ? "text-green-600 font-semibold" : ""}>
-          {formatDateStringToLocal(row.original.date.toISOString())}
+          {formatDateToLocal(row.original.date)}
         </div>
       );
     },

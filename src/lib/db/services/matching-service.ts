@@ -5,6 +5,7 @@ import {
   InsertTransactionFuelMatch,
 } from "@/lib/data-model/schema-types";
 import { MatchSummary } from "@/lib/data-model/query-types";
+import { isSameDay } from "@/lib/utils";
 
 export interface MatchingResult {
   transactionId: string;
@@ -29,16 +30,16 @@ export type MatchingFunction = (
  */
 export const matchByDateAndCost: MatchingFunction = (transaction, fuelLogs) => {
   const results: MatchingResult[] = [];
-  const transactionDate = new Date(transaction.transactionDate).toDateString();
+  const transactionDate = new Date(transaction.transactionDate);
   const transactionCost = parseFloat(transaction.billingAmount);
 
   for (const fuelLog of fuelLogs) {
-    const fuelLogDate = new Date(fuelLog.date).toDateString();
+    const fuelLogDate = new Date(fuelLog.date);
     const fuelLogCost = parseFloat(fuelLog.cost);
 
     // Check if dates match and costs are within $0.01
     if (
-      transactionDate === fuelLogDate &&
+      isSameDay(transactionDate, fuelLogDate) &&
       Math.abs(transactionCost - fuelLogCost) < 0.01
     ) {
       results.push({
@@ -68,16 +69,16 @@ export const matchByDateAndQuantity: MatchingFunction = (
     return results;
   }
 
-  const transactionDate = new Date(transaction.transactionDate).toDateString();
+  const transactionDate = new Date(transaction.transactionDate);
   const transactionQuantity = parseFloat(transaction.fuelQuantity);
 
   for (const fuelLog of fuelLogs) {
-    const fuelLogDate = new Date(fuelLog.date).toDateString();
+    const fuelLogDate = new Date(fuelLog.date);
     const fuelLogQuantity = parseFloat(fuelLog.gallons);
 
     // Check if dates match and quantities are within 0.01 gallons
     if (
-      transactionDate === fuelLogDate &&
+      isSameDay(transactionDate, fuelLogDate) &&
       Math.abs(transactionQuantity - fuelLogQuantity) < 0.01
     ) {
       results.push({
@@ -106,15 +107,15 @@ export const matchByDateSupplierAndState: MatchingFunction = (
     return results;
   }
 
-  const transactionDate = new Date(transaction.transactionDate).toDateString();
+  const transactionDate = new Date(transaction.transactionDate);
   const transactionCost = parseFloat(transaction.billingAmount);
 
   for (const fuelLog of fuelLogs) {
-    const fuelLogDate = new Date(fuelLog.date).toDateString();
+    const fuelLogDate = new Date(fuelLog.date);
     const fuelLogCost = parseFloat(fuelLog.cost);
 
     // Check date match first
-    if (transactionDate !== fuelLogDate) {
+    if (!isSameDay(transactionDate, fuelLogDate)) {
       continue;
     }
 
