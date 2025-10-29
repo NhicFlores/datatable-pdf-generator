@@ -95,6 +95,69 @@ export const createFuelLogColumns = (
       );
     },
   },
+    {
+    id: "invoiceNumber",
+    accessorKey: "invoiceNumber",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant={"ghost"}
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Invoice Number
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const fuelLogId = row.original.id;
+
+      const isMatched = matchingIds.has(fuelLogId); // Still use composite for matching logic
+
+      if (editable && onUpdateField) {
+        return (
+          <EditableCell
+            value={row.original.invoiceNumber}
+            onUpdate={(value) =>
+              onUpdateField(fuelLogId, "invoiceNumber", value as string)
+            }
+            type="text"
+            isMatched={isMatched}
+          />
+        );
+      }
+
+      return (
+        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
+          {row.original.invoiceNumber}
+        </span>
+      );
+    },
+  },
+    {
+    id: "receipt",
+    accessorKey: "receipt",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant={"ghost"}
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Receipt
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const fuelLogId = row.original.id;
+      const isMatched = matchingIds.has(fuelLogId); // Still use composite for matching logic
+      return (
+        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
+          {row.original.receipt ? "Yes" : "No"}
+        </span>
+      );
+    },
+  },
   {
     id: "sellerState",
     accessorKey: "sellerState",
@@ -151,45 +214,6 @@ export const createFuelLogColumns = (
     },
   },
   {
-    id: "invoiceNumber",
-    accessorKey: "invoiceNumber",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant={"ghost"}
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Invoice Number
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const fuelLogId = row.original.id;
-
-      const isMatched = matchingIds.has(fuelLogId); // Still use composite for matching logic
-
-      if (editable && onUpdateField) {
-        return (
-          <EditableCell
-            value={row.original.invoiceNumber}
-            onUpdate={(value) =>
-              onUpdateField(fuelLogId, "invoiceNumber", value as string)
-            }
-            type="text"
-            isMatched={isMatched}
-          />
-        );
-      }
-
-      return (
-        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
-          {row.original.invoiceNumber}
-        </span>
-      );
-    },
-  },
-  {
     id: "odometer",
     accessorKey: "odometer",
     header: ({ column }) => {
@@ -209,30 +233,6 @@ export const createFuelLogColumns = (
       return (
         <span className={isMatched ? "text-green-600 font-semibold" : ""}>
           {row.original.odometer.toLocaleString()}
-        </span>
-      );
-    },
-  },
-  {
-    id: "receipt",
-    accessorKey: "receipt",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant={"ghost"}
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Receipt
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const fuelLogId = row.original.id;
-      const isMatched = matchingIds.has(fuelLogId); // Still use composite for matching logic
-      return (
-        <span className={isMatched ? "text-green-600 font-semibold" : ""}>
-          {row.original.receipt ? "Yes" : "No"}
         </span>
       );
     },

@@ -6,6 +6,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "../ui/button";
 import { EditableCell } from "./editable-cell";
+import { DeleteFuelLogButton } from "../delete-fuel-log-button";
 
 export const createFilteredFuelLogColumns = (
   matchingIds: Set<string> = new Set(),
@@ -16,6 +17,24 @@ export const createFilteredFuelLogColumns = (
   ) => void,
   editable: boolean = false
 ): ColumnDef<FilteredFuelLog>[] => [
+    {
+    id: "driver",
+    accessorKey: "driver",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant={"ghost"}
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Driver
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => (
+      <div className="font-medium">{row.original.driver || "N/A"}</div>
+    ),
+  },
   {
     id: "vehicleId",
     accessorKey: "vehicleId",
@@ -53,24 +72,6 @@ export const createFilteredFuelLogColumns = (
         </div>
       );
     },
-  },
-  {
-    id: "driver",
-    accessorKey: "driver",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant={"ghost"}
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Driver
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => (
-      <div className="font-medium">{row.original.driver || "N/A"}</div>
-    ),
   },
   {
     id: "date",
@@ -338,4 +339,19 @@ export const createFilteredFuelLogColumns = (
       );
     },
   },
+  {
+    id: "actions",
+    accessorKey: "actions",
+    header: "Actions",
+    cell: ({row}) => {
+      return (
+        <DeleteFuelLogButton 
+          fuelLogId={row.original.id}
+          driverId={row.original.driverId}
+          vehicleId={row.original.vehicleId}
+          date={row.original.date}
+        />
+      )
+    }
+  }
 ];
