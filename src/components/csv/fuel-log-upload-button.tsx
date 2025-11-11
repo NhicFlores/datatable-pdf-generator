@@ -17,7 +17,9 @@ interface FuelLogUploadButtonProps {
   size?: "default" | "sm" | "lg" | "icon";
   disabled?: boolean;
 }
-
+// header from export:
+// vehicle,driver,startTime,invoiceNumber,gallons,Cost,sellerStateFullName,sellerName,odometer,receipt 
+// Vehicle, Purchaser, Date/Time, Invoice Number, Gallons, Cost, St./Prov., Merchant's Name, Vehicle Odometer, Receipt 
 export function FuelLogUploadButton({
   onDataParsed,
   variant = "outline",

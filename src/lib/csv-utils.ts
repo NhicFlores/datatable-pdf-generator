@@ -104,7 +104,6 @@ export function downloadFuelSummaryCSV(
   // List of all 50 US states in alphabetical order
   const allStates = [
     "Alabama",
-    "Alaska",
     "Arizona",
     "Arkansas",
     "California",
@@ -113,7 +112,6 @@ export function downloadFuelSummaryCSV(
     "Delaware",
     "Florida",
     "Georgia",
-    "Hawaii",
     "Idaho",
     "Illinois",
     "Indiana",

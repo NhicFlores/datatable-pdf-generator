@@ -81,6 +81,7 @@ export function DataUploadSection() {
         alert(`✅ Processing Complete! 
         • ${result.details.driversCreated} drivers created/found
         • ${result.details.transactionsCreated} fuel transactions saved
+        • ${result.details.skippedDuplicates} duplicates skipped
         • ${
           result.details.insertedIds?.length || 0
         } records inserted${validationErrorSummary}${databaseErrorSummary}`);

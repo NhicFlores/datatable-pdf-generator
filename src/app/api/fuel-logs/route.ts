@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
       details: {
         driversCreated: result.driversCreated,
         transactionsCreated: result.transactionsCreated,
+        skippedDuplicates: result.skippedDuplicates,
         insertedIds: result.insertedIds,
         validationErrors: errors,
         databaseErrors: result.errors,

@@ -7,6 +7,7 @@ export interface ProcessedFuelData {
   transactionsCreated: number;
   insertedIds: string[];
   errors: string[];
+  skippedDuplicates: number;
 }
 
 export async function processFuelCSVData(
@@ -17,6 +18,7 @@ export async function processFuelCSVData(
     transactionsCreated: 0,
     insertedIds: [],
     errors: [],
+    skippedDuplicates: 0,
   };
 
   try {
@@ -134,6 +136,14 @@ export async function processFuelCSVData(
             continue;
           }
 
+          const isDuplicate = await checkFuelLogExists(driverId, transactionDate);
+
+          if (isDuplicate){
+            result.skippedDuplicates++;
+            console.log(`Skipping duplicate fuel log for driver ${row.driver} on ${row.date}`);
+            continue; 
+          }
+
           // Insert fuel transaction using Drizzle ORM
           console.log(
             `🔄 Attempting to insert fuel transaction: ${row.invoiceNumber}`
@@ -186,4 +196,20 @@ export async function processFuelCSVData(
   }
 
   return result;
+}
+
+async function checkFuelLogExists(driverId: string, date: Date): Promise<boolean> {
+  try {
+    const existingLog = await db.query.fuelLogs.findFirst({
+      where: and(
+        eq(schema.fuelLogs.driverId, driverId),
+        eq(schema.fuelLogs.date, date)
+      )
+    })
+
+    return !!existingLog;
+  } catch (error) {
+    console.error("Error checking existing fuel log:", error);
+    return false;
+  }
 }
