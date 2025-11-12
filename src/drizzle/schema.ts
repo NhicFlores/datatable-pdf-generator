@@ -21,7 +21,9 @@ export const drivers = dbSchema.table(
     id: uuid().defaultRandom().primaryKey().notNull(),
     name: varchar("name", { length: 255 }).notNull(),
     branch: varchar("branch", { length: 100 }).notNull(),
-
+    lastFour: varchar("last_four", { length: 4 }),
+    alias: varchar("alias", { length: 255 }),
+    isActive: boolean("is_active").default(true).notNull(),
     // Metadata
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
