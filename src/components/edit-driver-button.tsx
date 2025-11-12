@@ -24,7 +24,7 @@ export function EditDriverButton({ driver }: EditDriverButtonProps) {
         variant="ghost"
         size="sm"
         onClick={() => setIsModalOpen(true)}
-        className="h-8 w-8 p-0"
+        className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
       >
         <Edit className="h-4 w-4" />
       </Button>

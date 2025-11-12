@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { UserBranches } from "@/lib/data-model/enum-types";
+import { BranchCodes } from "@/lib/data-model/enum-types";
 
 // Schema for editing driver information
 export const editDriverSchema = z.object({
@@ -15,9 +15,9 @@ export const editDriverSchema = z.object({
     .or(z.literal("")),
   branch: z
     .enum([
-      UserBranches.DENVER,
-      UserBranches.DES_MOINES,
-      UserBranches.MANHATTAN,
+      BranchCodes.MANHATTAN,
+        BranchCodes.DENVER,
+        BranchCodes.DES_MOINES,
     ])
     .refine((value) => value !== undefined, {
       message: "Please select a branch",

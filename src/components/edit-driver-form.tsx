@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { editDriverSchema, type EditDriverFormData } from "@/lib/validations/driver";
-import { getUserBranchOptions } from "@/lib/data-model/enum-types";
+import { getBranchCodeOptions } from "@/lib/data-model/enum-types";
 import { editDriverAction } from "@/lib/actions/edit-driver-action";
 import { type SelectDriver } from "@/lib/data-model/schema-types";
 
@@ -42,7 +42,7 @@ export function EditDriverForm({ existingDriver, onSuccess }: EditDriverFormProp
     defaultValues: {
       name: existingDriver.name,
       alias: existingDriver.alias || "",
-      branch: existingDriver.branch as "MANHATTAN" | "DENVER" | "DES_MOINES",
+      branch: existingDriver.branch as "MHK" | "DEN" | "DSM",
       lastFour: existingDriver.lastFour || "",
     },
   });
@@ -141,7 +141,7 @@ export function EditDriverForm({ existingDriver, onSuccess }: EditDriverFormProp
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {getUserBranchOptions().map((option) => (
+                    {getBranchCodeOptions().map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>

@@ -131,7 +131,7 @@ export const createDriverManagementColumns = (): ColumnDef<Driver>[] => [
     header: "Actions",
     cell: ({ row }) => {
       return (
-        <div className="flex items-center gap-1">
+        <div className="flex gap-1 ">
           <EditDriverButton driver={row.original} />
         </div>
       );
