@@ -3,6 +3,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "../ui/button";
 import { SelectDriver } from "@/lib/data-model/schema-types";
+import { EditDriverButton } from "@/components/edit-driver-button";
 
 // Use the actual schema type for drivers
 type Driver = SelectDriver;
@@ -122,6 +123,17 @@ export const createDriverManagementColumns = (): ColumnDef<Driver>[] => [
         >
           {isActive ? "Active" : "Inactive"}
         </span>
+      );
+    },
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      return (
+        <div className="flex items-center gap-1">
+          <EditDriverButton driver={row.original} />
+        </div>
       );
     },
   },
