@@ -14,6 +14,7 @@ export type InsertDriver = typeof drivers.$inferInsert;
 
 export type SelectFuelLog = typeof fuelLogs.$inferSelect;
 
+// TODO: REMOVE USAGE OF BaseFuelLog
 export type BaseFuelLog = Omit<SelectFuelLog, "createdAt" | "updatedAt">;
 
 export type SelectUser = typeof users.$inferSelect;

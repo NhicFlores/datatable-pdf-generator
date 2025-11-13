@@ -7,8 +7,7 @@ import {
   CreatedUser,
 } from "./schema-types";
 
-// TODO: REMOVE USAGE OF BaseFuelLog
-export type FuelReport = Omit<SelectDriver, "createdAt" | "updatedAt"> & {
+export type FuelReport = Omit<SelectDriver, "createdAt" | "updatedAt" | "isActive"> & {
   vehicleIds: string[];
   fuelLogs: SelectFuelLog[];
 };

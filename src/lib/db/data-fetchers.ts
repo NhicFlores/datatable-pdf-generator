@@ -9,7 +9,6 @@ import type {
   SelectFuelLog,
 } from "@/lib/data-model/schema-types";
 import type {
-  FuelReport,
   FuelReportSummary,
   DriverTransactions,
   FuelSummaryTableData,
@@ -24,7 +23,6 @@ export type { SelectTransaction, SelectDriver, SelectFuelLog };
 
 // Export new query types for convenience
 export type {
-  FuelReport,
   FuelReportSummary,
   DriverTransactions,
   FuelSummaryTableData,
@@ -57,6 +55,9 @@ export const getFuelReportSummariesFromDB = cache(
           id: schema.drivers.id,
           name: schema.drivers.name,
           branch: schema.drivers.branch,
+          lastFour: schema.drivers.lastFour,
+          alias: schema.drivers.alias,
+          isActive: schema.drivers.isActive,
           createdAt: schema.drivers.createdAt,
           updatedAt: schema.drivers.updatedAt,
           vehicleIds:
@@ -361,58 +362,58 @@ export const getFilteredFuelReportDetailFromDB = cache(
  * DEPRECATED: Use getFuelReportDetailFromDB instead
  * Keeping for backward compatibility during transition
  */
-export const getFuelReportByIdFromDB = cache(
-  async (driverId: string): Promise<FuelReport | null> => {
-    try {
-      console.log(`🔍 Fetching fuel report for driver ID: ${driverId}`);
+// export const getFuelReportByIdFromDB = cache(
+//   async (driverId: string): Promise<FuelReport | null> => {
+//     try {
+//       console.log(`🔍 Fetching fuel report for driver ID: ${driverId}`);
 
-      const [driver, fuelLogs] = await Promise.all([
-        db
-          .select({
-            id: schema.drivers.id,
-            name: schema.drivers.name,
-            branch: schema.drivers.branch,
-          })
-          .from(schema.drivers)
-          .where(eq(schema.drivers.id, driverId))
-          .limit(1),
+//       const [driver, fuelLogs] = await Promise.all([
+//         db
+//           .select({
+//             id: schema.drivers.id,
+//             name: schema.drivers.name,
+//             branch: schema.drivers.branch,
+//           })
+//           .from(schema.drivers)
+//           .where(eq(schema.drivers.id, driverId))
+//           .limit(1),
 
-        db
-          .select()
-          .from(schema.fuelLogs)
-          .where(eq(schema.fuelLogs.driverId, driverId))
-          .orderBy(desc(schema.fuelLogs.date)),
-      ]);
+//         db
+//           .select()
+//           .from(schema.fuelLogs)
+//           .where(eq(schema.fuelLogs.driverId, driverId))
+//           .orderBy(desc(schema.fuelLogs.date)),
+//       ]);
 
-      if (!driver[0]) {
-        console.log(`❌ Driver not found with ID: ${driverId}`);
-        return null;
-      }
+//       if (!driver[0]) {
+//         console.log(`❌ Driver not found with ID: ${driverId}`);
+//         return null;
+//       }
 
-      // Collect unique vehicle IDs
-      const vehicleIds = [...new Set(fuelLogs.map((t) => t.vehicleId))];
+//       // Collect unique vehicle IDs
+//       const vehicleIds = [...new Set(fuelLogs.map((t) => t.vehicleId))];
 
-      const fuelReport: FuelReport = {
-        id: driver[0].id,
-        name: driver[0].name,
-        branch: driver[0].branch,
-        vehicleIds,
-        fuelLogs: fuelLogs,
-      };
+//       const fuelReport: FuelReport = {
+//         id: driver[0].id,
+//         name: driver[0].name,
+//         branch: driver[0].branch,
+//         vehicleIds,
+//         fuelLogs: fuelLogs,
+//       };
 
-      console.log(
-        `✅ Fetched fuel report for ${driver[0].name} with ${fuelLogs.length} transactions`
-      );
-      return fuelReport;
-    } catch (error) {
-      console.error(
-        `❌ Failed to fetch fuel report for driver ${driverId}:`,
-        error
-      );
-      return null;
-    }
-  }
-);
+//       console.log(
+//         `✅ Fetched fuel report for ${driver[0].name} with ${fuelLogs.length} transactions`
+//       );
+//       return fuelReport;
+//     } catch (error) {
+//       console.error(
+//         `❌ Failed to fetch fuel report for driver ${driverId}:`,
+//         error
+//       );
+//       return null;
+//     }
+//   }
+// );
 
 /**
  * DEPRECATED: Use getFuelReportDetailFromDB instead
