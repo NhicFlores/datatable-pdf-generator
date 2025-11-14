@@ -43,6 +43,7 @@ export async function editDriverAction(
       alias: validatedData.alias?.trim() || null,
       branch: validatedData.branch,
       lastFour: validatedData.lastFour?.trim() || null,
+      isActive: validatedData.isActive,
       updatedAt: new Date(),
     };
 

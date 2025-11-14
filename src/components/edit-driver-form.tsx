@@ -44,6 +44,7 @@ export function EditDriverForm({ existingDriver, onSuccess }: EditDriverFormProp
       alias: existingDriver.alias || "",
       branch: existingDriver.branch as "MHK" | "DEN" | "DSM",
       lastFour: existingDriver.lastFour || "",
+      isActive: existingDriver.isActive,
     },
   });
 
@@ -173,6 +174,46 @@ export function EditDriverForm({ existingDriver, onSuccess }: EditDriverFormProp
                 </FormControl>
                 <FormDescription>
                   Last 4 digits of driver&apos;s ID or card number (optional)
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Status Field */}
+          <FormField
+            control={form.control}
+            name="isActive"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <Select
+                  onValueChange={(value) => field.onChange(value === "true")}
+                  defaultValue={field.value ? "true" : "false"}
+                  disabled={isLoading}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="true">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                        Active
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="false">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block w-2 h-2 rounded-full bg-red-500"></span>
+                        Inactive
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Active drivers can be assigned to new transactions
                 </FormDescription>
                 <FormMessage />
               </FormItem>

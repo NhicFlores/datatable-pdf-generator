@@ -27,6 +27,7 @@ export const editDriverSchema = z.object({
     .regex(/^$|^\d{4}$/, "Last four must be exactly 4 digits or empty")
     .optional()
     .or(z.literal("")),
+  isActive: z.boolean(),
 });
 
 export type EditDriverFormData = z.infer<typeof editDriverSchema>;
