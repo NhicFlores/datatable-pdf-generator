@@ -66,6 +66,7 @@ export const getFuelReportSummariesFromDB = cache(
             ),
         })
         .from(schema.drivers)
+        .where(eq(schema.drivers.isActive, true))
         .leftJoin(
           schema.fuelLogs,
           dateRange
