@@ -4,10 +4,12 @@ import { createTransactionColumns } from "@/components/tables/transaction-column
 import { createFuelLogColumns } from "@/components/tables/fuel-log-columns";
 import { FilterTabs } from "@/components/filter-tabs";
 import { CreateFuelLogButton } from "@/components/create-fuel-log-button";
+import { Button } from "@/components/ui/button";
 import {
   updateFuelLogFieldAction,
   addTransactionToDriverLogsAction,
 } from "@/lib/actions/fuel-actions";
+import { Eye, EyeOff } from "lucide-react";
 import React, { useMemo, useState, useCallback, useTransition } from "react";
 import type {
   SelectTransaction,
@@ -81,6 +83,9 @@ export function FuelReportDetail({
   const [transactionFilter, setTransactionFilter] = useState<
     "all" | "matched" | "unmatched"
   >("unmatched");
+
+  // State to control transaction table visibility
+  const [isTransactionTableVisible, setIsTransactionTableVisible] = useState<boolean>(true);
 
   // State to track temporarily removed transactions during audit
   const [removedTransactionIds, setRemovedTransactionIds] = useState<
@@ -211,68 +216,90 @@ export function FuelReportDetail({
       <section>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-800">
-            Fuel Transactions (Expense Statement)
+            Credit Transactions (Expense Statement)
           </h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsTransactionTableVisible(!isTransactionTableVisible)}
+            className="flex items-center gap-2"
+          >
+            {isTransactionTableVisible ? (
+              <>
+                <EyeOff className="h-4 w-4" />
+                Hide Tansaction Table
+              </>
+            ) : (
+              <>
+                <Eye className="h-4 w-4" />
+                Show Tansaction Table
+              </>
+            )}
+          </Button>
         </div>
 
-        {allTransactions.length > 0 ? (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <FilterTabs
-                activeFilter={statementFilter}
-                onFilterChange={setStatementFilter}
-                totalCount={
-                  allTransactions.filter(
-                    (t) => !removedTransactionIds.has(t.transactionReference)
-                  ).length
-                }
-                matchedCount={
-                  allTransactions.filter(
-                    (t) =>
-                      matchingTransactionIds.has(t.id) && // Use database ID
-                      !removedTransactionIds.has(t.transactionReference)
-                  ).length
-                }
-                unmatchedCount={
-                  allTransactions.filter(
-                    (t) =>
-                      !matchingTransactionIds.has(t.id) && // Use database ID
-                      !removedTransactionIds.has(t.transactionReference)
-                  ).length
-                }
-              />
-              {removedTransactionIds.size > 0 && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>
-                    {removedTransactionIds.size} transactions removed from view
-                  </span>
-                  <button
-                    onClick={handleRestoreTransactions}
-                    className="text-blue-600 hover:text-blue-700 underline"
-                  >
-                    Restore All
-                  </button>
+        {isTransactionTableVisible && (
+          <>
+            {allTransactions.length > 0 ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <FilterTabs
+                    activeFilter={statementFilter}
+                    onFilterChange={setStatementFilter}
+                    totalCount={
+                      allTransactions.filter(
+                        (t) => !removedTransactionIds.has(t.transactionReference)
+                      ).length
+                    }
+                    matchedCount={
+                      allTransactions.filter(
+                        (t) =>
+                          matchingTransactionIds.has(t.id) && // Use database ID
+                          !removedTransactionIds.has(t.transactionReference)
+                      ).length
+                    }
+                    unmatchedCount={
+                      allTransactions.filter(
+                        (t) =>
+                          !matchingTransactionIds.has(t.id) && // Use database ID
+                          !removedTransactionIds.has(t.transactionReference)
+                      ).length
+                    }
+                  />
+                  {removedTransactionIds.size > 0 && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <span>
+                        {removedTransactionIds.size} transactions removed from view
+                      </span>
+                      <button
+                        onClick={handleRestoreTransactions}
+                        className="text-blue-600 hover:text-blue-700 underline"
+                      >
+                        Restore All
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <DataTable
-              columns={transactionColumns}
-              data={filteredStatementTransactions}
-            />
-          </div>
-        ) : (
-          <div className="text-center text-gray-500 mt-10">
-            {driverTransactions
-              ? `No transactions found for ${driverTransactions.driverName}`
-              : "No transaction data available"}
-          </div>
+                <DataTable
+                  columns={transactionColumns}
+                  data={filteredStatementTransactions}
+                />
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 mt-10">
+                {driverTransactions
+                  ? `No transactions found for ${driverTransactions.driverName}`
+                  : "No transaction data available"}
+              </div>
+            )}
+          </>
         )}
       </section>
 
       <section>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-800">
-            All Fuel Transactions (Fuel Report)
+            Fuel Logs (Fuel Report)
           </h2>
         </div>
         {driverLogs ? (
