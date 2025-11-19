@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -25,6 +25,11 @@ export function QuarterSelector({
 }: QuarterSelectorProps) {
   const [selectedQuarter, setSelectedQuarter] = useState(currentQuarter);
   const [isPending, startTransition] = useTransition();
+
+  // Sync local state with prop when it changes (after server redirect)
+  useEffect(() => {
+    setSelectedQuarter(currentQuarter);
+  }, [currentQuarter]);
 
   const handleQuarterChange = (newQuarter: string) => {
     setSelectedQuarter(newQuarter);
