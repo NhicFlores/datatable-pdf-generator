@@ -163,68 +163,76 @@ export function FuelReportDetail({
     return driverTransactions?.matchedTransactionIds || new Set<string>();
   }, [driverTransactions]);
 
-  // Filtered transactions for the expense statement view
-  const filteredStatementTransactions = useMemo(() => {
+  // Base filtered transactions (week + exclusions only, no tab filter)
+  const baseFilteredTransactions = useMemo(() => {
     if (!allTransactions.length) return [];
 
     const activeTransactions = allTransactions.filter(
       (t) => !removedTransactionIds.has(t.transactionReference)
     );
 
-    // Apply week filter first
-    const weekFilteredTransactions = selectedWeek 
+    // Apply week filter only
+    return selectedWeek 
       ? activeTransactions.filter(t => isDateInSelectedWeek(t.transactionDate))
       : activeTransactions;
-
-    // Then apply match filter
-    switch (statementFilter) {
-      case "matched":
-        return weekFilteredTransactions.filter(
-          (t) => matchingTransactionIds.has(t.id) // Use database ID instead of reference
-        );
-      case "unmatched":
-        return weekFilteredTransactions.filter(
-          (t) => !matchingTransactionIds.has(t.id) // Use database ID instead of reference
-        );
-      case "all":
-      default:
-        return weekFilteredTransactions;
-    }
   }, [
     allTransactions,
-    statementFilter,
-    matchingTransactionIds,
     removedTransactionIds,
     selectedWeek,
     isDateInSelectedWeek,
   ]);
 
-  // Filtered data for fuel transactions
-  const filteredFuelLogs = useMemo(() => {
+  // Filtered transactions for the expense statement view (base + tab filter)
+  const filteredStatementTransactions = useMemo(() => {
+    // Apply match filter to base filtered data
+    switch (statementFilter) {
+      case "matched":
+        return baseFilteredTransactions.filter(
+          (t) => matchingTransactionIds.has(t.id) // Use database ID instead of reference
+        );
+      case "unmatched":
+        return baseFilteredTransactions.filter(
+          (t) => !matchingTransactionIds.has(t.id) // Use database ID instead of reference
+        );
+      case "all":
+      default:
+        return baseFilteredTransactions;
+    }
+  }, [
+    baseFilteredTransactions,
+    statementFilter,
+    matchingTransactionIds,
+  ]);
+
+  // Base filtered fuel logs (week only, no tab filter)
+  const baseFilteredFuelLogs = useMemo(() => {
     if (!driverLogs) return [];
 
     const allFuelLogs = driverLogs.fuelLogs;
 
-    // Apply week filter first
-    const weekFilteredLogs = selectedWeek 
+    // Apply week filter only
+    return selectedWeek 
       ? allFuelLogs.filter(log => isDateInSelectedWeek(log.date))
       : allFuelLogs;
+  }, [driverLogs, selectedWeek, isDateInSelectedWeek]);
 
-    // Then apply match filter
+  // Filtered data for fuel transactions (base + tab filter)
+  const filteredFuelLogs = useMemo(() => {
+    // Apply match filter to base filtered data
     switch (transactionFilter) {
       case "matched":
-        return weekFilteredLogs.filter(
+        return baseFilteredFuelLogs.filter(
           (t) => matchingFuelLogIds.has(t.id) // Use database ID instead of composite key
         );
       case "unmatched":
-        return weekFilteredLogs.filter(
+        return baseFilteredFuelLogs.filter(
           (t) => !matchingFuelLogIds.has(t.id) // Use database ID instead of composite key
         );
       case "all":
       default:
-        return weekFilteredLogs;
+        return baseFilteredFuelLogs;
     }
-  }, [driverLogs, matchingFuelLogIds, transactionFilter, selectedWeek, isDateInSelectedWeek]);
+  }, [baseFilteredFuelLogs, transactionFilter, matchingFuelLogIds]);
 
   const transactionColumns = useMemo(
     () =>
@@ -318,14 +326,14 @@ export function FuelReportDetail({
                   <FilterTabs
                     activeFilter={statementFilter}
                     onFilterChange={setStatementFilter}
-                    totalCount={filteredStatementTransactions.length}
+                    totalCount={baseFilteredTransactions.length}
                     matchedCount={
-                      filteredStatementTransactions.filter(
+                      baseFilteredTransactions.filter(
                         (t) => matchingTransactionIds.has(t.id) // Use database ID
                       ).length
                     }
                     unmatchedCount={
-                      filteredStatementTransactions.filter(
+                      baseFilteredTransactions.filter(
                         (t) => !matchingTransactionIds.has(t.id) // Use database ID
                       ).length
                     }
@@ -380,14 +388,14 @@ export function FuelReportDetail({
               <FilterTabs
                 activeFilter={transactionFilter}
                 onFilterChange={setTransactionFilter}
-                totalCount={filteredFuelLogs.length}
+                totalCount={baseFilteredFuelLogs.length}
                 matchedCount={
-                  filteredFuelLogs.filter(
+                  baseFilteredFuelLogs.filter(
                     (t) => matchingFuelLogIds.has(t.id) // Use database ID
                   ).length
                 }
                 unmatchedCount={
-                  filteredFuelLogs.filter(
+                  baseFilteredFuelLogs.filter(
                     (t) => !matchingFuelLogIds.has(t.id) // Use database ID
                   ).length
                 }
