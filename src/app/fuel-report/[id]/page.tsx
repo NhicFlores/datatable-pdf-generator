@@ -61,6 +61,8 @@ export default async function FuelReportDetailPage({
         <FuelReportDetail
           driverLogs={driverLogs}
           driverTransactions={driverTransactions}
+          quarterStartDate={selectedDateRange?.startDate}
+          quarterEndDate={selectedDateRange?.endDate}
         />
       </main>
     </div>

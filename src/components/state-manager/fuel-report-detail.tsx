@@ -4,6 +4,7 @@ import { createTransactionColumns } from "@/components/tables/transaction-column
 import { createFuelLogColumns } from "@/components/tables/fuel-log-columns";
 import { FilterTabs } from "@/components/filter-tabs";
 import { CreateFuelLogButton } from "@/components/create-fuel-log-button";
+import { WeekSelector } from "@/components/week-selector";
 import { Button } from "@/components/ui/button";
 import {
   updateFuelLogFieldAction,
@@ -11,6 +12,12 @@ import {
 } from "@/lib/actions/fuel-actions";
 import { Eye, EyeOff } from "lucide-react";
 import React, { useMemo, useState, useCallback, useTransition } from "react";
+import { 
+  generateWeeksForQuarter, 
+  getCurrentWeek,
+  type WeekRange 
+} from "@/lib/utils/week-utils";
+import { parseISO, isWithinInterval } from "date-fns";
 import type {
   SelectTransaction,
   SelectFuelLog,
@@ -23,13 +30,28 @@ import type {
 interface FuelReportDetailProps {
   driverLogs: DriverLogs;
   driverTransactions: DriverTransactions | null;
+  quarterStartDate?: Date; // Optional for backward compatibility
+  quarterEndDate?: Date;   // Optional for backward compatibility
 }
 
 export function FuelReportDetail({
   driverLogs,
   driverTransactions,
+  quarterStartDate,
+  quarterEndDate,
 }: FuelReportDetailProps) {
   const [, startTransition] = useTransition();
+
+  // Generate weeks for the quarter (if dates are provided)
+  const weeks = useMemo(() => {
+    if (!quarterStartDate || !quarterEndDate) return [];
+    return generateWeeksForQuarter(quarterStartDate, quarterEndDate);
+  }, [quarterStartDate, quarterEndDate]);
+
+  // Week filter state
+  const [selectedWeek, setSelectedWeek] = useState<WeekRange | null>(() => {
+    return weeks.length > 0 ? getCurrentWeek(weeks) : null;
+  });
 
   // Server Action wrapper for updating fuel transaction fields
   const handleUpdateFuelLogField = useCallback(
@@ -112,6 +134,26 @@ export function FuelReportDetail({
     setRemovedTransactionIds(new Set());
   }, []);
 
+  // Week filter handler
+  const handleWeekChange = useCallback((week: WeekRange | null) => {
+    setSelectedWeek(week);
+  }, []);
+
+  // Helper function to check if a date is within the selected week
+  const isDateInSelectedWeek = useCallback((date: Date | string | null): boolean => {
+    if (!selectedWeek || !date) return true; // Show all if no week selected or no date
+    
+    try {
+      const dateObj = typeof date === 'string' ? parseISO(date) : date;
+      return isWithinInterval(dateObj, {
+        start: selectedWeek.startDate,
+        end: selectedWeek.endDate,
+      });
+    } catch {
+      return true; // Show item if date parsing fails
+    }
+  }, [selectedWeek]);
+
   // Get matching transaction IDs for highlighting (now from server)
   const matchingFuelLogIds = useMemo(() => {
     return driverTransactions?.matchedFuelLogIds || new Set<string>();
@@ -129,24 +171,32 @@ export function FuelReportDetail({
       (t) => !removedTransactionIds.has(t.transactionReference)
     );
 
+    // Apply week filter first
+    const weekFilteredTransactions = selectedWeek 
+      ? activeTransactions.filter(t => isDateInSelectedWeek(t.transactionDate))
+      : activeTransactions;
+
+    // Then apply match filter
     switch (statementFilter) {
       case "matched":
-        return activeTransactions.filter(
+        return weekFilteredTransactions.filter(
           (t) => matchingTransactionIds.has(t.id) // Use database ID instead of reference
         );
       case "unmatched":
-        return activeTransactions.filter(
+        return weekFilteredTransactions.filter(
           (t) => !matchingTransactionIds.has(t.id) // Use database ID instead of reference
         );
       case "all":
       default:
-        return activeTransactions;
+        return weekFilteredTransactions;
     }
   }, [
     allTransactions,
     statementFilter,
     matchingTransactionIds,
     removedTransactionIds,
+    selectedWeek,
+    isDateInSelectedWeek,
   ]);
 
   // Filtered data for fuel transactions
@@ -155,20 +205,26 @@ export function FuelReportDetail({
 
     const allFuelLogs = driverLogs.fuelLogs;
 
+    // Apply week filter first
+    const weekFilteredLogs = selectedWeek 
+      ? allFuelLogs.filter(log => isDateInSelectedWeek(log.date))
+      : allFuelLogs;
+
+    // Then apply match filter
     switch (transactionFilter) {
       case "matched":
-        return allFuelLogs.filter(
+        return weekFilteredLogs.filter(
           (t) => matchingFuelLogIds.has(t.id) // Use database ID instead of composite key
         );
       case "unmatched":
-        return allFuelLogs.filter(
+        return weekFilteredLogs.filter(
           (t) => !matchingFuelLogIds.has(t.id) // Use database ID instead of composite key
         );
       case "all":
       default:
-        return allFuelLogs;
+        return weekFilteredLogs;
     }
-  }, [driverLogs, matchingFuelLogIds, transactionFilter]);
+  }, [driverLogs, matchingFuelLogIds, transactionFilter, selectedWeek, isDateInSelectedWeek]);
 
   const transactionColumns = useMemo(
     () =>
@@ -213,10 +269,26 @@ export function FuelReportDetail({
         </div>
       </div>
 
+      {/* Week Filter */}
+      {weeks.length > 0 && (
+        <section className="flex justify-center">
+          <WeekSelector
+            weeks={weeks}
+            currentWeek={selectedWeek}
+            onWeekChange={handleWeekChange}
+          />
+        </section>
+      )}
+
       <section>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-800">
             Credit Transactions (Expense Statement)
+            {selectedWeek && (
+              <span className="text-sm font-normal text-gray-600 ml-2">
+                - {selectedWeek.label}
+              </span>
+            )}
           </h2>
           <Button
             variant="outline"
@@ -246,23 +318,15 @@ export function FuelReportDetail({
                   <FilterTabs
                     activeFilter={statementFilter}
                     onFilterChange={setStatementFilter}
-                    totalCount={
-                      allTransactions.filter(
-                        (t) => !removedTransactionIds.has(t.transactionReference)
-                      ).length
-                    }
+                    totalCount={filteredStatementTransactions.length}
                     matchedCount={
-                      allTransactions.filter(
-                        (t) =>
-                          matchingTransactionIds.has(t.id) && // Use database ID
-                          !removedTransactionIds.has(t.transactionReference)
+                      filteredStatementTransactions.filter(
+                        (t) => matchingTransactionIds.has(t.id) // Use database ID
                       ).length
                     }
                     unmatchedCount={
-                      allTransactions.filter(
-                        (t) =>
-                          !matchingTransactionIds.has(t.id) && // Use database ID
-                          !removedTransactionIds.has(t.transactionReference)
+                      filteredStatementTransactions.filter(
+                        (t) => !matchingTransactionIds.has(t.id) // Use database ID
                       ).length
                     }
                   />
@@ -287,9 +351,12 @@ export function FuelReportDetail({
               </div>
             ) : (
               <div className="text-center text-gray-500 mt-10">
-                {driverTransactions
+                {selectedWeek 
+                  ? `No transactions found for ${selectedWeek.label}`
+                  : driverTransactions
                   ? `No transactions found for ${driverTransactions.driverName}`
-                  : "No transaction data available"}
+                  : "No transaction data available"
+                }
               </div>
             )}
           </>
@@ -300,6 +367,11 @@ export function FuelReportDetail({
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-800">
             Fuel Logs (Fuel Report)
+            {selectedWeek && (
+              <span className="text-sm font-normal text-gray-600 ml-2">
+                - {selectedWeek.label}
+              </span>
+            )}
           </h2>
         </div>
         {driverLogs ? (
@@ -308,14 +380,14 @@ export function FuelReportDetail({
               <FilterTabs
                 activeFilter={transactionFilter}
                 onFilterChange={setTransactionFilter}
-                totalCount={driverLogs.fuelLogs.length}
+                totalCount={filteredFuelLogs.length}
                 matchedCount={
-                  driverLogs.fuelLogs.filter(
+                  filteredFuelLogs.filter(
                     (t) => matchingFuelLogIds.has(t.id) // Use database ID
                   ).length
                 }
                 unmatchedCount={
-                  driverLogs.fuelLogs.filter(
+                  filteredFuelLogs.filter(
                     (t) => !matchingFuelLogIds.has(t.id) // Use database ID
                   ).length
                 }
