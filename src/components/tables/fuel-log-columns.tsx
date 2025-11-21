@@ -230,6 +230,26 @@ export const createFuelLogColumns = (
     cell: ({ row }) => {
       const fuelLogId = row.original.id;
       const isMatched = matchingIds.has(fuelLogId); // Still use composite for matching logic
+
+      if (editable && onUpdateField) {
+        return (
+          <EditableCell
+            value={row.original.odometer}
+            onUpdate={(value) =>
+              onUpdateField(fuelLogId, "odometer", value as number)
+            }
+            type="number"
+            step="0.01"
+            min="0"
+            isMatched={isMatched}
+            autoEdit={false}
+            autoEditCondition={(val) => typeof val === "number" && val === 0}
+            zeroValueText="Enter odometer"
+            className="w-24"
+          />
+        );
+      }
+
       return (
         <span className={isMatched ? "text-green-600 font-semibold" : ""}>
           {row.original.odometer.toLocaleString()}
