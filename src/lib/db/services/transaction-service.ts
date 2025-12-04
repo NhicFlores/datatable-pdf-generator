@@ -1,5 +1,5 @@
 import { db, schema } from "@/lib/db";
-// import { eq } from "drizzle-orm"; // Now using eq from db/index
+import { eq } from "drizzle-orm"; // Now using eq from db/index
 import {
   ExpenseCSVRowSchema,
   type ExpenseCSVRow,
@@ -28,40 +28,95 @@ export async function processTransactionCSVData(
         .select({
           id: schema.drivers.id,
           name: schema.drivers.name,
+          alias: schema.drivers.alias,
         })
         .from(schema.drivers);
 
-      // Create a map for fast driver lookups by name (case-insensitive)
-      const driverMap = new Map<string, string>();
+      // Create maps for fast driver lookups by name and alias (case-insensitive)
+      const driverMap = new Map<string, { id: string; matchedBy: 'name' | 'alias'; originalValue: string }>();
+      
       existingDrivers.forEach((driver) => {
-        driverMap.set(driver.name.toLowerCase().trim(), driver.id);
+        // Map by driver name
+        const normalizedName = driver.name.toLowerCase().trim();
+        driverMap.set(normalizedName, { 
+          id: driver.id, 
+          matchedBy: 'name',
+          originalValue: driver.name 
+        });
+
+        // Map by driver alias (if exists)
+        if (driver.alias && driver.alias.trim()) {
+          const normalizedAlias = driver.alias.toLowerCase().trim();
+          driverMap.set(normalizedAlias, { 
+            id: driver.id, 
+            matchedBy: 'alias',
+            originalValue: driver.alias 
+          });
+        }
       });
 
       console.log(
-        `✅ Found ${existingDrivers.length} existing drivers in database`
+        `✅ Found ${existingDrivers.length} existing drivers in database (${driverMap.size} name/alias mappings)`
       );
 
       // Track newly created drivers to avoid duplicates within this batch
       const newDriversCreated = new Map<string, string>();
 
+      // Helper function to find existing driver by comparing multiple fields
+      const findExistingDriver = (cardholderName: string, employeeName: string): { id: string; matchedBy: string; originalValue: string } | null => {
+        const normalizedCardholder = cardholderName.toLowerCase().trim();
+        const normalizedEmployee = employeeName.toLowerCase().trim();
+
+        // Check cardholder name against driver name and alias
+        if (driverMap.has(normalizedCardholder)) {
+          const match = driverMap.get(normalizedCardholder)!;
+          return {
+            id: match.id,
+            matchedBy: `cardholder → driver ${match.matchedBy}`,
+            originalValue: match.originalValue
+          };
+        }
+
+        // Check employee name against driver name and alias
+        if (driverMap.has(normalizedEmployee)) {
+          const match = driverMap.get(normalizedEmployee)!;
+          return {
+            id: match.id,
+            matchedBy: `employee → driver ${match.matchedBy}`,
+            originalValue: match.originalValue
+          };
+        }
+
+        return null;
+      };
+
       // Helper function to get or create driver
       const getOrCreateDriver = async (
-        cardholderName: string
+        cardholderName: string,
+        employeeName: string
       ): Promise<string> => {
-        const normalizedName = cardholderName.toLowerCase().trim();
-
-        // Check existing drivers first
-        if (driverMap.has(normalizedName)) {
-          return driverMap.get(normalizedName)!;
+        const normalizedCardholder = cardholderName.toLowerCase().trim();
+        
+        // Check existing drivers first (by cardholder name or employee name)
+        const existingMatch = findExistingDriver(cardholderName, employeeName);
+        if (existingMatch) {
+          console.log(
+            `🔗 Found existing driver: "${existingMatch.matchedBy}" → "${existingMatch.originalValue}" (ID: ${existingMatch.id})`
+          );
+          return existingMatch.id;
         }
 
-        // Check if we already created this driver in this batch
-        if (newDriversCreated.has(normalizedName)) {
-          return newDriversCreated.get(normalizedName)!;
+        // Check if we already created this driver in this batch (use cardholder name as primary key)
+        if (newDriversCreated.has(normalizedCardholder)) {
+          const driverId = newDriversCreated.get(normalizedCardholder)!;
+          console.log(
+            `🔗 Using batch-created driver: "${cardholderName}" (ID: ${driverId})`
+          );
+          return driverId;
         }
 
-        // Create new driver
-        console.log(`🔄 Creating new driver: ${cardholderName}`);
+        // Create new driver using cardholder name
+        console.log(`🔄 Creating new driver: "${cardholderName}" (employee: "${employeeName}")`);
         const [newDriver] = await trx
           .insert(schema.drivers)
           .values({
@@ -70,17 +125,22 @@ export async function processTransactionCSVData(
           })
           .returning({ id: schema.drivers.id });
 
-        newDriversCreated.set(normalizedName, newDriver.id);
-        driverMap.set(normalizedName, newDriver.id); // Add to main map too
+        newDriversCreated.set(normalizedCardholder, newDriver.id);
+        // Also add to main map to catch future matches in this batch
+        driverMap.set(normalizedCardholder, { 
+          id: newDriver.id, 
+          matchedBy: 'name',
+          originalValue: cardholderName.trim() 
+        });
 
         console.log(
-          `✅ Created driver ${cardholderName} with ID: ${newDriver.id}`
+          `✅ Created driver "${cardholderName}" with ID: ${newDriver.id}`
         );
         return newDriver.id;
       };
 
       // Track processed references to detect duplicates within batch
-      // const processedReferences = new Set<string>();
+      const processedReferences = new Set<string>();
 
       for (const row of rows) {
         try {
@@ -95,21 +155,20 @@ export async function processTransactionCSVData(
           }
 
           const validRow = validation.data;
-
           // REF_NUMBER-LINE_NUMBER to enforce uniqueness for split transactions
           const refNumberWithLineNumber = `${validRow.transactionReference}-${
             validRow.lineNumber || "1"
           }`;
 
-          // // Step 2: Check for duplicates within batch
-          // if (processedReferences.has(validRow.transactionReference)) {
-          //   result.duplicatesSkipped++;
-          //   result.validationErrors.push(
-          //     `Duplicate transaction reference: ${validRow.transactionReference}`
-          //   );
-          //   continue;
-          // }
-          // processedReferences.add(validRow.transactionReference);
+          // Step 2: Check for duplicates within batch
+          if (processedReferences.has(refNumberWithLineNumber)) {
+            result.duplicatesSkipped++;
+            result.validationErrors.push(
+              `Duplicate transaction reference: ${refNumberWithLineNumber}`
+            );
+            continue;
+          }
+          processedReferences.add(refNumberWithLineNumber);
 
           // Step 3: Validate required fields and constraints
           if (
@@ -172,33 +231,34 @@ export async function processTransactionCSVData(
 
           // Step 6: Check for existing transaction with same reference
           // TODO: Re-enable duplicate check after confirming INSERT works
-          /*
+          
           const existingTransaction = await trx
             .select({ id: schema.transactions.id })
             .from(schema.transactions)
             .where(
               eq(
                 schema.transactions.transactionReference,
-                validRow.transactionReference
+                refNumberWithLineNumber
               )
             )
             .limit(1);
 
           if (existingTransaction.length > 0) {
             console.log(
-              `⚠️ Skipping duplicate transaction: ${validRow.transactionReference}`
+              `⚠️ Skipping duplicate transaction: ${refNumberWithLineNumber}`
             );
             result.duplicatesSkipped++;
             continue;
           }
-          */
+          
 
           // Step 7: Get or create driver for this transaction
-          const driverId = await getOrCreateDriver(validRow.cardHolderName);
+          const employeeFullName = `${validRow.employeeFirstName || ''} ${validRow.employeeLastName || ''}`.trim();
+          const driverId = await getOrCreateDriver(validRow.cardHolderName, employeeFullName);
 
           // Step 8: Insert transaction using Drizzle ORM
           console.log(
-            `🔄 Attempting to insert transaction: ${validRow.transactionReference}`
+            `🔄 Attempting to insert transaction: ${refNumberWithLineNumber}`
           );
           console.log(
             `   Data validation: cardHolderName="${validRow.cardHolderName}", driverId="${driverId}", lastFourDigits="${validRow.lastFourDigits}" (length: ${validRow.lastFourDigits.length}), lineNumber="${validRow.lineNumber}"`
