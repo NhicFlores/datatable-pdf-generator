@@ -136,7 +136,7 @@ export async function processFuelCSVData(
             continue;
           }
 
-          const isDuplicate = await checkFuelLogExists(driverId, transactionDate);
+          const isDuplicate = await checkFuelLogExists(driverId, transactionDate, row.odometer ?? 0);
 
           if (isDuplicate){
             result.skippedDuplicates++;
@@ -198,12 +198,13 @@ export async function processFuelCSVData(
   return result;
 }
 
-async function checkFuelLogExists(driverId: string, date: Date): Promise<boolean> {
+async function checkFuelLogExists(driverId: string, date: Date, odometer: number): Promise<boolean> {
   try {
     const existingLog = await db.query.fuelLogs.findFirst({
       where: and(
         eq(schema.fuelLogs.driverId, driverId),
-        eq(schema.fuelLogs.date, date)
+        eq(schema.fuelLogs.date, date),
+        eq(schema.fuelLogs.odometer, odometer.toString())
       )
     })
 
