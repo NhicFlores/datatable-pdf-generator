@@ -141,15 +141,33 @@ export function FuelReportDetail({
 
   // Helper function to check if a date is within the selected week
   const isDateInSelectedWeek = useCallback((date: Date | string | null): boolean => {
-    if (!selectedWeek || !date) return true; // Show all if no week selected or no date
+     if (!selectedWeek || !date) {
+      console.log('🔍 isDateInSelectedWeek: no week or date', { selectedWeek: selectedWeek?.label, date });
+      return true; // Show all if no week selected or no date
+    }
     
     try {
       const dateObj = typeof date === 'string' ? parseISO(date) : date;
-      return isWithinInterval(dateObj, {
+      const isWithin = isWithinInterval(dateObj, {
         start: selectedWeek.startDate,
         end: selectedWeek.endDate,
       });
-    } catch {
+      
+      console.log('🔍 isDateInSelectedWeek:', {
+        originalDate: date,
+        parsedDate: dateObj.toDateString(),
+        parsedISO: dateObj.toISOString(),
+        selectedWeek: selectedWeek.label,
+        weekStart: selectedWeek.startDate.toDateString(),
+        weekStartISO: selectedWeek.startDate.toISOString(),
+        weekEnd: selectedWeek.endDate.toDateString(),
+        weekEndISO: selectedWeek.endDate.toISOString(),
+        isWithinWeek: isWithin
+      });
+      
+      return isWithin;
+    } catch (error) {
+      console.log('🔍 isDateInSelectedWeek: parse error', { date, error });
       return true; // Show item if date parsing fails
     }
   }, [selectedWeek]);
