@@ -5,14 +5,14 @@ import { redirect } from "next/navigation";
 import { db } from "@/drizzle";
 import { users } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
-import { UserRoles } from "@/lib/data-model/enum-types";
+import { UserRoles, type UserRole, type UserBranch } from "@/lib/data-model/enum-types";
 import { AuthRoute, HomeRoute } from "@/lib/routes";
 
 // Extend the built-in session types
 declare module "next-auth" {
   interface User {
-    role: string;
-    branch: string;
+    role: UserRole;
+    branch: UserBranch;
   }
 
   interface Session {
@@ -20,8 +20,8 @@ declare module "next-auth" {
       id: string;
       email: string;
       name: string;
-      role: string;
-      branch: string;
+      role: UserRole;
+      branch: UserBranch;
     };
   }
 }
@@ -85,8 +85,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             id: user[0].id,
             email: user[0].email,
             name: user[0].name,
-            role: user[0].role,
-            branch: user[0].branch,
+            role: user[0].role as UserRole,
+            branch: user[0].branch as UserBranch,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -109,8 +109,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Add role, branch and id to session from token
       if (token) {
         session.user.id = token.id as string;
-        session.user.role = token.role as string;
-        session.user.branch = token.branch as string;
+        session.user.role = token.role as UserRole;
+        session.user.branch = token.branch as UserBranch;
       }
       return session;
     },

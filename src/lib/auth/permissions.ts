@@ -3,6 +3,7 @@ import {
   type UserBranch,
   UserRoles,
   USER_BRANCHES,
+  getBranchByCode,
 } from "@/lib/data-model/enum-types";
 
 export interface User {
@@ -74,14 +75,10 @@ export function canEditBranchData(
 
 /**
  * Get user's display name for branch
- * Converts "DES MOINES" to "Des Moines"
+ * Converts branch code "MHK" to "Manhattan"
  */
-export function getBranchDisplayName(branch: UserBranch): string {
-  return branch
-    .toLowerCase()
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+export function getBranchDisplayName(branchCode: UserBranch): string {
+  return getBranchByCode(branchCode).displayName;
 }
 
 /**

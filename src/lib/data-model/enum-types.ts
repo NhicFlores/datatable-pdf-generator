@@ -27,53 +27,62 @@ export const getUserRoleOptions = () => {
     value,
   }));
 };
-// User Branches with object-based enum pattern
-export const UserBranches = {
-  DENVER: "DENVER",
-  DES_MOINES: "DES_MOINES",
-  MANHATTAN: "MANHATTAN",
+// User Branches - Unified configuration with codes and display names
+export const BRANCHES = {
+  MHK: {
+    code: "MHK" as const,
+    displayName: "Manhattan" as const,
+  },
+  DEN: {
+    code: "DEN" as const,
+    displayName: "Denver" as const,
+  },
+  DSM: {
+    code: "DSM" as const,
+    displayName: "Des Moines" as const,
+  },
 } as const;
 
-export type UserBranch = (typeof UserBranches)[keyof typeof UserBranches];
+// Extract types
+export type UserBranch = keyof typeof BRANCHES;
+export type BranchCode = UserBranch; // Alias for backward compatibility
 
-export const USER_BRANCHES = Object.values(UserBranches);
+// Arrays for iteration
+export const USER_BRANCHES = Object.keys(BRANCHES) as UserBranch[];
+export const BRANCH_CODES = USER_BRANCHES; // Alias for backward compatibility
 
+// Type guards for runtime validation
 export const isUserBranch = (value: string): value is UserBranch => {
-  return Object.values(UserBranches).includes(value as UserBranch);
+  return Object.keys(BRANCHES).includes(value as UserBranch);
 };
 
+export const isBranchCode = (value: string): value is BranchCode => {
+  return isUserBranch(value);
+};
 
+// Helper functions
+export const getBranchByCode = (code: UserBranch) => BRANCHES[code];
 
 export const getUserBranchOptions = () => {
-  return Object.entries(UserBranches).map(([key, value]) => ({
-    label: key
-      .replace(/_/g, " ")
-      .toLowerCase()
-      .replace(/\b\w/g, (l) => l.toUpperCase()),
-    value,
+  return Object.entries(BRANCHES).map(([code, { displayName }]) => ({
+    label: displayName,
+    value: code,
   }));
 };
+
+export const getBranchCodeOptions = () => {
+  return getUserBranchOptions(); // Same as above now
+};
+
+// Legacy enum objects for backward compatibility (DEPRECATED)
+export const UserBranches = {
+  MANHATTAN: "MHK",
+  DENVER: "DEN", 
+  DES_MOINES: "DSM",
+} as const;
 
 export const BranchCodes = {
   DENVER: "DEN",
-  DES_MOINES: "DSM",
+  DES_MOINES: "DSM", 
   MANHATTAN: "MHK",
 } as const;
-
-export type BranchCode = (typeof BranchCodes)[keyof typeof BranchCodes];
-
-export const BRANCH_CODES = Object.values(BranchCodes);
-
-export const isBranchCode = (value: string): value is BranchCode => {
-  return Object.values(BranchCodes).includes(value as BranchCode);
-}
-
-export const getBranchCodeOptions = () => {
-  return Object.entries(BranchCodes).map(([key, value]) => ({
-    label: key
-      .replace(/_/g, " ")
-      .toLowerCase()
-      .replace(/\b\w/g, (l) => l.toUpperCase()),
-    value,
-  }));
-};

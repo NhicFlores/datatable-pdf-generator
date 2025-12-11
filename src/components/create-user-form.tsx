@@ -31,7 +31,7 @@ import {
   getUserRoleOptions,
   getUserBranchOptions,
   UserRoles,
-  UserBranches,
+  USER_BRANCHES,
 } from "@/lib/data-model/enum-types";
 import { createUserAction } from "@/lib/actions/create-user-action";
 
@@ -50,7 +50,7 @@ export function CreateUserForm({ onSuccess }: CreateUserFormProps) {
       name: "",
       password: "",
       role: UserRoles.USER,
-      branch: UserBranches.MANHATTAN,
+      branch: USER_BRANCHES[0], // Use first branch code (MHK)
     },
   });
 

@@ -27,6 +27,8 @@ import { editUserSchema, type EditUserFormData } from "@/lib/validations/user";
 import {
   getUserRoleOptions,
   getUserBranchOptions,
+  type UserRole,
+  type UserBranch,
 } from "@/lib/data-model/enum-types";
 import { editUserAction } from "@/lib/actions/edit-user-action";
 import { type UserListItem } from "@/lib/data-model/schema-types";
@@ -46,8 +48,8 @@ export function EditUserForm({ existingUser, onSuccess }: EditUserFormProps) {
       email: existingUser.email,
       name: existingUser.name,
       password: "",
-      role: existingUser.role as "USER" | "ADMIN",
-      branch: existingUser.branch as "MANHATTAN" | "DENVER" | "DES_MOINES",
+      role: existingUser.role as UserRole,
+      branch: existingUser.branch as UserBranch,
     },
   });
 
