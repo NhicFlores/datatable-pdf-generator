@@ -5,6 +5,7 @@ import { requireAuth } from "@/auth";
 import Header from "@/components/header";
 import { getCurrentYearQuarters } from "@/lib/actions/quarter-data-actions";
 import { getQuarterDateRangeFromQuarters } from "@/lib/utils/quarter-utils";
+import { UserRoles } from "@/lib/data-model/enum-types";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -16,8 +17,8 @@ export default async function FuelReportDetailPage({
   params,
   searchParams,
 }: PageProps) {
-  // Ensure user is authenticated
-  await requireAuth();
+  // Ensure user is authenticated and get user data
+  const user = await requireAuth();
 
   const { id } = await params;
   const urlParams = await searchParams;
@@ -35,10 +36,12 @@ export default async function FuelReportDetailPage({
     );
   }
 
-  // Single consolidated data fetch with optional quarter filtering
+  // Single consolidated data fetch with optional quarter filtering and branch isolation
   const { driverLogs, driverTransactions } = await getFuelReportDetailFromDB(
     id,
-    selectedDateRange
+    selectedDateRange,
+    // Only pass branch filter for non-admin users
+    user.role === UserRoles.ADMIN ? undefined : user.branch
   );
 
   if (!driverLogs) {

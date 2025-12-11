@@ -8,6 +8,7 @@ import type {
   SelectDriver,
   SelectFuelLog,
 } from "@/lib/data-model/schema-types";
+import type { UserBranch } from "@/lib/data-model/enum-types";
 import type {
   FuelReportSummary,
   DriverTransactions,
@@ -40,7 +41,13 @@ export type {
  * Returns basic driver info + aggregated stats without full transaction data
  */
 export const getFuelReportSummariesFromDB = cache(
-  async (dateRange?: QuarterDateRange | null): Promise<FuelReportSummary[]> => {
+  async (
+    dateRange?: QuarterDateRange | null,
+    userBranch?: UserBranch
+  ): Promise<FuelReportSummary[]> => {
+    if(userBranch){
+      console.log(`Filtering fuel report summaries for branch: ${userBranch}`);
+    }
     try {
       console.log("🔍 Fetching fuel report summaries from database...");
 
@@ -48,6 +55,16 @@ export const getFuelReportSummariesFromDB = cache(
         console.log(
           `📅 Filtering by date range: ${dateRange.startDate.toISOString()} - ${dateRange.endDate.toISOString()}`
         );
+      }
+
+      if (userBranch) {
+        console.log(`🏢 Filtering by branch: ${userBranch}`);
+      }
+
+      // Build where conditions
+      const whereConditions = [eq(schema.drivers.isActive, true)];
+      if (userBranch) {
+        whereConditions.push(eq(schema.drivers.branch, userBranch));
       }
 
       const query = db
@@ -66,7 +83,7 @@ export const getFuelReportSummariesFromDB = cache(
             ),
         })
         .from(schema.drivers)
-        .where(eq(schema.drivers.isActive, true))
+        .where(and(...whereConditions))
         .leftJoin(
           schema.fuelLogs,
           dateRange
@@ -120,7 +137,8 @@ export const getFuelReportSummariesFromDB = cache(
 export const getFuelReportDetailFromDB = cache(
   async (
     driverId: string,
-    dateRange?: QuarterDateRange | null
+    dateRange?: QuarterDateRange | null,
+    userBranch?: UserBranch
   ): Promise<{
     driverLogs: DriverLogs | null;
     driverTransactions: DriverTransactions | null;
@@ -129,7 +147,7 @@ export const getFuelReportDetailFromDB = cache(
       console.log(
         `🔍 Fetching complete fuel report detail for driver ID: ${driverId}${
           dateRange ? ` for date range` : ""
-        }`
+        }${userBranch ? ` for branch: ${userBranch}` : ""}`
       );
 
       if (dateRange) {
@@ -139,8 +157,13 @@ export const getFuelReportDetailFromDB = cache(
       }
       // NOTE TODO: simplify query by removing driver query and just using transactions FK 
       // Single comprehensive query using Drizzle's relational query API
+      const driverWhereConditions = [eq(schema.drivers.id, driverId)];
+      if (userBranch) {
+        driverWhereConditions.push(eq(schema.drivers.branch, userBranch));
+      }
+
       const result = await db.query.drivers.findFirst({
-        where: eq(schema.drivers.id, driverId),
+        where: and(...driverWhereConditions),
         with: {
           fuelLogs: {
             where: dateRange
@@ -246,7 +269,8 @@ export const getFilteredFuelReportDetailFromDB = cache(
     filters?: {
       statementFilter?: "all" | "matched" | "unmatched";
       transactionFilter?: "all" | "matched" | "unmatched";
-    }
+    },
+    userBranch?: UserBranch
   ): Promise<{
     driverLogs: DriverLogs | null;
     driverTransactions: DriverTransactions | null;
@@ -262,7 +286,7 @@ export const getFilteredFuelReportDetailFromDB = cache(
 
       // Get base data first
       const { driverLogs, driverTransactions } =
-        await getFuelReportDetailFromDB(driverId);
+        await getFuelReportDetailFromDB(driverId, undefined, userBranch);
 
       if (!driverLogs || !driverTransactions) {
         return {
@@ -512,7 +536,10 @@ export const getTransactionsByDriverFromDB = cache(
  * Returns data structured to match the deprecated FuelSummaryData format
  */
 export const getFuelSummaryTableFromDB = cache(
-  async (dateRange?: QuarterDateRange | null): Promise<FuelSummaryTableData> => {
+  async (
+    dateRange?: QuarterDateRange | null,
+    userBranch?: UserBranch
+  ): Promise<FuelSummaryTableData> => {
     try {
       console.log("🔍 Fetching fuel summary table data from database...");
 
@@ -522,10 +549,19 @@ export const getFuelSummaryTableFromDB = cache(
         );
       }
 
+      if (userBranch) {
+        console.log(`🏢 Filtering fuel summary data by branch: ${userBranch}`);
+      }
+
       // Build where conditions
       const whereConditions = [
         sql`${schema.fuelLogs.sellerState} IS NOT NULL`
       ];
+
+      // Add branch filter if provided
+      if (userBranch) {
+        whereConditions.push(eq(schema.drivers.branch, userBranch));
+      }
 
       // Add date range filter if provided
       if (dateRange) {
@@ -546,6 +582,7 @@ export const getFuelSummaryTableFromDB = cache(
           gallons: schema.fuelLogs.gallons,
         })
         .from(schema.fuelLogs)
+        .leftJoin(schema.drivers, eq(schema.fuelLogs.driverId, schema.drivers.id))
         .where(and(...whereConditions))
         .orderBy(schema.fuelLogs.sellerState);
 
@@ -620,6 +657,7 @@ export const getFilteredFuelLogs = cache(
     state?: string;
     truckId?: string;
     dateRange?: QuarterDateRange;
+    userBranch?: UserBranch;
   }): Promise<Array<{
     id: string;
     vehicleId: string;
@@ -648,6 +686,10 @@ export const getFilteredFuelLogs = cache(
       
       if (filters.truckId) {
         conditions.push(eq(schema.fuelLogs.vehicleId, filters.truckId));
+      }
+      
+      if (filters.userBranch) {
+        conditions.push(eq(schema.drivers.branch, filters.userBranch));
       }
       
       if (filters.dateRange) {
@@ -697,7 +739,10 @@ export const getFilteredFuelLogs = cache(
  * Returns raw fuel log data for export purposes
  */
 export const getAllFuelLogsForQuarter = cache(
-  async (dateRange: QuarterDateRange): Promise<Array<{
+  async (
+    dateRange: QuarterDateRange,
+    userBranch?: UserBranch
+  ): Promise<Array<{
     id: string;
     vehicleId: string;
     driverId: string;
@@ -719,6 +764,24 @@ export const getAllFuelLogsForQuarter = cache(
         `📅 Date range: ${dateRange.startDate.toLocaleDateString()} - ${dateRange.endDate.toLocaleDateString()}`
       );
 
+      if (userBranch) {
+        console.log(`🏢 Filtering by branch: ${userBranch}`);
+      }
+
+      // Build where conditions
+      const whereConditions = [
+        between(
+          schema.fuelLogs.date,
+          dateRange.startDate,
+          dateRange.endDate
+        )
+      ];
+
+      // Add branch filter if provided
+      if (userBranch) {
+        whereConditions.push(eq(schema.drivers.branch, userBranch));
+      }
+
       // Fetch all fuel logs within the date range with driver names
       const fuelLogs = await db
         .select({
@@ -739,13 +802,7 @@ export const getAllFuelLogsForQuarter = cache(
         })
         .from(schema.fuelLogs)
         .leftJoin(schema.drivers, eq(schema.fuelLogs.driverId, schema.drivers.id))
-        .where(
-          between(
-            schema.fuelLogs.date,
-            dateRange.startDate,
-            dateRange.endDate
-          )
-        )
+        .where(and(...whereConditions))
         .orderBy(desc(schema.fuelLogs.date), schema.fuelLogs.vehicleId);
 
       console.log(`✅ Retrieved ${fuelLogs.length} fuel log records for export`);

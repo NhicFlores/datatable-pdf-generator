@@ -7,6 +7,7 @@ import { getCurrentYearQuarters } from "@/lib/actions/quarter-data-actions";
 import { getQuarterDateRangeFromQuarters } from "@/lib/utils/quarter-utils";
 import { QuarterSelector } from "@/components/quarter-selector";
 import { redirect } from "next/navigation";
+import { UserRoles } from "@/lib/data-model/enum-types";
 
 interface PageProps {
   searchParams: Promise<{ quarter?: string }>;
@@ -14,8 +15,8 @@ interface PageProps {
 
 // Server Component - fetches fuel report summaries
 export default async function FuelReportsPage({ searchParams }: PageProps) {
-  // Ensure user is authenticated
-  await requireAuth();
+  // Ensure user is authenticated and get user data
+  const user = await requireAuth();
 
   const params = await searchParams;
 
@@ -31,9 +32,11 @@ export default async function FuelReportsPage({ searchParams }: PageProps) {
     ? getQuarterDateRangeFromQuarters(params.quarter, quarters)
     : currentQuarterDateRange;
 
-  // Fetch data for selected quarter
+  // Fetch data for selected quarter with branch filtering
   const fuelReportSummaries = await getFuelReportSummariesFromDB(
-    selectedDateRange
+    selectedDateRange,
+    // Only pass branch filter for non-admin users
+    user.role === UserRoles.ADMIN ? undefined : user.branch
   );
 
   const handleQuarterChange = async (quarter: string) => {
@@ -55,6 +58,7 @@ export default async function FuelReportsPage({ searchParams }: PageProps) {
               </h1>
               <p className="text-muted-foreground">
                 View and manage fuel report summaries for {selectedQuarter}
+                {user.role !== UserRoles.ADMIN && ` - ${user.branch} Branch`}
               </p>
             </div>
             <QuarterSelector
