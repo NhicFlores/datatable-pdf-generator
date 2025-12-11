@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { FuelCSVRow } from "@/lib/validations/fuel";
 
@@ -26,10 +26,9 @@ export async function processFuelCSVData(
       console.log("-------- FUEL TRANSACTION STARTED --------");
       console.log(`💾 Processing ${rows.length} fuel transactions...`);
 
-      // Step 1: Create drivers for unique driver-branch combinations
-      const uniqueDrivers = new Map<string, { name: string; branch: string }>();
-      const driverMap = new Map<string, string>(); // name-branch -> driverId
-
+      // Step 1: Create drivers for unique driver names
+      const uniqueDrivers = new Set<string>();
+      const driverMap = new Map<string, string>(); // name -> driverId
       for (const row of rows) {
         if (!row.driver || !row.vehicleId) {
           result.errors.push(
@@ -38,27 +37,14 @@ export async function processFuelCSVData(
           continue;
         }
 
-        // Extract branch from vehicleId (assuming format like "NYC-123")
-        const branch = row.vehicleId.split("-")[0] || "UNKNOWN";
-        const driverKey = `${row.driver}-${branch}`;
-
-        if (!uniqueDrivers.has(driverKey)) {
-          uniqueDrivers.set(driverKey, {
-            name: row.driver,
-            branch: branch,
-          });
-        }
+        uniqueDrivers.add(row.driver);
       }
-
       // Create drivers using Drizzle ORM with transaction support
-      for (const [key, driverData] of uniqueDrivers) {
+      for (const driverName of uniqueDrivers) {
         try {
           // First check if driver exists using Drizzle query
           const existingDriver = await trx.query.drivers.findFirst({
-            where: and(
-              eq(schema.drivers.name, driverData.name),
-              eq(schema.drivers.branch, driverData.branch)
-            ),
+            where: eq(schema.drivers.name, driverName)
           });
 
           let driverId: string;
@@ -66,29 +52,33 @@ export async function processFuelCSVData(
           if (existingDriver) {
             driverId = existingDriver.id;
             console.log(
-              `✓ Found existing driver: ${driverData.name} (${driverData.branch})`
+              `✓ Found existing driver: ${driverName}`
             );
           } else {
+            // Extract branch from first vehicle with this driver for new driver creation
+            const sampleRow = rows.find(row => row.driver === driverName);
+            const branch = sampleRow?.vehicleId.split("-")[0] || "UNKNOWN";
+
             // Create new driver using Drizzle insert
             const insertResult = await trx
               .insert(schema.drivers)
               .values({
-                name: driverData.name,
-                branch: driverData.branch,
+                name: driverName,
+                branch: branch,
               })
               .returning({ id: schema.drivers.id });
 
             driverId = insertResult[0].id;
             result.driversCreated++;
             console.log(
-              `✓ Created driver: ${driverData.name} (${driverData.branch}) - ID: ${driverId}`
+              `✓ Created driver: ${driverName} (${branch}) - ID: ${driverId}`
             );
           }
 
-          driverMap.set(key, driverId);
+          driverMap.set(driverName, driverId);
         } catch (error) {
           result.errors.push(
-            `Failed to create driver ${driverData.name}: ${error}`
+            `Failed to create driver ${driverName}: ${error}`
           );
         }
       }
@@ -118,13 +108,11 @@ export async function processFuelCSVData(
           }
 
           // Get driver ID
-          const branch = row.vehicleId.split("-")[0] || "UNKNOWN";
-          const driverKey = `${row.driver}-${branch}`;
-          const driverId = driverMap.get(driverKey);
+          const driverId = driverMap.get(row.driver);
 
           if (!driverId) {
             result.errors.push(
-              `Driver not found for: ${row.driver} in branch ${branch}`
+              `Driver not found: ${row.driver}`
             );
             continue;
           }
@@ -136,7 +124,7 @@ export async function processFuelCSVData(
             continue;
           }
 
-          const isDuplicate = await checkFuelLogExists(driverId, transactionDate, row.odometer ?? 0);
+          const isDuplicate = await checkFuelLogExists(driverId, transactionDate, row.odometer ?? 0, row.cost);
 
           if (isDuplicate){
             result.skippedDuplicates++;
@@ -198,13 +186,19 @@ export async function processFuelCSVData(
   return result;
 }
 
-async function checkFuelLogExists(driverId: string, date: Date, odometer: number): Promise<boolean> {
+async function checkFuelLogExists(driverId: string, date: Date, odometer: number, amount: number): Promise<boolean> {
   try {
     const existingLog = await db.query.fuelLogs.findFirst({
-      where: and(
+      where: or(
+      and(
         eq(schema.fuelLogs.driverId, driverId),
         eq(schema.fuelLogs.date, date),
         eq(schema.fuelLogs.odometer, odometer.toString())
+      ), 
+      and(
+        eq(schema.fuelLogs.driverId, driverId),
+        eq(schema.fuelLogs.date, date),
+        eq(schema.fuelLogs.cost, amount.toString()))
       )
     })
 
