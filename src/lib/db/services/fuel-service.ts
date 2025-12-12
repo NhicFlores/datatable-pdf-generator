@@ -1,6 +1,7 @@
 import { eq, and, or } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { FuelCSVRow } from "@/lib/validations/fuel";
+import { startOfDay, format } from "date-fns";
 
 export interface ProcessedFuelData {
   driversCreated: number;
@@ -117,14 +118,24 @@ export async function processFuelCSVData(
             continue;
           }
 
-          // Parse date
+          // Parse date and normalize to start of day for consistent duplicate checking
           const transactionDate = new Date(row.date);
           if (isNaN(transactionDate.getTime())) {
             result.errors.push(`Invalid date format: ${row.date}`);
             continue;
           }
+          
+          // Normalize to start of day to ensure date-only comparison
+          const normalizedDate = startOfDay(transactionDate);
+          
+          console.log('📅 DATE PROCESSING:', {
+            original: row.date,
+            parsed: transactionDate.toISOString(),
+            normalized: normalizedDate.toISOString(),
+            dateString: format(normalizedDate, 'yyyy-MM-dd')
+          });
 
-          const isDuplicate = await checkFuelLogExists(driverId, transactionDate, row.odometer ?? 0, row.cost);
+          const isDuplicate = await checkFuelLogExists(driverId, normalizedDate, row.odometer ?? 0, row.cost);
 
           if (isDuplicate){
             result.skippedDuplicates++;
@@ -145,7 +156,7 @@ export async function processFuelCSVData(
             .values({
               vehicleId: row.vehicleId,
               driverId: driverId,
-              date: transactionDate,
+              date: normalizedDate, // Use normalized date for consistent storage
               invoiceNumber: row.invoiceNumber,
               gallons: row.gallons.toString(), // Convert to string for decimal
               cost: row.cost.toString(), // Convert to string for decimal

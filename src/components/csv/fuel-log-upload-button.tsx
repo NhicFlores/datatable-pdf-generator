@@ -4,6 +4,7 @@ import React from "react";
 import { CSVUploadButton } from "./csv-upload-button";
 import Papa from "papaparse";
 import { FuelCSVRow } from "@/lib/validations/fuel";
+import { format, startOfDay } from "date-fns";
 
 interface FuelLogUploadButtonProps {
   onDataParsed: (data: FuelCSVRow[]) => void;
@@ -63,7 +64,7 @@ export function FuelLogUploadButton({
                 case "driver":
                   return "NO_DRIVER";
                 case "date":
-                  return new Date().toString();
+                  return format(startOfDay(new Date()), "yyyy-MM-dd");
                 case "invoiceNumber":
                   return "NO_INVOICE_NUMBER";
                 case "sellerState":
@@ -78,6 +79,32 @@ export function FuelLogUploadButton({
                   return "0";
               }
               return "";
+            }
+
+            // Special handling for date field to ensure consistent timezone
+            if (field === "date") {
+              try {
+                // Parse the date string (browser assumes local timezone)
+                const parsedDate = new Date(value);
+                
+                // Normalize to start of day in local timezone
+                const normalizedDate = startOfDay(parsedDate);
+                
+                // Format as YYYY-MM-DD for consistent database storage
+                const formattedDate = format(normalizedDate, "yyyy-MM-dd");
+                
+                console.log('🗓️ DATE TRANSFORM:', {
+                  original: value,
+                  parsed: parsedDate.toISOString(),
+                  normalized: normalizedDate.toISOString(),
+                  formatted: formattedDate
+                });
+                
+                return formattedDate;
+              } catch (error) {
+                console.error('Date parsing error:', error);
+                return format(startOfDay(new Date()), "yyyy-MM-dd");
+              }
             }
 
             if (
