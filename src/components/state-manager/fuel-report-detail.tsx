@@ -17,7 +17,7 @@ import {
   getCurrentWeek,
   type WeekRange 
 } from "@/lib/utils/week-utils";
-import { parseISO, isWithinInterval } from "date-fns";
+import { parseISO, format } from "date-fns";
 import type {
   SelectTransaction,
   SelectFuelLog,
@@ -139,29 +139,35 @@ export function FuelReportDetail({
     setSelectedWeek(week);
   }, []);
 
-  // Helper function to check if a date is within the selected week
+  // Helper function to check if a date is within the selected week (timezone-agnostic)
   const isDateInSelectedWeek = useCallback((date: Date | string | null): boolean => {
-     if (!selectedWeek || !date) {
+    if (!selectedWeek || !date) {
       console.log('🔍 isDateInSelectedWeek: no week or date', { selectedWeek: selectedWeek?.label, date });
       return true; // Show all if no week selected or no date
     }
     
     try {
+      // Extract UTC date component to avoid timezone conversion
       const dateObj = typeof date === 'string' ? parseISO(date) : date;
-      const isWithin = isWithinInterval(dateObj, {
-        start: selectedWeek.startDate,
-        end: selectedWeek.endDate,
-      });
       
-      console.log('🔍 isDateInSelectedWeek:', {
+      // Use UTC date components to avoid local timezone conversion
+      const year = dateObj.getUTCFullYear();
+      const month = (dateObj.getUTCMonth() + 1).toString().padStart(2, '0');
+      const day = dateObj.getUTCDate().toString().padStart(2, '0');
+      const logDateString = `${year}-${month}-${day}`;
+      
+      const weekStartString = format(selectedWeek.startDate, 'yyyy-MM-dd');
+      const weekEndString = format(selectedWeek.endDate, 'yyyy-MM-dd');
+      
+      // Compare as date strings (timezone-agnostic)
+      const isWithin = logDateString >= weekStartString && logDateString <= weekEndString;
+      
+      console.log('🔍 isDateInSelectedWeek (UTC-based):', {
         originalDate: date,
-        parsedDate: dateObj.toDateString(),
-        parsedISO: dateObj.toISOString(),
+        extractedUTCDate: logDateString,
         selectedWeek: selectedWeek.label,
-        weekStart: selectedWeek.startDate.toDateString(),
-        weekStartISO: selectedWeek.startDate.toISOString(),
-        weekEnd: selectedWeek.endDate.toDateString(),
-        weekEndISO: selectedWeek.endDate.toISOString(),
+        weekStartString,
+        weekEndString,
         isWithinWeek: isWithin
       });
       
@@ -227,30 +233,73 @@ export function FuelReportDetail({
     if (!driverLogs) return [];
 
     const allFuelLogs = driverLogs.fuelLogs;
+    
+    console.log('📋 BASE FUEL LOG FILTERING:', {
+      totalLogs: allFuelLogs.length,
+      selectedWeek: selectedWeek?.label || 'All weeks',
+      allLogDates: allFuelLogs.map(log => ({
+        date: typeof log.date === 'string' ? log.date : 
+          `${log.date.getUTCFullYear()}-${(log.date.getUTCMonth() + 1).toString().padStart(2, '0')}-${log.date.getUTCDate().toString().padStart(2, '0')}`,
+        id: log.id
+      }))
+    });
 
     // Apply week filter only
-    return selectedWeek 
-      ? allFuelLogs.filter(log => isDateInSelectedWeek(log.date))
+    const result = selectedWeek 
+      ? allFuelLogs.filter(log => {
+          const shouldInclude = isDateInSelectedWeek(log.date);
+          console.log(`  Log ${log.id} (${typeof log.date === 'string' ? log.date : 
+            `${log.date.getUTCFullYear()}-${(log.date.getUTCMonth() + 1).toString().padStart(2, '0')}-${log.date.getUTCDate().toString().padStart(2, '0')}`}): ${shouldInclude ? 'INCLUDE' : 'EXCLUDE'}`);
+          return shouldInclude;
+        })
       : allFuelLogs;
+      
+    console.log('📋 BASE FILTERING RESULT:', {
+      includedCount: result.length,
+      includedDates: result.map(log => ({
+        date: typeof log.date === 'string' ? log.date : 
+          `${log.date.getUTCFullYear()}-${(log.date.getUTCMonth() + 1).toString().padStart(2, '0')}-${log.date.getUTCDate().toString().padStart(2, '0')}`,
+        id: log.id
+      }))
+    });
+      
+    return result;
   }, [driverLogs, selectedWeek, isDateInSelectedWeek]);
 
   // Filtered data for fuel transactions (base + tab filter)
   const filteredFuelLogs = useMemo(() => {
     // Apply match filter to base filtered data
+    let result;
     switch (transactionFilter) {
       case "matched":
-        return baseFilteredFuelLogs.filter(
+        result = baseFilteredFuelLogs.filter(
           (t) => matchingFuelLogIds.has(t.id) // Use database ID instead of composite key
         );
+        break;
       case "unmatched":
-        return baseFilteredFuelLogs.filter(
+        result = baseFilteredFuelLogs.filter(
           (t) => !matchingFuelLogIds.has(t.id) // Use database ID instead of composite key
         );
+        break;
       case "all":
       default:
-        return baseFilteredFuelLogs;
+        result = baseFilteredFuelLogs;
     }
-  }, [baseFilteredFuelLogs, transactionFilter, matchingFuelLogIds]);
+    
+    console.log('📊 FILTERED FUEL LOGS RESULT:', {
+      selectedWeek: selectedWeek?.label || 'All weeks',
+      transactionFilter,
+      baseFilteredCount: baseFilteredFuelLogs.length,
+      finalFilteredCount: result.length,
+      finalDates: result.map(log => ({
+        date: typeof log.date === 'string' ? log.date : 
+          `${log.date.getUTCFullYear()}-${(log.date.getUTCMonth() + 1).toString().padStart(2, '0')}-${log.date.getUTCDate().toString().padStart(2, '0')}`,
+        id: log.id
+      }))
+    });
+    
+    return result;
+  }, [baseFilteredFuelLogs, transactionFilter, matchingFuelLogIds, selectedWeek]);
 
   const transactionColumns = useMemo(
     () =>
