@@ -1,4 +1,4 @@
-import { eq, and, or } from "drizzle-orm";
+import { eq, and, or, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { FuelCSVRow } from "@/lib/validations/fuel";
 import { startOfDay, format } from "date-fns";
@@ -203,12 +203,12 @@ async function checkFuelLogExists(driverId: string, date: Date, odometer: number
       where: or(
       and(
         eq(schema.fuelLogs.driverId, driverId),
-        eq(schema.fuelLogs.date, date),
+        eq(sql`DATE(${schema.fuelLogs.date})`, format(date, 'yyyy-MM-dd')),
         eq(schema.fuelLogs.odometer, odometer.toString())
       ), 
       and(
         eq(schema.fuelLogs.driverId, driverId),
-        eq(schema.fuelLogs.date, date),
+        eq(sql`DATE(${schema.fuelLogs.date})`, format(date, 'yyyy-MM-dd')),
         eq(schema.fuelLogs.cost, amount.toString()))
       )
     })
