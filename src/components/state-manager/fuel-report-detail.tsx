@@ -104,7 +104,7 @@ export function FuelReportDetail({
   >("unmatched");
   const [transactionFilter, setTransactionFilter] = useState<
     "all" | "matched" | "unmatched"
-  >("unmatched");
+  >("all");
 
   // State to control transaction table visibility
   const [isTransactionTableVisible, setIsTransactionTableVisible] = useState<boolean>(true);
