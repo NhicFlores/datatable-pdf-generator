@@ -1,0 +1,1 @@
+ALTER TABLE "dev-reports"."transactions" ALTER COLUMN "fuel_type" SET DATA TYPE varchar(150);

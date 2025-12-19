@@ -85,7 +85,7 @@ export const transactions = dbSchema.table(
     // Fuel-specific fields (optional for fuel transactions)
     odometerReading: numeric("odometer_reading", { precision: 10, scale: 3 }),
     fuelQuantity: numeric("fuel_quantity", { precision: 8, scale: 3 }),
-    fuelType: varchar("fuel_type", { length: 50 }),
+    fuelType: varchar("fuel_type", { length: 150 }),
     fuelUnitCost: numeric("fuel_unit_cost", { precision: 8, scale: 4 }),
     fuelUnitOfMeasure: varchar("fuel_unit_of_measure", { length: 20 }),
 
