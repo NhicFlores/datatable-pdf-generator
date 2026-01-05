@@ -1,0 +1,1 @@
+ALTER TABLE "dev-reports"."quarter_settings" ADD COLUMN "is_current" boolean DEFAULT false NOT NULL;

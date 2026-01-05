@@ -3,6 +3,7 @@ import { z } from "zod";
 export const quarterSettingsSchema = z
   .object({
     year: z.number().min(2000).max(2035),
+    currentQuarter: z.number().min(1).max(4),
     quarters: z
       .array(
         z.object({

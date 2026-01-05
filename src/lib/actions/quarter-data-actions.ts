@@ -1,6 +1,6 @@
 "use server";
 
-import { getQuarterSettings } from "./quarter-settings-actions";
+import { getQuarterSettings, getCurrentQuarterFromDB } from "./quarter-settings-actions";
 
 export interface QuarterOption {
   value: string;
@@ -22,7 +22,6 @@ export async function getCurrentYearQuarters(): Promise<{
 }> {
   try {
     const currentYear = new Date().getFullYear();
-    const today = new Date();
 
     // Get quarter settings for current year
     const quarterSettings = await getQuarterSettings(currentYear);
@@ -38,28 +37,8 @@ export async function getCurrentYearQuarters(): Promise<{
       endDate: q.endDate,
     }));
 
-    // Determine current quarter based on today's date
-    const currentQuarterData = quarterSettings.quarters.find(
-      (q) => today >= q.startDate && today <= q.endDate
-    );
-
-    const currentQuarter = currentQuarterData
-      ? `${currentYear}-Q${currentQuarterData.quarter}`
-      : `${currentYear}-Q1`; // Default to Q1 if no match
-
-    // Get the date range for the current quarter
-    const currentQuarterDateRange = currentQuarterData
-      ? {
-          startDate: currentQuarterData.startDate,
-          endDate: currentQuarterData.endDate,
-        }
-      : quarters.find((q) => q.value === currentQuarter)
-      ? {
-          startDate: quarters.find((q) => q.value === currentQuarter)!
-            .startDate,
-          endDate: quarters.find((q) => q.value === currentQuarter)!.endDate,
-        }
-      : null;
+    // Get the current quarter from database (based on isCurrent flag)
+    const { currentQuarter, currentQuarterDateRange } = await getCurrentQuarterFromDB(currentYear);
 
     return {
       currentQuarter,

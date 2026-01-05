@@ -287,6 +287,7 @@ export const quarterSettings = dbSchema.table(
     startDate: timestamp("start_date").notNull(),
     endDate: timestamp("end_date").notNull(),
     isActive: boolean("is_active").notNull().default(true),
+    isCurrent: boolean("is_current").notNull().default(false),
 
     // Audit trail
     createdBy: uuid("created_by")
