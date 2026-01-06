@@ -1,6 +1,6 @@
 "use server";
 
-import { getQuarterSettings, getCurrentQuarterFromDB, getAllActiveQuarters } from "./quarter-settings-actions";
+import { getCurrentQuarterFromDB, getAllActiveQuarters } from "./quarter-settings-actions";
 
 export interface QuarterOption {
   value: string;
