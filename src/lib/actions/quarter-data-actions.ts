@@ -38,7 +38,7 @@ export async function getCurrentYearQuarters(): Promise<{
     }));
 
     // Get the current quarter from database (based on isCurrent flag)
-    const { currentQuarter, currentQuarterDateRange } = await getCurrentQuarterFromDB(currentYear);
+    const { currentQuarter, currentQuarterDateRange } = await getCurrentQuarterFromDB();
 
     return {
       currentQuarter,

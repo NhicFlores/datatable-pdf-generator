@@ -114,27 +114,22 @@ export async function updateQuarterSettings(data: QuarterSettings) {
   }
 }
 
-export async function getCurrentQuarterFromDB(year?: number): Promise<{
+export async function getCurrentQuarterFromDB(): Promise<{
   currentQuarter: string;
   currentQuarterDateRange: { startDate: Date; endDate: Date } | null;
 }> {
   try {
-    const queryYear = year || new Date().getFullYear();
-    
-    // Find the quarter marked as current for the specified year
+    // Find ANY quarter marked as current, regardless of year
     const currentQuarterSetting = await db
       .select()
       .from(quarterSettings)
-      .where(and(
-        eq(quarterSettings.year, queryYear),
-        eq(quarterSettings.isCurrent, true)
-      ))
+      .where(eq(quarterSettings.isCurrent, true))
       .limit(1);
 
     if (currentQuarterSetting.length > 0) {
       const setting = currentQuarterSetting[0];
       return {
-        currentQuarter: `${queryYear}-Q${setting.quarterNumber}`,
+        currentQuarter: `${setting.year}-Q${setting.quarterNumber}`,
         currentQuarterDateRange: {
           startDate: setting.startDate,
           endDate: setting.endDate,
@@ -142,12 +137,13 @@ export async function getCurrentQuarterFromDB(year?: number): Promise<{
       };
     }
 
-    // Fallback: if no quarter is marked as current, use Q1 of the year
+    // Fallback: if no quarter is marked as current anywhere, use Q1 of current year
+    const currentYear = new Date().getFullYear();
     const q1Setting = await db
       .select()
       .from(quarterSettings)
       .where(and(
-        eq(quarterSettings.year, queryYear),
+        eq(quarterSettings.year, currentYear),
         eq(quarterSettings.quarterNumber, 1)
       ))
       .limit(1);
@@ -155,7 +151,7 @@ export async function getCurrentQuarterFromDB(year?: number): Promise<{
     if (q1Setting.length > 0) {
       const setting = q1Setting[0];
       return {
-        currentQuarter: `${queryYear}-Q1`,
+        currentQuarter: `${currentYear}-Q1`,
         currentQuarterDateRange: {
           startDate: setting.startDate,
           endDate: setting.endDate,
@@ -163,12 +159,12 @@ export async function getCurrentQuarterFromDB(year?: number): Promise<{
       };
     }
 
-    // Ultimate fallback: calculate Q1 dates if no settings exist
-    const q1Start = new Date(queryYear, 0, 1);
-    const q1End = new Date(queryYear, 2, 31);
+    // Ultimate fallback: calculate Q1 dates if no settings exist at all
+    const q1Start = new Date(currentYear, 0, 1);
+    const q1End = new Date(currentYear, 2, 31);
     
     return {
-      currentQuarter: `${queryYear}-Q1`,
+      currentQuarter: `${currentYear}-Q1`,
       currentQuarterDateRange: {
         startDate: q1Start,
         endDate: q1End,
@@ -178,7 +174,7 @@ export async function getCurrentQuarterFromDB(year?: number): Promise<{
     console.error("Error fetching current quarter from DB:", error);
     
     // Fallback to Q1 of current year
-    const fallbackYear = year || new Date().getFullYear();
+    const fallbackYear = new Date().getFullYear();
     return {
       currentQuarter: `${fallbackYear}-Q1`,
       currentQuarterDateRange: {
