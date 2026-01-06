@@ -184,3 +184,24 @@ export async function getCurrentQuarterFromDB(): Promise<{
     };
   }
 }
+
+export async function getAllActiveQuarters() {
+  try {
+    const settings = await db
+      .select()
+      .from(quarterSettings)
+      .where(eq(quarterSettings.isActive, true))
+      .orderBy(quarterSettings.year, quarterSettings.quarterNumber);
+
+    return settings.map((setting) => ({
+      quarter: setting.quarterNumber,
+      year: setting.year,
+      startDate: setting.startDate,
+      endDate: setting.endDate,
+      isCurrent: setting.isCurrent,
+    }));
+  } catch (error) {
+    console.error("Error fetching active quarters:", error);
+    throw new Error("Failed to fetch active quarters");
+  }
+}

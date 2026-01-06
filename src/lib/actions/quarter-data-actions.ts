@@ -1,6 +1,6 @@
 "use server";
 
-import { getQuarterSettings, getCurrentQuarterFromDB } from "./quarter-settings-actions";
+import { getQuarterSettings, getCurrentQuarterFromDB, getAllActiveQuarters } from "./quarter-settings-actions";
 
 export interface QuarterOption {
   value: string;
@@ -21,17 +21,15 @@ export async function getCurrentYearQuarters(): Promise<{
   quarters: QuarterOption[];
 }> {
   try {
-    const currentYear = new Date().getFullYear();
-
-    // Get quarter settings for current year
-    const quarterSettings = await getQuarterSettings(currentYear);
+    // Get all active quarter settings from any year
+    const activeQuarters = await getAllActiveQuarters();
 
     // Transform to dropdown options
-    const quarters: QuarterOption[] = quarterSettings.quarters.map((q) => ({
-      value: `${currentYear}-Q${q.quarter}`,
+    const quarters: QuarterOption[] = activeQuarters.map((q) => ({
+      value: `${q.year}-Q${q.quarter}`,
       label: `Q${
         q.quarter
-      } ${currentYear} (${q.startDate.toLocaleDateString()} - ${q.endDate.toLocaleDateString()})`,
+      } ${q.year} (${q.startDate.toLocaleDateString()} - ${q.endDate.toLocaleDateString()})`,
       quarter: q.quarter,
       startDate: q.startDate,
       endDate: q.endDate,
