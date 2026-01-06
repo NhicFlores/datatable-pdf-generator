@@ -10,6 +10,7 @@ import {
   type QuarterSettings,
 } from "@/lib/validations/quarter-settings";
 import { AdminRoute } from "../routes";
+import { UserRoles } from "../data-model/enum-types";
 
 export async function getQuarterSettings(year: number) {
   try {
@@ -33,18 +34,12 @@ export async function getQuarterSettings(year: number) {
       }
       return { 
         year, 
-        currentQuarter: 1, // Default to Q1 as current
         quarters: defaultQuarters 
       };
     }
 
-    // Find which quarter is marked as current
-    const currentQuarterSetting = settings.find(setting => setting.isCurrent);
-    const currentQuarter = currentQuarterSetting ? currentQuarterSetting.quarterNumber : 1;
-
     return {
       year,
-      currentQuarter,
       quarters: settings.map((setting) => ({
         quarter: setting.quarterNumber,
         startDate: setting.startDate,
@@ -76,8 +71,6 @@ export async function updateQuarterSettings(data: QuarterSettings) {
 
       // Insert new quarter settings
       for (const quarter of validatedData.quarters) {
-        const isCurrent = quarter.quarter === validatedData.currentQuarter;
-        
         await tx.insert(quarterSettings).values({
           year: validatedData.year,
           quarterNumber: quarter.quarter,
@@ -85,7 +78,7 @@ export async function updateQuarterSettings(data: QuarterSettings) {
           startDate: quarter.startDate,
           endDate: quarter.endDate,
           isActive: true,
-          isCurrent,
+          isCurrent: false, // Don't set current quarter here
           createdBy: user.id,
         });
       }
@@ -203,5 +196,64 @@ export async function getAllActiveQuarters() {
   } catch (error) {
     console.error("Error fetching active quarters:", error);
     throw new Error("Failed to fetch active quarters");
+  }
+}
+
+export async function updateCurrentQuarter(quarterValue: string) {
+  try {
+    // Ensure user is admin
+    const user = await requireAdmin();
+    if (user.role !== UserRoles.ADMIN) {
+      throw new Error("Unauthorized: Admin access required");
+    }
+    // Parse the quarter value (format: "YYYY-QN")
+    const [yearStr, quarterStr] = quarterValue.split('-Q');
+    const year = parseInt(yearStr);
+    const quarter = parseInt(quarterStr);
+    
+    if (!year || !quarter || quarter < 1 || quarter > 4) {
+      throw new Error("Invalid quarter format");
+    }
+
+    // Begin transaction to update current quarter
+    await db.transaction(async (tx) => {
+      // First, set all quarters to not current
+      await tx.update(quarterSettings).set({ isCurrent: false });
+      
+      // Then set the specific quarter as current
+      const result = await tx
+        .update(quarterSettings)
+        .set({ isCurrent: true })
+        .where(and(
+          eq(quarterSettings.year, year),
+          eq(quarterSettings.quarterNumber, quarter)
+        ));
+      
+      // Check if the quarter exists
+      if (result.rowCount === 0) {
+        throw new Error("Selected quarter does not exist in the database");
+      }
+    });
+
+    revalidatePath(AdminRoute.page);
+
+    return {
+      success: true,
+      message: `Current quarter updated to Q${quarter} ${year}`,
+    };
+  } catch (error) {
+    console.error("Error updating current quarter:", error);
+
+    if (error instanceof Error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+
+    return {
+      success: false,
+      message: "Failed to update current quarter",
+    };
   }
 }

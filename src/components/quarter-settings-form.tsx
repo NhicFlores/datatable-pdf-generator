@@ -49,7 +49,6 @@ export function QuarterSettingsForm({ initialData }: QuarterSettingsFormProps) {
   // Get default values
   const defaultQuarters = [];
   const year = initialData?.year || currentYear;
-  const defaultCurrentQuarter = initialData?.currentQuarter || 1;
 
   if (initialData?.quarters) {
     defaultQuarters.push(...initialData.quarters);
@@ -70,7 +69,6 @@ export function QuarterSettingsForm({ initialData }: QuarterSettingsFormProps) {
     resolver: zodResolver(quarterSettingsSchema),
     defaultValues: {
       year,
-      currentQuarter: defaultCurrentQuarter,
       quarters: defaultQuarters,
     },
   });
@@ -152,38 +150,6 @@ export function QuarterSettingsForm({ initialData }: QuarterSettingsFormProps) {
                 </Select>
                 <FormDescription>
                   Select the year to configure quarter settings for.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Current Quarter Selection */}
-          <FormField
-            control={form.control}
-            name="currentQuarter"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Current Quarter</FormLabel>
-                <Select
-                  value={field.value?.toString()}
-                  onValueChange={(value) => field.onChange(parseInt(value))}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select current quarter" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {[1, 2, 3, 4].map((quarter) => (
-                      <SelectItem key={quarter} value={quarter.toString()}>
-                        Q{quarter} {selectedYear}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Select which quarter is currently active. This will be used as the default when users log in.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
