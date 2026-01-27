@@ -17,7 +17,7 @@ import type {
   DriverLogs,
 } from "../data-model/query-types";
 import { findMatchesForTransactions } from "./services/matching-service";
-import type { QuarterDateRange } from "@/lib/actions/quarter-data-actions";
+import type { QuarterDateRange } from "@/lib/utils/quarter-utils";
 
 // Re-export types for convenience
 export type { SelectTransaction, SelectDriver, SelectFuelLog };

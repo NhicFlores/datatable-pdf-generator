@@ -1,16 +1,12 @@
 "use server";
 
+import { QuarterDateRange } from "../utils/quarter-utils";
 import { getCurrentQuarterFromDB, getAllActiveQuarters } from "./quarter-settings-actions";
 
 export interface QuarterOption {
   value: string;
   label: string;
   quarter: number;
-  startDate: Date;
-  endDate: Date;
-}
-
-export interface QuarterDateRange {
   startDate: Date;
   endDate: Date;
 }

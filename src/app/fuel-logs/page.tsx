@@ -16,11 +16,25 @@ function FuelLogsContent() {
   const searchParams = useSearchParams();
   const state = searchParams.get('state');
   const truckId = searchParams.get('truckId');
+  const startDateParam = searchParams.get('startDate');
+  const endDateParam = searchParams.get('endDate');
   
   const [fuelLogs, setFuelLogs] = useState<FilteredFuelLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+
+  // Helper function to parse date without timezone issues
+  const parseUrlDate = (dateString: string): Date => {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day); // month is 0-indexed
+  };
+
+  // Helper function to format date for display (MM-DD-YYYY)
+  const formatDateForDisplay = (dateString: string): string => {
+    const [year, month, day] = dateString.split('-');
+    return `${month}-${day}-${year}`;
+  };
 
   // Fetch fuel logs based on filters
   const fetchFuelLogs = useCallback(async () => {
@@ -31,10 +45,23 @@ function FuelLogsContent() {
       const filters: {
         state?: string;
         truckId?: string;
+        dateRange?: { startDate: Date; endDate: Date };
       } = {};
       
       if (state) filters.state = state;
       if (truckId) filters.truckId = truckId;
+      
+      // Parse date range from URL params (timezone-safe)
+      if (startDateParam && endDateParam) {
+        try {
+          filters.dateRange = {
+            startDate: parseUrlDate(startDateParam),
+            endDate: parseUrlDate(endDateParam)
+          };
+        } catch (err) {
+          console.error('Failed to parse date range from URL:', err);
+        }
+      }
       
       const logs = await getFilteredFuelLogs(filters);
       setFuelLogs(logs);
@@ -44,7 +71,7 @@ function FuelLogsContent() {
     } finally {
       setLoading(false);
     }
-  }, [state, truckId]);
+  }, [state, truckId, startDateParam, endDateParam]);
 
   // Server Action wrapper for updating fuel log fields
   const handleUpdateFuelLogField = useCallback(
@@ -76,17 +103,23 @@ function FuelLogsContent() {
   }, [fetchFuelLogs]);
 
   const getPageTitle = () => {
-    if (state && truckId) return `Fuel Logs - ${state} - Truck ${truckId}`;
-    if (state) return `Fuel Logs - ${state}`;
-    if (truckId) return `Fuel Logs - Truck ${truckId}`;
-    return 'All Fuel Logs';
+    const dateRangeText = startDateParam && endDateParam 
+      ? ` (${formatDateForDisplay(startDateParam)} to ${formatDateForDisplay(endDateParam)})` 
+      : '';
+    if (state && truckId) return `Fuel Logs - ${state} - Truck ${truckId}${dateRangeText}`;
+    if (state) return `Fuel Logs - ${state}${dateRangeText}`;
+    if (truckId) return `Fuel Logs - Truck ${truckId}${dateRangeText}`;
+    return `All Fuel Logs${dateRangeText}`;
   };
 
   const getBreadcrumbText = () => {
-    if (state && truckId) return `${state} & Truck ${truckId}`;
-    if (state) return state;
-    if (truckId) return `Truck ${truckId}`;
-    return 'All';
+    const dateRangeText = startDateParam && endDateParam 
+      ? ` (${formatDateForDisplay(startDateParam)} to ${formatDateForDisplay(endDateParam)})` 
+      : '';
+    if (state && truckId) return `${state} & Truck ${truckId}${dateRangeText}`;
+    if (state) return `${state}${dateRangeText}`;
+    if (truckId) return `Truck ${truckId}${dateRangeText}`;
+    return `All${dateRangeText}`;
   };
 
   const columns = useMemo(() => createFilteredFuelLogColumns(

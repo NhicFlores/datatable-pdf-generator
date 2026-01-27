@@ -10,12 +10,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FuelSummaryTableData } from "@/lib/data-model/query-types";
+import { QuarterDateRange } from "@/lib/utils/quarter-utils";
 
 interface FuelSummaryTableProps {
   summaryData: FuelSummaryTableData;
+  selectedDateRange?: QuarterDateRange | null;
 }
 
-export function FuelSummaryTable({ summaryData }: FuelSummaryTableProps) {
+export function FuelSummaryTable({ summaryData, selectedDateRange }: FuelSummaryTableProps) {
   const { summaryRows, uniqueTruckIds } = summaryData;
 
   // Format number to 2 decimal places
@@ -38,6 +40,27 @@ export function FuelSummaryTable({ summaryData }: FuelSummaryTableProps) {
     0
   );
 
+  // Helper function to format date without timezone issues
+  const formatDateForUrl = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`; 
+  };
+
+  // Helper function to build URL with date range
+  const buildFuelLogsUrl = (baseParams: string) => {
+    let url = `/fuel-logs?${baseParams}`;
+    
+    if (selectedDateRange) {
+      const startDate = formatDateForUrl(selectedDateRange.startDate);
+      const endDate = formatDateForUrl(selectedDateRange.endDate);
+      url += `&startDate=${startDate}&endDate=${endDate}`;
+    }
+    
+    return url;
+  }
+
   return (
     <div className="w-full">
       <div className="rounded-md border">
@@ -51,7 +74,7 @@ export function FuelSummaryTable({ summaryData }: FuelSummaryTableProps) {
               {uniqueTruckIds.map((truckId, index) => (
                 <TableHead key={index} className="font-medium text-center">
                   <Link 
-                    href={`/fuel-logs?truckId=${encodeURIComponent(truckId)}`}
+                    href={buildFuelLogsUrl(`truckId=${encodeURIComponent(truckId)}`)}
                     className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                   >
                     {truckId}
@@ -67,7 +90,7 @@ export function FuelSummaryTable({ summaryData }: FuelSummaryTableProps) {
                   <TableRow key={row.state}>
                     <TableCell className="font-medium">
                       <Link 
-                        href={`/fuel-logs?state=${encodeURIComponent(row.state)}`}
+                        href={buildFuelLogsUrl(`state=${encodeURIComponent(row.state)}`)}
                         className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                       >
                         {row.state}
@@ -80,7 +103,7 @@ export function FuelSummaryTable({ summaryData }: FuelSummaryTableProps) {
                       <TableCell key={truckId} className="text-center">
                         {row.truckGallons[truckId] > 0 ? (
                           <Link 
-                            href={`/fuel-logs?state=${encodeURIComponent(row.state)}&truckId=${encodeURIComponent(truckId)}`}
+                            href={buildFuelLogsUrl(`state=${encodeURIComponent(row.state)}&truckId=${encodeURIComponent(truckId)}`)}
                             className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                           >
                             {formatGallons(row.truckGallons[truckId])}

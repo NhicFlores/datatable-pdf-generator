@@ -143,7 +143,10 @@ export default async function FuelSummaryPage({ searchParams }: PageProps) {
               </p>
             </div>
 
-            <FuelSummaryTable summaryData={summaryData} />
+            <FuelSummaryTable 
+              summaryData={summaryData} 
+              selectedDateRange={selectedDateRange}
+            />
           </div>
         </div>
       </main>
