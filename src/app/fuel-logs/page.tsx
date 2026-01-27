@@ -1,5 +1,5 @@
 "use client";
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Suspense, useMemo, useCallback, useTransition } from 'react';
 import { DataTable } from "@/components/tables/data-table";
 import { createFilteredFuelLogColumns } from "@/components/tables/filtered-fuel-log-columns";
@@ -9,11 +9,11 @@ import { SelectFuelLog } from "@/lib/data-model/schema-types";
 import { updateFuelLogFieldAction } from "@/lib/actions/fuel-actions";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 function FuelLogsContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const state = searchParams.get('state');
   const truckId = searchParams.get('truckId');
   const startDateParam = searchParams.get('startDate');
@@ -151,12 +151,14 @@ function FuelLogsContent() {
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6 flex items-center gap-4">
-        <Link href="/quarter-summary">
-          <Button variant="outline" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Summary
-          </Button>
-        </Link>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => router.back()}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Summary
+        </Button>
         <div>
           <h1 className="text-3xl font-bold">{getPageTitle()}</h1>
           <p className="text-muted-foreground">
