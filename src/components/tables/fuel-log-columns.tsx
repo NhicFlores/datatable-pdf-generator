@@ -260,6 +260,7 @@ export const createFuelLogColumns = (
   {
     id: "gallons",
     accessorKey: "gallons",
+    sortingFn: "alphanumeric",
     header: ({ column }) => {
       return (
         <Button
@@ -305,6 +306,7 @@ export const createFuelLogColumns = (
   {
     id: "cost",
     accessorKey: "cost",
+    sortingFn: "alphanumeric",
     header: ({ column }) => {
       return (
         <Button
