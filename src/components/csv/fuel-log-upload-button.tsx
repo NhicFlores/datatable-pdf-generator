@@ -36,16 +36,16 @@ export function FuelLogUploadButton({
 
         // Header mapping for fuel CSV
         const headerMap: { [key: string]: string } = {
-          vehicle: "vehicleId",
-          driver: "driver",
-          startTime: "date",
-          invoiceNumber: "invoiceNumber",
-          gallons: "gallons",
-          Cost: "cost",
-          sellerStateFullName: "sellerState",
-          sellerName: "sellerName",
-          odometer: "odometer",
-          receipt: "receipt",
+          vehicle: "Vehicle",
+          driver: "Linked Driver",
+          startTime: "Date/Time",
+          invoiceNumber: "Invoice Number",
+          gallons: "Volume",
+          Cost: "Cost",
+          sellerStateFullName: "St./Prov.",
+          sellerName: "Merchant's Name",
+          odometer: "Vehicle Odometer",
+          receipt: "Receipt",
         };
 
         Papa.parse<FuelCSVRow>(csvText, {
@@ -59,24 +59,24 @@ export function FuelLogUploadButton({
             if (!value || value.trim() === "") {
               // For numeric fields, return "0" string for Zod coercion
               switch (field) {
-                case "vehicleId":
+                case "Vehicle": // vehicleID 
                   return "NO_VEHICLE_ID";
-                case "driver":
+                case "Linked Driver":
                   return "NO_DRIVER";
-                case "date":
+                case "Date/Time":
                   // TODO: update to .toISOString() before next quarter release
                   return new Date().toString()
-                case "invoiceNumber":
+                case "Invoice Number":
                   return "NO_INVOICE_NUMBER";
-                case "sellerState":
+                case "St./Prov.":
                   return "NO_SELLER_STATE";
-                case "sellerName":
+                case "Merchant's Name":
                   return "NO_SELLER_NAME";
-                case "receipt":
+                case "Receipt":
                   return "NO_RECEIPT";
-                case "gallons":
-                case "cost":
-                case "odometer":
+                case "Volume":
+                case "Cost":
+                case "Vehicle Odometer":
                   return "0";
               }
               return "";
@@ -109,9 +109,9 @@ export function FuelLogUploadButton({
             // }
 
             if (
-              field === "gallons" ||
-              field === "cost" ||
-              field === "odometer"
+              field === "Volume" ||
+              field === "Cost" ||
+              field === "Vehicle Odometer"
             ) {
               const cleanedValue = value.replace(/[$,\s()]/g, "");
 
