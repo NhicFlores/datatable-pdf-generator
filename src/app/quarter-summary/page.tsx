@@ -1,8 +1,12 @@
 export const revalidate = 60;
-import { getFuelSummaryTableFromDB } from "@/lib/db/data-fetchers";
+import {
+  getFuelSummaryTableFromDB,
+  getMonthlyBranchFuelSummaryFromDB,
+} from "@/lib/db/data-fetchers";
 import { FuelSummaryTable } from "@/components/tables/fuel-summary-table";
 import { FuelSummaryExportButton } from "@/components/csv/fuel-summary-export-button";
 import { AllFuelTransactionsExportButton } from "@/components/csv/all-fuel-transactions-export-button";
+import { MonthlyBranchExportButton } from "@/components/csv/monthly-branch-export-button";
 import { requireAuth } from "@/auth";
 import Header from "@/components/header";
 import { getCurrentYearQuarters } from "@/lib/actions/quarter-data-actions";
@@ -34,7 +38,10 @@ export default async function FuelSummaryPage({ searchParams }: PageProps) {
     : currentQuarterDateRange;
 
   // Fetch data for selected quarter
-  const summaryData = await getFuelSummaryTableFromDB(selectedDateRange);
+  const [summaryData, monthlyBranchData] = await Promise.all([
+    getFuelSummaryTableFromDB(selectedDateRange),
+    getMonthlyBranchFuelSummaryFromDB(selectedDateRange),
+  ]);
 
   const handleQuarterChange = async (quarter: string) => {
     "use server";
@@ -58,7 +65,8 @@ export default async function FuelSummaryPage({ searchParams }: PageProps) {
                   Fuel Report Summary
                 </h1>
                 <p className="text-muted-foreground">
-                  Fuel consumption summary by state and truck ID for {selectedQuarter}
+                  Fuel consumption summary by state and truck ID for{" "}
+                  {selectedQuarter}
                 </p>
               </div>
               <QuarterSelector
@@ -67,9 +75,11 @@ export default async function FuelSummaryPage({ searchParams }: PageProps) {
                 onQuarterChange={handleQuarterChange}
               />
             </div>
-            
+
             <div className="text-center">
-              <p className="text-muted-foreground">No fuel data available for {selectedQuarter}.</p>
+              <p className="text-muted-foreground">
+                No fuel data available for {selectedQuarter}.
+              </p>
             </div>
           </div>
         </main>
@@ -89,7 +99,8 @@ export default async function FuelSummaryPage({ searchParams }: PageProps) {
                 Fuel Report Summary
               </h1>
               <p className="text-muted-foreground">
-                Fuel consumption summary by state and truck ID for {selectedQuarter}
+                Fuel consumption summary by state and truck ID for{" "}
+                {selectedQuarter}
               </p>
             </div>
             <QuarterSelector
@@ -107,7 +118,8 @@ export default async function FuelSummaryPage({ searchParams }: PageProps) {
                   Export Options
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Download summary data or complete fuel logs for {selectedQuarter}
+                  Download summary data or complete fuel logs for{" "}
+                  {selectedQuarter}
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -129,6 +141,15 @@ export default async function FuelSummaryPage({ searchParams }: PageProps) {
                   variant="default"
                   size="sm"
                 />
+                <MonthlyBranchExportButton
+                  summaryData={monthlyBranchData}
+                  filename={`monthly_branch_${selectedQuarter}_${
+                    new Date().toISOString().split("T")[0]
+                  }.csv`}
+                  label="Export Monthly by Branch"
+                  variant="outline"
+                  size="sm"
+                />
               </div>
             </div>
           </div>
@@ -139,12 +160,13 @@ export default async function FuelSummaryPage({ searchParams }: PageProps) {
                 Summary by State and Truck
               </h2>
               <p className="text-sm text-muted-foreground">
-                Total gallons consumed per state with breakdown by truck ID for {selectedQuarter}
+                Total gallons consumed per state with breakdown by truck ID for{" "}
+                {selectedQuarter}
               </p>
             </div>
 
-            <FuelSummaryTable 
-              summaryData={summaryData} 
+            <FuelSummaryTable
+              summaryData={summaryData}
               selectedDateRange={selectedDateRange}
             />
           </div>

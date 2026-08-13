@@ -1,12 +1,16 @@
 // DEPRECATED OR REFACTOR
-import { FuelReport, FuelSummaryTableData } from "./data-model/query-types";
+import {
+  FuelReport,
+  FuelSummaryTableData,
+  MonthlyBranchSummaryData,
+} from "./data-model/query-types";
 import { BaseFuelLog } from "./data-model/schema-types";
 
 // Generic CSV download function
 export function downloadCSV(
   data: Record<string, unknown>[],
   filename: string,
-  headers?: string[]
+  headers?: string[],
 ) {
   if (data.length === 0) {
     alert("No data to export");
@@ -34,7 +38,7 @@ export function downloadCSV(
           }
           return value || "";
         })
-        .join(",")
+        .join(","),
     ),
   ].join("\n");
 
@@ -56,10 +60,10 @@ export function downloadCSV(
 
 // Function to export fuel summary data
 // Function to download all fuel transactions in original fuel-report.csv format
-// TODO: IMPLEMENT FOR BACKING UP FUEL LOGS 
+// TODO: IMPLEMENT FOR BACKING UP FUEL LOGS
 export function downloadAllFuelTransactionsCSV(
   fuelReports: FuelReport[],
-  filename?: string
+  filename?: string,
 ) {
   // Headers matching the original fuel-report.csv format
   const headers = [
@@ -88,7 +92,7 @@ export function downloadAllFuelTransactionsCSV(
       sellerName: tx.sellerName,
       odometer: tx.odometer,
       receipt: tx.receipt,
-    }))
+    })),
   );
 
   const defaultFilename = filename || "updated-fuel-report.csv";
@@ -97,7 +101,7 @@ export function downloadAllFuelTransactionsCSV(
 
 export function downloadFuelSummaryCSV(
   summaryData: FuelSummaryTableData,
-  filename?: string
+  filename?: string,
 ) {
   const { summaryRows, uniqueTruckIds } = summaryData;
 
@@ -169,13 +173,16 @@ export function downloadFuelSummaryCSV(
     };
 
     // Add gallons for each truck
-    const truckData = uniqueTruckIds.reduce((acc, truckId) => {
-      acc[truckId] =
-        existingRow && existingRow.truckGallons[truckId]
-          ? existingRow.truckGallons[truckId].toFixed(2)
-          : "0.00";
-      return acc;
-    }, {} as Record<string, string>);
+    const truckData = uniqueTruckIds.reduce(
+      (acc, truckId) => {
+        acc[truckId] =
+          existingRow && existingRow.truckGallons[truckId]
+            ? existingRow.truckGallons[truckId].toFixed(2)
+            : "0.00";
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 
     return { ...baseData, ...truckData };
   });
@@ -183,14 +190,17 @@ export function downloadFuelSummaryCSV(
   // Add totals row
   const totalGallons = summaryRows.reduce(
     (sum, row) => sum + row.totalGallons,
-    0
+    0,
   );
-  const truckTotals = uniqueTruckIds.reduce((totals, truckId) => {
-    totals[truckId] = summaryRows
-      .reduce((sum, row) => sum + (row.truckGallons[truckId] || 0), 0)
-      .toFixed(2);
-    return totals;
-  }, {} as Record<string, string>);
+  const truckTotals = uniqueTruckIds.reduce(
+    (totals, truckId) => {
+      totals[truckId] = summaryRows
+        .reduce((sum, row) => sum + (row.truckGallons[truckId] || 0), 0)
+        .toFixed(2);
+      return totals;
+    },
+    {} as Record<string, string>,
+  );
 
   const totalsRow = {
     state: "TOTAL",
@@ -204,4 +214,41 @@ export function downloadFuelSummaryCSV(
     new Date().toISOString().split("T")[0]
   }.csv`;
   downloadCSV(formattedData, filename || defaultFilename, headers);
+}
+
+export function downloadMonthlyBranchSummaryCSV(
+  data: MonthlyBranchSummaryData,
+  filename?: string,
+) {
+  const { rows, branches } = data;
+  const headers = ["month", "total", ...branches];
+
+  const formattedRows = rows.map((row) => {
+    const base: Record<string, string> = {
+      month: row.month,
+      total: row.totalGallons.toFixed(2),
+    };
+    for (const branch of branches) {
+      base[branch] = (row.branchGallons[branch] || 0).toFixed(2);
+    }
+    return base;
+  });
+
+  const grandTotal = rows.reduce((s, r) => s + r.totalGallons, 0);
+  const branchTotals = Object.fromEntries(
+    branches.map((b) => [
+      b,
+      rows.reduce((s, r) => s + (r.branchGallons[b] || 0), 0).toFixed(2),
+    ]),
+  );
+  formattedRows.push({
+    month: "TOTAL",
+    total: grandTotal.toFixed(2),
+    ...branchTotals,
+  });
+
+  const defaultFilename = `monthly_branch_summary_${
+    new Date().toISOString().split("T")[0]
+  }.csv`;
+  downloadCSV(formattedRows, filename || defaultFilename, headers);
 }

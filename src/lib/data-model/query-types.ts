@@ -7,7 +7,10 @@ import {
   CreatedUser,
 } from "./schema-types";
 
-export type FuelReport = Omit<SelectDriver, "createdAt" | "updatedAt" | "isActive"> & {
+export type FuelReport = Omit<
+  SelectDriver,
+  "createdAt" | "updatedAt" | "isActive"
+> & {
   vehicleIds: string[];
   fuelLogs: SelectFuelLog[];
 };
@@ -70,6 +73,17 @@ export type FuelSummaryRow = {
 export type FuelSummaryTableData = {
   summaryRows: FuelSummaryRow[];
   uniqueTruckIds: string[];
+};
+
+export type MonthlyBranchRow = {
+  month: string; // "YYYY-MM"
+  totalGallons: number;
+  branchGallons: { [branch: string]: number };
+};
+
+export type MonthlyBranchSummaryData = {
+  rows: MonthlyBranchRow[];
+  branches: string[];
 };
 
 // Admin dashboard related types

@@ -14,6 +14,8 @@ import type {
   DriverTransactions,
   FuelSummaryTableData,
   FuelSummaryRow,
+  MonthlyBranchRow,
+  MonthlyBranchSummaryData,
   DriverLogs,
 } from "../data-model/query-types";
 import { findMatchesForTransactions } from "./services/matching-service";
@@ -28,6 +30,7 @@ export type {
   DriverTransactions,
   FuelSummaryTableData,
   FuelSummaryRow,
+  MonthlyBranchSummaryData,
 } from "../data-model/query-types";
 
 // Server-side data fetchers with caching
@@ -43,9 +46,9 @@ export type {
 export const getFuelReportSummariesFromDB = cache(
   async (
     dateRange?: QuarterDateRange | null,
-    userBranch?: UserBranch
+    userBranch?: UserBranch,
   ): Promise<FuelReportSummary[]> => {
-    if(userBranch){
+    if (userBranch) {
       console.log(`Filtering fuel report summaries for branch: ${userBranch}`);
     }
     try {
@@ -53,7 +56,7 @@ export const getFuelReportSummariesFromDB = cache(
 
       if (dateRange) {
         console.log(
-          `📅 Filtering by date range: ${dateRange.startDate.toISOString()} - ${dateRange.endDate.toISOString()}`
+          `📅 Filtering by date range: ${dateRange.startDate.toISOString()} - ${dateRange.endDate.toISOString()}`,
         );
       }
 
@@ -79,7 +82,7 @@ export const getFuelReportSummariesFromDB = cache(
           updatedAt: schema.drivers.updatedAt,
           vehicleIds:
             sql<string>`STRING_AGG(DISTINCT ${schema.fuelLogs.vehicleId}, ',')`.as(
-              "vehicle_ids"
+              "vehicle_ids",
             ),
         })
         .from(schema.drivers)
@@ -92,17 +95,17 @@ export const getFuelReportSummariesFromDB = cache(
                 between(
                   schema.fuelLogs.date,
                   dateRange.startDate,
-                  dateRange.endDate
-                )
+                  dateRange.endDate,
+                ),
               )
-            : eq(schema.drivers.id, schema.fuelLogs.driverId)
+            : eq(schema.drivers.id, schema.fuelLogs.driverId),
         )
         .groupBy(
           schema.drivers.id,
           schema.drivers.name,
           schema.drivers.branch,
           schema.drivers.createdAt,
-          schema.drivers.updatedAt
+          schema.drivers.updatedAt,
         )
         .orderBy(schema.drivers.name);
 
@@ -119,14 +122,14 @@ export const getFuelReportSummariesFromDB = cache(
       console.log(
         `✅ Fetched ${transformedSummaries.length} fuel report summaries${
           dateRange ? ` for date range` : ""
-        }`
+        }`,
       );
       return transformedSummaries;
     } catch (error) {
       console.error("❌ Failed to fetch fuel report summaries:", error);
       return [];
     }
-  }
+  },
 );
 
 /**
@@ -138,7 +141,7 @@ export const getFuelReportDetailFromDB = cache(
   async (
     driverId: string,
     dateRange?: QuarterDateRange | null,
-    userBranch?: UserBranch
+    userBranch?: UserBranch,
   ): Promise<{
     driverLogs: DriverLogs | null;
     driverTransactions: DriverTransactions | null;
@@ -147,15 +150,15 @@ export const getFuelReportDetailFromDB = cache(
       console.log(
         `🔍 Fetching complete fuel report detail for driver ID: ${driverId}${
           dateRange ? ` for date range` : ""
-        }${userBranch ? ` for branch: ${userBranch}` : ""}`
+        }${userBranch ? ` for branch: ${userBranch}` : ""}`,
       );
 
       if (dateRange) {
         console.log(
-          `📅 Filtering by date range: ${dateRange.startDate.toISOString()} - ${dateRange.endDate.toISOString()}`
+          `📅 Filtering by date range: ${dateRange.startDate.toISOString()} - ${dateRange.endDate.toISOString()}`,
         );
       }
-      // NOTE TODO: simplify query by removing driver query and just using transactions FK 
+      // NOTE TODO: simplify query by removing driver query and just using transactions FK
       // Single comprehensive query using Drizzle's relational query API
       const driverWhereConditions = [eq(schema.drivers.id, driverId)];
       if (userBranch) {
@@ -170,7 +173,7 @@ export const getFuelReportDetailFromDB = cache(
               ? between(
                   schema.fuelLogs.date,
                   dateRange.startDate,
-                  dateRange.endDate
+                  dateRange.endDate,
                 )
               : undefined,
             orderBy: [desc(schema.fuelLogs.date)],
@@ -194,22 +197,22 @@ export const getFuelReportDetailFromDB = cache(
                 between(
                   schema.transactions.transactionDate,
                   dateRange.startDate,
-                  dateRange.endDate
-                )
+                  dateRange.endDate,
+                ),
               )
-            : eq(schema.transactions.driverId, driverId)
+            : eq(schema.transactions.driverId, driverId),
         )
         .orderBy(desc(schema.transactions.transactionDate));
 
       console.log(
-        `📋 Fetched ${result.fuelLogs.length} fuel logs and ${transactions.length} transactions`
+        `📋 Fetched ${result.fuelLogs.length} fuel logs and ${transactions.length} transactions`,
       );
 
       // Perform on-demand matching using fresh data
       console.log("🔍 Running on-demand matching...");
       const freshMatches = findMatchesForTransactions(
         transactions,
-        result.fuelLogs
+        result.fuelLogs,
       );
 
       console.log(`✅ Found ${freshMatches.length} fresh matches`);
@@ -223,7 +226,7 @@ export const getFuelReportDetailFromDB = cache(
 
       // Build matching data sets from fresh matches
       const matchedTransactionIds = new Set(
-        freshMatches.map((m) => m.transactionId)
+        freshMatches.map((m) => m.transactionId),
       );
       const matchedFuelLogIds = new Set(freshMatches.map((m) => m.fuelLogId));
       const matchSummaries = freshMatches.map((m) => ({
@@ -245,18 +248,18 @@ export const getFuelReportDetailFromDB = cache(
       };
 
       console.log(
-        `✅ Fetched complete data: ${result.fuelLogs.length} fuel logs, ${transactions.length} transactions, ${freshMatches.length} fresh matches`
+        `✅ Fetched complete data: ${result.fuelLogs.length} fuel logs, ${transactions.length} transactions, ${freshMatches.length} fresh matches`,
       );
 
       return { driverLogs, driverTransactions };
     } catch (error) {
       console.error(
         `❌ Failed to fetch fuel report detail for driver ${driverId}:`,
-        error
+        error,
       );
       return { driverLogs: null, driverTransactions: null };
     }
-  }
+  },
 );
 
 /**
@@ -270,7 +273,7 @@ export const getFilteredFuelReportDetailFromDB = cache(
       statementFilter?: "all" | "matched" | "unmatched";
       transactionFilter?: "all" | "matched" | "unmatched";
     },
-    userBranch?: UserBranch
+    userBranch?: UserBranch,
   ): Promise<{
     driverLogs: DriverLogs | null;
     driverTransactions: DriverTransactions | null;
@@ -325,22 +328,22 @@ export const getFilteredFuelReportDetailFromDB = cache(
       // Filter transactions based on match status
       if (filters.statementFilter === "matched") {
         filteredTransactions = driverTransactions.transactions.filter((t) =>
-          driverTransactions.matchedTransactionIds.has(t.id)
+          driverTransactions.matchedTransactionIds.has(t.id),
         );
       } else if (filters.statementFilter === "unmatched") {
         filteredTransactions = driverTransactions.transactions.filter(
-          (t) => !driverTransactions.matchedTransactionIds.has(t.id)
+          (t) => !driverTransactions.matchedTransactionIds.has(t.id),
         );
       }
 
       // Filter fuel logs based on match status
       if (filters.transactionFilter === "matched") {
         filteredFuelLogs = driverLogs.fuelLogs.filter((f) =>
-          driverTransactions.matchedFuelLogIds.has(f.id)
+          driverTransactions.matchedFuelLogIds.has(f.id),
         );
       } else if (filters.transactionFilter === "unmatched") {
         filteredFuelLogs = driverLogs.fuelLogs.filter(
-          (f) => !driverTransactions.matchedFuelLogIds.has(f.id)
+          (f) => !driverTransactions.matchedFuelLogIds.has(f.id),
         );
       }
 
@@ -356,7 +359,7 @@ export const getFilteredFuelReportDetailFromDB = cache(
       };
 
       console.log(
-        `✅ Applied filters - Transactions: ${filteredTransactions.length}/${driverTransactions.transactions.length}, Fuel Logs: ${filteredFuelLogs.length}/${driverLogs.fuelLogs.length}`
+        `✅ Applied filters - Transactions: ${filteredTransactions.length}/${driverTransactions.transactions.length}, Fuel Logs: ${filteredFuelLogs.length}/${driverLogs.fuelLogs.length}`,
       );
 
       return {
@@ -367,7 +370,7 @@ export const getFilteredFuelReportDetailFromDB = cache(
     } catch (error) {
       console.error(
         `❌ Failed to fetch filtered data for driver ${driverId}:`,
-        error
+        error,
       );
       return {
         driverLogs: null,
@@ -380,7 +383,7 @@ export const getFilteredFuelReportDetailFromDB = cache(
         },
       };
     }
-  }
+  },
 );
 
 /**
@@ -485,19 +488,19 @@ export const getTransactionsByDriverFromDB = cache(
           .from(schema.transactionFuelMatches)
           .innerJoin(
             schema.fuelLogs,
-            eq(schema.transactionFuelMatches.fuelLogId, schema.fuelLogs.id)
+            eq(schema.transactionFuelMatches.fuelLogId, schema.fuelLogs.id),
           )
           .where(
             and(
               eq(schema.fuelLogs.driverId, driverId),
-              eq(schema.transactionFuelMatches.isActive, true)
-            )
+              eq(schema.transactionFuelMatches.isActive, true),
+            ),
           ),
       ]);
 
       // Build matching data sets
       const matchedTransactionIds = new Set(
-        matches.map((m) => m.transactionId)
+        matches.map((m) => m.transactionId),
       );
       const matchedFuelLogIds = new Set(matches.map((m) => m.fuelLogId));
       const matchSummaries = matches.map((m) => ({
@@ -518,17 +521,17 @@ export const getTransactionsByDriverFromDB = cache(
       };
 
       console.log(
-        `✅ Fetched ${transactions.length} transactions and ${matches.length} matches for driver ${driver[0].name}`
+        `✅ Fetched ${transactions.length} transactions and ${matches.length} matches for driver ${driver[0].name}`,
       );
       return result;
     } catch (error) {
       console.error(
         `❌ Failed to fetch transactions for driver ${driverId}:`,
-        error
+        error,
       );
       return null;
     }
-  }
+  },
 );
 
 /**
@@ -538,14 +541,14 @@ export const getTransactionsByDriverFromDB = cache(
 export const getFuelSummaryTableFromDB = cache(
   async (
     dateRange?: QuarterDateRange | null,
-    userBranch?: UserBranch
+    userBranch?: UserBranch,
   ): Promise<FuelSummaryTableData> => {
     try {
       console.log("🔍 Fetching fuel summary table data from database...");
 
       if (dateRange) {
         console.log(
-          `📅 Filtering fuel summary data by date range: ${dateRange.startDate.toLocaleDateString()} - ${dateRange.endDate.toLocaleDateString()}`
+          `📅 Filtering fuel summary data by date range: ${dateRange.startDate.toLocaleDateString()} - ${dateRange.endDate.toLocaleDateString()}`,
         );
       }
 
@@ -554,9 +557,7 @@ export const getFuelSummaryTableFromDB = cache(
       }
 
       // Build where conditions
-      const whereConditions = [
-        sql`${schema.fuelLogs.sellerState} IS NOT NULL`
-      ];
+      const whereConditions = [sql`${schema.fuelLogs.sellerState} IS NOT NULL`];
 
       // Add branch filter if provided
       if (userBranch) {
@@ -566,11 +567,7 @@ export const getFuelSummaryTableFromDB = cache(
       // Add date range filter if provided
       if (dateRange) {
         whereConditions.push(
-          between(
-            schema.fuelLogs.date,
-            dateRange.startDate,
-            dateRange.endDate
-          )
+          between(schema.fuelLogs.date, dateRange.startDate, dateRange.endDate),
         );
       }
 
@@ -582,7 +579,10 @@ export const getFuelSummaryTableFromDB = cache(
           gallons: schema.fuelLogs.gallons,
         })
         .from(schema.fuelLogs)
-        .leftJoin(schema.drivers, eq(schema.fuelLogs.driverId, schema.drivers.id))
+        .leftJoin(
+          schema.drivers,
+          eq(schema.fuelLogs.driverId, schema.drivers.id),
+        )
         .where(and(...whereConditions))
         .orderBy(schema.fuelLogs.sellerState);
 
@@ -603,7 +603,7 @@ export const getFuelSummaryTableFromDB = cache(
         // Calculate total gallons for this state
         const totalGallons = stateFuelLogs.reduce(
           (sum, t) => sum + (parseFloat(t.gallons) || 0),
-          0
+          0,
         );
 
         // Calculate gallons per truck ID for this state
@@ -635,7 +635,7 @@ export const getFuelSummaryTableFromDB = cache(
       };
 
       console.log(
-        `✅ Fetched fuel summary table data with ${summaryRows.length} states and ${uniqueTruckIds.length} trucks`
+        `✅ Fetched fuel summary table data with ${summaryRows.length} states and ${uniqueTruckIds.length} trucks`,
       );
       return summaryTableData;
     } catch (error) {
@@ -645,7 +645,66 @@ export const getFuelSummaryTableFromDB = cache(
         uniqueTruckIds: [],
       };
     }
-  }
+  },
+);
+
+export const getMonthlyBranchFuelSummaryFromDB = cache(
+  async (
+    dateRange?: QuarterDateRange | null,
+  ): Promise<MonthlyBranchSummaryData> => {
+    try {
+      const whereConditions = [sql`${schema.fuelLogs.sellerState} IS NOT NULL`];
+
+      if (dateRange) {
+        whereConditions.push(
+          between(schema.fuelLogs.date, dateRange.startDate, dateRange.endDate),
+        );
+      }
+
+      const fuelLogs = await db
+        .select({
+          date: schema.fuelLogs.date,
+          gallons: schema.fuelLogs.gallons,
+          branch: schema.drivers.branch,
+        })
+        .from(schema.fuelLogs)
+        .leftJoin(
+          schema.drivers,
+          eq(schema.fuelLogs.driverId, schema.drivers.id),
+        )
+        .where(and(...whereConditions));
+
+      const branches = [
+        ...new Set(fuelLogs.map((r) => r.branch).filter(Boolean)),
+      ].sort() as string[];
+
+      // Group gallons by "YYYY-MM" month key and branch
+      const monthMap = new Map<string, { [branch: string]: number }>();
+      for (const log of fuelLogs) {
+        if (!log.branch || !log.gallons) continue;
+        const d = new Date(log.date);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        if (!monthMap.has(key)) {
+          monthMap.set(key, Object.fromEntries(branches.map((b) => [b, 0])));
+        }
+        const entry = monthMap.get(key)!;
+        entry[log.branch] = (entry[log.branch] || 0) + parseFloat(log.gallons);
+      }
+
+      const rows: MonthlyBranchRow[] = [...monthMap.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([month, branchGallons]) => ({
+          month,
+          totalGallons: Object.values(branchGallons).reduce((s, v) => s + v, 0),
+          branchGallons,
+        }));
+
+      return { rows, branches };
+    } catch (error) {
+      console.error("❌ Failed to fetch monthly branch fuel summary:", error);
+      return { rows: [], branches: [] };
+    }
+  },
 );
 
 /**
@@ -658,47 +717,49 @@ export const getFilteredFuelLogs = cache(
     truckId?: string;
     dateRange?: QuarterDateRange;
     userBranch?: UserBranch;
-  }): Promise<Array<{
-    id: string;
-    vehicleId: string;
-    driverId: string;
-    driver: string | null;
-    date: Date;
-    invoiceNumber: string;
-    gallons: string;
-    cost: string;
-    sellerState: string;
-    sellerName: string;
-    odometer: string;
-    receipt: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }>> => {
+  }): Promise<
+    Array<{
+      id: string;
+      vehicleId: string;
+      driverId: string;
+      driver: string | null;
+      date: Date;
+      invoiceNumber: string;
+      gallons: string;
+      cost: string;
+      sellerState: string;
+      sellerName: string;
+      odometer: string;
+      receipt: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    }>
+  > => {
     try {
       console.log("🔍 Fetching filtered fuel logs...", filters);
 
       // Build where conditions
       const conditions = [];
-      
+
       if (filters.state) {
         conditions.push(eq(schema.fuelLogs.sellerState, filters.state));
       }
-      
+
       if (filters.truckId) {
         conditions.push(eq(schema.fuelLogs.vehicleId, filters.truckId));
       }
-      
+
       if (filters.userBranch) {
         conditions.push(eq(schema.drivers.branch, filters.userBranch));
       }
-      
+
       if (filters.dateRange) {
         conditions.push(
           between(
             schema.fuelLogs.date,
             filters.dateRange.startDate,
-            filters.dateRange.endDate
-          )
+            filters.dateRange.endDate,
+          ),
         );
       }
 
@@ -721,7 +782,10 @@ export const getFilteredFuelLogs = cache(
           updatedAt: schema.fuelLogs.updatedAt,
         })
         .from(schema.fuelLogs)
-        .leftJoin(schema.drivers, eq(schema.fuelLogs.driverId, schema.drivers.id))
+        .leftJoin(
+          schema.drivers,
+          eq(schema.fuelLogs.driverId, schema.drivers.id),
+        )
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(desc(schema.fuelLogs.date), schema.fuelLogs.vehicleId);
 
@@ -731,7 +795,7 @@ export const getFilteredFuelLogs = cache(
       console.error("❌ Failed to fetch filtered fuel logs:", error);
       return [];
     }
-  }
+  },
 );
 
 /**
@@ -741,27 +805,29 @@ export const getFilteredFuelLogs = cache(
 export const getAllFuelLogsForQuarter = cache(
   async (
     dateRange: QuarterDateRange,
-    userBranch?: UserBranch
-  ): Promise<Array<{
-    id: string;
-    vehicleId: string;
-    driverId: string;
-    driver: string | null;
-    date: Date;
-    invoiceNumber: string;
-    gallons: string;
-    cost: string;
-    sellerState: string;
-    sellerName: string;
-    odometer: string;
-    receipt: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }>> => {
+    userBranch?: UserBranch,
+  ): Promise<
+    Array<{
+      id: string;
+      vehicleId: string;
+      driverId: string;
+      driver: string | null;
+      date: Date;
+      invoiceNumber: string;
+      gallons: string;
+      cost: string;
+      sellerState: string;
+      sellerName: string;
+      odometer: string;
+      receipt: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    }>
+  > => {
     try {
       console.log("🔍 Fetching all fuel logs for quarter export...");
       console.log(
-        `📅 Date range: ${dateRange.startDate.toLocaleDateString()} - ${dateRange.endDate.toLocaleDateString()}`
+        `📅 Date range: ${dateRange.startDate.toLocaleDateString()} - ${dateRange.endDate.toLocaleDateString()}`,
       );
 
       if (userBranch) {
@@ -770,11 +836,7 @@ export const getAllFuelLogsForQuarter = cache(
 
       // Build where conditions
       const whereConditions = [
-        between(
-          schema.fuelLogs.date,
-          dateRange.startDate,
-          dateRange.endDate
-        )
+        between(schema.fuelLogs.date, dateRange.startDate, dateRange.endDate),
       ];
 
       // Add branch filter if provided
@@ -801,15 +863,20 @@ export const getAllFuelLogsForQuarter = cache(
           updatedAt: schema.fuelLogs.updatedAt,
         })
         .from(schema.fuelLogs)
-        .leftJoin(schema.drivers, eq(schema.fuelLogs.driverId, schema.drivers.id))
+        .leftJoin(
+          schema.drivers,
+          eq(schema.fuelLogs.driverId, schema.drivers.id),
+        )
         .where(and(...whereConditions))
         .orderBy(desc(schema.fuelLogs.date), schema.fuelLogs.vehicleId);
 
-      console.log(`✅ Retrieved ${fuelLogs.length} fuel log records for export`);
+      console.log(
+        `✅ Retrieved ${fuelLogs.length} fuel log records for export`,
+      );
       return fuelLogs;
     } catch (error) {
       console.error("❌ Failed to fetch fuel logs for quarter export:", error);
       return [];
     }
-  }
+  },
 );
