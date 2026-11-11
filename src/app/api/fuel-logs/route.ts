@@ -66,6 +66,27 @@ export async function POST(request: NextRequest) {
     // Process valid rows with database transaction
     const result = await processFuelCSVData(validRows);
 
+    // The outer transaction failed/rolled back: nothing was saved
+    if (!result.committed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            result.errors[result.errors.length - 1] ??
+            "Database transaction failed",
+          details: {
+            transactionsCreated: 0,
+            driversCreated: 0,
+            skippedDuplicates: 0,
+            insertedIds: [],
+            validationErrors: errors,
+            databaseErrors: result.errors,
+          },
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
       message: `Successfully processed ${result.transactionsCreated} fuel transactions`,

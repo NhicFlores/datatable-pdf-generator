@@ -10,6 +10,9 @@ export interface ProcessedFuelData {
   insertedIds: string[];
   errors: string[];
   skippedDuplicates: number;
+  // True only once the outer database transaction has committed. When false,
+  // nothing was persisted and all counts are zero.
+  committed: boolean;
 }
 
 export async function processFuelCSVData(
@@ -21,7 +24,12 @@ export async function processFuelCSVData(
     insertedIds: [],
     errors: [],
     skippedDuplicates: 0,
+    committed: false,
   };
+
+  // Counts are collected here and only copied to `result` after the commit,
+  // so a failed/rolled-back transaction never reports rows as created.
+  const pending = { driversCreated: 0, insertedIds: [] as string[], skippedDuplicates: 0 };
 
   try {
     await db.transaction(async (trx) => {
@@ -44,25 +52,26 @@ export async function processFuelCSVData(
       // Create drivers using Drizzle ORM with transaction support
       for (const driverName of uniqueDrivers) {
         try {
-          // First check if driver exists using Drizzle query
-          const existingDriver = await trx.query.drivers.findFirst({
-            where: eq(schema.drivers.name, driverName)
-          });
+          // Savepoint: a failure here rolls back only this driver, not the whole upload
+          const { driverId, created } = await trx.transaction(async (sp) => {
+            // First check if driver exists using Drizzle query
+            const existingDriver = await sp.query.drivers.findFirst({
+              where: eq(schema.drivers.name, driverName)
+            });
 
-          let driverId: string;
+            if (existingDriver) {
+              console.log(
+                `✓ Found existing driver: ${driverName}`
+              );
+              return { driverId: existingDriver.id, created: false };
+            }
 
-          if (existingDriver) {
-            driverId = existingDriver.id;
-            console.log(
-              `✓ Found existing driver: ${driverName}`
-            );
-          } else {
             // Extract branch from first vehicle with this driver for new driver creation
             const sampleRow = rows.find(row => row.driver === driverName);
             const branch = sampleRow?.vehicleId.split("-")[0] || "UNKNOWN";
 
             // Create new driver using Drizzle insert
-            const insertResult = await trx
+            const insertResult = await sp
               .insert(schema.drivers)
               .values({
                 name: driverName,
@@ -70,13 +79,13 @@ export async function processFuelCSVData(
               })
               .returning({ id: schema.drivers.id });
 
-            driverId = insertResult[0].id;
-            result.driversCreated++;
             console.log(
-              `✓ Created driver: ${driverName} (${branch}) - ID: ${driverId}`
+              `✓ Created driver: ${driverName} (${branch}) - ID: ${insertResult[0].id}`
             );
-          }
+            return { driverId: insertResult[0].id, created: true };
+          });
 
+          if (created) pending.driversCreated++;
           driverMap.set(driverName, driverId);
         } catch (error) {
           const dbError = extractDbError(error);
@@ -141,7 +150,7 @@ export async function processFuelCSVData(
           const isDuplicate = await checkFuelLogExists(driverId, normalizedDate, row.odometer ?? 0, row.cost);
 
           if (isDuplicate){
-            result.skippedDuplicates++;
+            pending.skippedDuplicates++;
             console.log(`Skipping duplicate fuel log for driver ${row.driver} on ${row.date}`);
             continue; 
           }
@@ -154,25 +163,29 @@ export async function processFuelCSVData(
             `   Data: gallons=${row.gallons}, cost=${row.cost}, odometer=${row.odometer}`
           );
 
-          const insertResult = await trx
-            .insert(schema.fuelLogs)
-            .values({
-              vehicleId: row.vehicleId,
-              driverId: driverId,
-              date: normalizedDate, // Use normalized date for consistent storage
-              invoiceNumber: row.invoiceNumber,
-              gallons: row.gallons.toString(), // Convert to string for decimal
-              cost: row.cost.toString(), // Convert to string for decimal
-              sellerState: row.sellerState || "UNKNOWN STATE", // Provide default for required field
-              sellerName: row.sellerName || "UNKNOWN NAME", // Provide default for required field
-              odometer: row.odometer?.toString() || "0.000",
-              receipt: row.receipt || null, // Optional field can be null
-            })
-            .returning({ id: schema.fuelLogs.id });
+          // Savepoint: a failed insert rolls back only this row. Without it,
+          // Postgres aborts the whole transaction and every later row fails
+          // with "current transaction is aborted" (25P02).
+          const insertResult = await trx.transaction((sp) =>
+            sp
+              .insert(schema.fuelLogs)
+              .values({
+                vehicleId: row.vehicleId,
+                driverId: driverId,
+                date: normalizedDate, // Use normalized date for consistent storage
+                invoiceNumber: row.invoiceNumber,
+                gallons: row.gallons.toString(), // Convert to string for decimal
+                cost: row.cost.toString(), // Convert to string for decimal
+                sellerState: row.sellerState || "UNKNOWN STATE", // Provide default for required field
+                sellerName: row.sellerName || "UNKNOWN NAME", // Provide default for required field
+                odometer: row.odometer?.toString() || "0.000",
+                receipt: row.receipt || null, // Optional field can be null
+              })
+              .returning({ id: schema.fuelLogs.id })
+          );
 
           const transactionId = insertResult[0].id;
-          result.insertedIds.push(transactionId);
-          result.transactionsCreated++;
+          pending.insertedIds.push(transactionId);
 
           console.log(
             `✓ Inserted fuel transaction: ${row.invoiceNumber} - ID: ${transactionId}`
@@ -193,10 +206,17 @@ export async function processFuelCSVData(
       }
 
       console.log(
-        `✅ Fuel transaction processing complete: ${result.transactionsCreated} transactions, ${result.driversCreated} drivers`
+        `✅ Fuel transaction processing complete: ${pending.insertedIds.length} transactions, ${pending.driversCreated} drivers`
       );
       console.log("-------- FUEL TRANSACTION COMPLETED --------");
     });
+
+    // Reached only if the outer transaction committed
+    result.committed = true;
+    result.driversCreated = pending.driversCreated;
+    result.insertedIds = pending.insertedIds;
+    result.transactionsCreated = pending.insertedIds.length;
+    result.skippedDuplicates = pending.skippedDuplicates;
   } catch (error) {
     const dbError = extractDbError(error);
     console.error("💥 Database transaction failed:", dbError, error);
