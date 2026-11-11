@@ -2,6 +2,7 @@ import { eq, and, or, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { FuelCSVRow } from "@/lib/validations/fuel";
 import { startOfDay, format } from "date-fns";
+import { extractDbError, toUserMessage } from "@/lib/db/errors";
 
 export interface ProcessedFuelData {
   driversCreated: number;
@@ -78,8 +79,10 @@ export async function processFuelCSVData(
 
           driverMap.set(driverName, driverId);
         } catch (error) {
+          const dbError = extractDbError(error);
+          console.error(`❌ Failed to create driver: ${driverName}`, dbError);
           result.errors.push(
-            `Failed to create driver ${driverName}: ${error}`
+            `Failed to create driver ${driverName}: ${toUserMessage(dbError)}`
           );
         }
       }
@@ -175,8 +178,17 @@ export async function processFuelCSVData(
             `✓ Inserted fuel transaction: ${row.invoiceNumber} - ID: ${transactionId}`
           );
         } catch (error) {
-          result.errors.push(`Failed to insert fuel transaction: ${error}`);
-          console.error(`❌ Failed to insert: ${row.invoiceNumber}`, error);
+          const dbError = extractDbError(error);
+          const rowLabel = `vehicle ${row.vehicleId}, invoice ${row.invoiceNumber}, date ${row.date}`;
+          console.error(`❌ Failed to insert fuel transaction (${rowLabel})`, {
+            ...dbError,
+            gallons: row.gallons,
+            cost: row.cost,
+            odometer: row.odometer,
+          });
+          result.errors.push(
+            `Failed to insert fuel transaction (${rowLabel}): ${toUserMessage(dbError)}`
+          );
         }
       }
 
@@ -186,11 +198,10 @@ export async function processFuelCSVData(
       console.log("-------- FUEL TRANSACTION COMPLETED --------");
     });
   } catch (error) {
-    console.error("💥 Database transaction failed:", error);
+    const dbError = extractDbError(error);
+    console.error("💥 Database transaction failed:", dbError, error);
     result.errors.push(
-      `Database transaction failed: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`
+      `Database transaction failed: ${toUserMessage(dbError)}`
     );
   }
 
