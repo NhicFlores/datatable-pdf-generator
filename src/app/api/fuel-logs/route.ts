@@ -40,8 +40,8 @@ export async function POST(request: NextRequest) {
       .map(
         (r) =>
           `Row ${r.idx + 1}: ${r.result.error?.issues
-            .map((i) => i.message)
-            .join(", ")}`
+            .map((i) => `${i.path.join(".") || "row"} ${i.message}`)
+            .join("; ")}`
       );
 
     const validRows = validationResults
