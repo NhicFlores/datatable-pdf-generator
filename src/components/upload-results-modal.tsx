@@ -2,22 +2,26 @@
 
 import { X, Download, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  formatUploadError,
+  type UploadRowError,
+} from "@/lib/data-model/upload-types";
 
 export interface UploadResult {
   type: "fuel" | "transactions";
   success: boolean;
+  /** Correlates this result with server logs */
+  requestId?: string;
   summary: {
     created?: number;
     driversCreated?: number;
     duplicatesSkipped?: number;
     nonDriversSkipped?: number;
+    failedRows?: number;
     totalErrors?: number;
   };
-  details: {
-    validationErrors?: string[];
-    databaseErrors?: string[];
-    insertedIds?: string[];
-  };
+  errors: UploadRowError[];
+  insertedIds?: string[];
 }
 
 interface UploadResultsModalProps {
@@ -37,8 +41,11 @@ export function UploadResultsModal({
     const data = {
       uploadType: result.type,
       timestamp: new Date().toISOString(),
+      requestId: result.requestId,
+      success: result.success,
       summary: result.summary,
-      details: result.details,
+      errors: result.errors,
+      insertedIds: result.insertedIds,
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -57,9 +64,43 @@ export function UploadResultsModal({
     URL.revokeObjectURL(url);
   };
 
-  const hasErrors =
-    (result.details.validationErrors?.length || 0) > 0 ||
-    (result.details.databaseErrors?.length || 0) > 0;
+  const validationErrors = result.errors.filter((e) => e.stage === "validation");
+  const databaseErrors = result.errors.filter((e) => e.stage !== "validation");
+  const hasErrors = result.errors.length > 0;
+
+  const summaryRows: { label: string; value?: number; className: string }[] = [
+    {
+      label:
+        result.type === "fuel" ? "Fuel Logs Saved:" : "Transactions Saved:",
+      value: result.summary.created,
+      className: "text-green-600",
+    },
+    {
+      label: "Drivers Created:",
+      value: result.summary.driversCreated,
+      className: "text-primary",
+    },
+    {
+      label: "Duplicates Skipped:",
+      value: result.summary.duplicatesSkipped,
+      className: "text-yellow-600",
+    },
+    {
+      label: "Non-Drivers Skipped:",
+      value: result.summary.nonDriversSkipped,
+      className: "text-muted-foreground",
+    },
+    {
+      label: "Rows Failed:",
+      value: result.summary.failedRows,
+      className: "text-destructive",
+    },
+    {
+      label: "Total Errors:",
+      value: result.summary.totalErrors,
+      className: "text-destructive",
+    },
+  ];
 
   return (
     <div
@@ -95,88 +136,60 @@ export function UploadResultsModal({
           {/* Summary */}
           <div className="mb-6">
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  {result.type === "fuel"
-                    ? "Fuel Logs Saved:"
-                    : "Transactions Saved:"}
-                </span>
-                <span className="font-medium text-green-600">
-                  {result.summary.created}
-                </span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Drivers Created:</span>
-                <span className="font-medium text-primary">
-                  {result.summary.driversCreated}
-                </span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  Duplicates Skipped:
-                </span>
-                <span className="font-medium text-yellow-600">
-                  {result.summary.duplicatesSkipped}
-                </span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  Non-Drivers Skipped:
-                </span>
-                <span className="font-medium text-muted-foreground">
-                  {result.summary.nonDriversSkipped}
-                </span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Total Errors:</span>
-                <span className="font-medium text-destructive">
-                  {result.summary.totalErrors}
-                </span>
-              </div>
+              {summaryRows
+                .filter((row) => row.value !== undefined)
+                .map((row) => (
+                  <div key={row.label} className="flex justify-between">
+                    <span className="text-muted-foreground">{row.label}</span>
+                    <span className={`font-medium ${row.className}`}>
+                      {row.value}
+                    </span>
+                  </div>
+                ))}
             </div>
+            {result.requestId && (
+              <p className="mt-3 text-xs text-muted-foreground">
+                Reference ID:{" "}
+                <span className="font-mono select-all">{result.requestId}</span>
+              </p>
+            )}
           </div>
 
           {/* Validation Errors */}
-          {result.details.validationErrors &&
-            result.details.validationErrors.length > 0 && (
-              <div className="mb-6">
-                <h4 className="text-md font-medium mb-2 text-destructive">
-                  Validation Errors ({result.details.validationErrors.length})
-                </h4>
-                <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 max-h-32 overflow-y-auto">
-                  <ul className="text-sm space-y-1">
-                    {result.details.validationErrors.map((error, index) => (
-                      <li key={index} className="text-destructive">
-                        • {error}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+          {validationErrors.length > 0 && (
+            <div className="mb-6">
+              <h4 className="text-md font-medium mb-2 text-destructive">
+                Validation Errors ({validationErrors.length})
+              </h4>
+              <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 max-h-48 overflow-y-auto">
+                <ul className="text-sm space-y-1">
+                  {validationErrors.map((error, index) => (
+                    <li key={index} className="text-destructive">
+                      • {formatUploadError(error)}
+                    </li>
+                  ))}
+                </ul>
               </div>
-            )}
+            </div>
+          )}
 
           {/* Database Errors */}
-          {result.details.databaseErrors &&
-            result.details.databaseErrors.length > 0 && (
-              <div className="mb-6">
-                <h4 className="text-md font-medium mb-2 text-destructive">
-                  Database Errors ({result.details.databaseErrors.length})
-                </h4>
-                <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 max-h-32 overflow-y-auto">
-                  <ul className="text-sm space-y-1">
-                    {result.details.databaseErrors.map((error, index) => (
-                      <li key={index} className="text-destructive">
-                        • {error}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+          {databaseErrors.length > 0 && (
+            <div className="mb-6">
+              <h4 className="text-md font-medium mb-2 text-destructive">
+                Database Errors ({databaseErrors.length})
+              </h4>
+              <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 max-h-48 overflow-y-auto">
+                <ul className="text-sm space-y-1">
+                  {databaseErrors.map((error, index) => (
+                    <li key={index} className="text-destructive">
+                      • {formatUploadError(error)}
+                    </li>
+                  ))}
+                </ul>
               </div>
-            )}
+            </div>
+          )}
 
           {/* Success Message */}
           {result.success && !hasErrors && (

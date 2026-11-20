@@ -7,6 +7,7 @@ import { FuelLogUploadButton } from "@/components/csv/fuel-log-upload-button";
 import { UploadResultsModal, UploadResult } from "@/components/upload-results-modal";
 import { FuelCSVRow } from "@/lib/validations/fuel";
 import { ExpenseCSVRow } from "@/lib/validations/transaction";
+import type { FuelUploadResponse } from "@/lib/data-model/upload-types";
 
 export function DataUploadSection() {
   const [modalResult, setModalResult] = useState<UploadResult | null>(null);
@@ -49,10 +50,18 @@ export function DataUploadSection() {
             nonDriversSkipped: result.data.nonDriversSkipped,
             totalErrors: result.data.totalErrors,
           },
-          details: {
-            validationErrors: result.data.validationErrors || [],
-            databaseErrors: result.data.databaseErrors || [],
-          },
+          // The transactions API still returns plain string arrays; adapt them
+          // to the structured error shape the modal expects.
+          errors: [
+            ...(result.data.validationErrors || []).map((message: string) => ({
+              stage: "validation" as const,
+              message,
+            })),
+            ...(result.data.databaseErrors || []).map((message: string) => ({
+              stage: "insert" as const,
+              message,
+            })),
+          ],
         };
 
         if (hasErrors) {
@@ -99,55 +108,51 @@ export function DataUploadSection() {
         body: JSON.stringify({ transactions: data }),
       });
 
-      const result = await response.json();
+      const result: FuelUploadResponse = await response.json();
+      toast.dismiss(loadingToastId);
 
-      if (result.success) {
-        // Dismiss loading toast
-        toast.dismiss(loadingToastId);
-        
-        const hasErrors = (result.details.validationErrors?.length || 0) > 0 || 
-                         (result.details.databaseErrors?.length || 0) > 0;
-
-        const resultData = {
-          type: "fuel" as const,
-          success: true,
-          summary: {
-            created: result.details.transactionsCreated,
-            driversCreated: result.details.driversCreated,
-            duplicatesSkipped: result.details.skippedDuplicates,
-          },
-          details: {
-            validationErrors: result.details.validationErrors || [],
-            databaseErrors: result.details.databaseErrors || [],
-            insertedIds: result.details.insertedIds || [],
-          },
-        };
-
-        if (hasErrors) {
-          // Show error toast and auto-open modal
-          const errorCount = (result.details.validationErrors?.length || 0) + (result.details.databaseErrors?.length || 0);
-          toast.error(`Processed ${result.details.transactionsCreated} fuel logs with ${errorCount} issues`);
-          setTimeout(() => showResults(resultData), 500);
-        } else {
-          // Show success toast with View Details action
-          toast.success(
-            `Successfully processed ${result.details.transactionsCreated} fuel logs`,
-            {
-              action: {
-                label: "View Details",
-                onClick: () => showResults(resultData),
-              },
-            }
-          );
-        }
-
-        console.log("✅ Fuel processing complete:", result);
-
-        // The page will automatically revalidate due to server-side revalidatePath
-        // No need for manual reload
-      } else {
+      // No summary means the request itself was rejected (e.g. malformed body)
+      if (!result.summary) {
         throw new Error(result.error || "Failed to process data");
       }
+
+      const resultData: UploadResult = {
+        type: "fuel",
+        success: result.success,
+        requestId: result.requestId,
+        summary: {
+          created: result.summary.created,
+          driversCreated: result.summary.driversCreated,
+          duplicatesSkipped: result.summary.duplicatesSkipped,
+          failedRows: result.summary.failedRows,
+          totalErrors: result.summary.totalErrors,
+        },
+        errors: result.errors,
+        insertedIds: result.insertedIds,
+      };
+
+      if (!result.success) {
+        // Nothing was saved (rejected or rolled back): show why
+        toast.error(result.error || "Failed to process fuel data");
+        setTimeout(() => showResults(resultData), 500);
+      } else if (result.errors.length > 0) {
+        toast.error(
+          `Processed ${result.summary.created} fuel logs with ${result.errors.length} issues`
+        );
+        setTimeout(() => showResults(resultData), 500);
+      } else {
+        toast.success(
+          `Successfully processed ${result.summary.created} fuel logs`,
+          {
+            action: {
+              label: "View Details",
+              onClick: () => showResults(resultData),
+            },
+          }
+        );
+      }
+
+      console.log("✅ Fuel processing complete:", result);
     } catch (error) {
       console.error("💥 Error processing fuel data:", error);
       toast.dismiss(loadingToastId);

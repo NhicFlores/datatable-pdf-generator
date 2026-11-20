@@ -3,21 +3,36 @@ import { db, schema } from "@/lib/db";
 import { FuelCSVRow } from "@/lib/validations/fuel";
 import { startOfDay, format } from "date-fns";
 import { extractDbError, toUserMessage } from "@/lib/db/errors";
+import type { UploadRowError } from "@/lib/data-model/upload-types";
 
 export interface ProcessedFuelData {
   driversCreated: number;
   transactionsCreated: number;
   insertedIds: string[];
-  errors: string[];
+  errors: UploadRowError[];
   skippedDuplicates: number;
   // True only once the outer database transaction has committed. When false,
   // nothing was persisted and all counts are zero.
   committed: boolean;
 }
 
+export interface ProcessFuelOptions {
+  /** Original 1-based row numbers for `rows` (rows that failed validation are not in `rows`) */
+  rowNumbers?: number[];
+  /** Included in logs so they can be matched to the API response */
+  requestId?: string;
+}
+
+const rowLabel = (row: FuelCSVRow) =>
+  `vehicle ${row.vehicleId}, invoice ${row.invoiceNumber}`;
+
 export async function processFuelCSVData(
-  rows: FuelCSVRow[]
+  rows: FuelCSVRow[],
+  options: ProcessFuelOptions = {}
 ): Promise<ProcessedFuelData> {
+  const logTag = options.requestId ? `[${options.requestId}]` : "";
+  const rowNumberOf = (index: number) => options.rowNumbers?.[index] ?? index + 1;
+
   const result: ProcessedFuelData = {
     driversCreated: 0,
     transactionsCreated: 0,
@@ -39,11 +54,13 @@ export async function processFuelCSVData(
       // Step 1: Create drivers for unique driver names
       const uniqueDrivers = new Set<string>();
       const driverMap = new Map<string, string>(); // name -> driverId
-      for (const row of rows) {
+      for (const [index, row] of rows.entries()) {
         if (!row.driver || !row.vehicleId) {
-          result.errors.push(
-            `Missing driver or vehicle data: ${JSON.stringify(row)}`
-          );
+          result.errors.push({
+            stage: "insert",
+            rowNumber: rowNumberOf(index),
+            message: "Missing driver or vehicle data",
+          });
           continue;
         }
 
@@ -89,15 +106,19 @@ export async function processFuelCSVData(
           driverMap.set(driverName, driverId);
         } catch (error) {
           const dbError = extractDbError(error);
-          console.error(`❌ Failed to create driver: ${driverName}`, dbError);
-          result.errors.push(
-            `Failed to create driver ${driverName}: ${toUserMessage(dbError)}`
-          );
+          console.error(`❌ ${logTag} Failed to create driver: ${driverName}`, dbError);
+          result.errors.push({
+            stage: "driver",
+            label: `driver ${driverName}`,
+            code: dbError.code,
+            message: `Failed to create driver: ${toUserMessage(dbError)}`,
+          });
         }
       }
 
       // Step 2: Insert fuel transactions using raw SQL with RETURNING
-      for (const row of rows) {
+      for (const [index, row] of rows.entries()) {
+        const rowNumber = rowNumberOf(index);
         try {
           // Validate required fields
           if (
@@ -106,17 +127,22 @@ export async function processFuelCSVData(
             !row.date ||
             !row.invoiceNumber
           ) {
-            result.errors.push(
-              `Missing required fields: ${JSON.stringify(row)}`
-            );
+            result.errors.push({
+              stage: "insert",
+              rowNumber,
+              message: "Missing required fields",
+            });
             continue;
           }
 
           // Validate numeric fields
           if (typeof row.gallons !== "number" || typeof row.cost !== "number") {
-            result.errors.push(
-              `Invalid numeric data in row: ${JSON.stringify(row)}`
-            );
+            result.errors.push({
+              stage: "insert",
+              rowNumber,
+              label: rowLabel(row),
+              message: "Invalid numeric data",
+            });
             continue;
           }
 
@@ -124,16 +150,25 @@ export async function processFuelCSVData(
           const driverId = driverMap.get(row.driver);
 
           if (!driverId) {
-            result.errors.push(
-              `Driver not found: ${row.driver}`
-            );
+            result.errors.push({
+              stage: "insert",
+              rowNumber,
+              label: rowLabel(row),
+              message: `Driver not found: ${row.driver}`,
+            });
             continue;
           }
 
           // Parse date and normalize to start of day for consistent duplicate checking
           const transactionDate = new Date(row.date);
           if (isNaN(transactionDate.getTime())) {
-            result.errors.push(`Invalid date format: ${row.date}`);
+            result.errors.push({
+              stage: "insert",
+              rowNumber,
+              label: rowLabel(row),
+              field: "date",
+              message: `Invalid date format: ${row.date}`,
+            });
             continue;
           }
           
@@ -192,16 +227,22 @@ export async function processFuelCSVData(
           );
         } catch (error) {
           const dbError = extractDbError(error);
-          const rowLabel = `vehicle ${row.vehicleId}, invoice ${row.invoiceNumber}, date ${row.date}`;
-          console.error(`❌ Failed to insert fuel transaction (${rowLabel})`, {
-            ...dbError,
-            gallons: row.gallons,
-            cost: row.cost,
-            odometer: row.odometer,
-          });
-          result.errors.push(
-            `Failed to insert fuel transaction (${rowLabel}): ${toUserMessage(dbError)}`
+          console.error(
+            `❌ ${logTag} Row ${rowNumber} failed (${rowLabel(row)}, date ${row.date})`,
+            {
+              ...dbError,
+              gallons: row.gallons,
+              cost: row.cost,
+              odometer: row.odometer,
+            }
           );
+          result.errors.push({
+            stage: "insert",
+            rowNumber,
+            label: rowLabel(row),
+            code: dbError.code,
+            message: toUserMessage(dbError),
+          });
         }
       }
 
@@ -219,10 +260,12 @@ export async function processFuelCSVData(
     result.skippedDuplicates = pending.skippedDuplicates;
   } catch (error) {
     const dbError = extractDbError(error);
-    console.error("💥 Database transaction failed:", dbError, error);
-    result.errors.push(
-      `Database transaction failed: ${toUserMessage(dbError)}`
-    );
+    console.error(`💥 ${logTag} Database transaction failed:`, dbError, error);
+    result.errors.push({
+      stage: "transaction",
+      code: dbError.code,
+      message: `Database transaction failed, no rows were saved: ${toUserMessage(dbError)}`,
+    });
   }
 
   return result;
